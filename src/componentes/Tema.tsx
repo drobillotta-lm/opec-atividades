@@ -23,6 +23,31 @@ export function BotaoTema({ compacto = false }: { compacto?: boolean }) {
     const atual = (document.documentElement.getAttribute("data-tema") as Tema) || "escuro";
     setTema(atual);
     setMontado(true);
+
+    // Outra aba trocou o tema: acompanhar, senao as duas ficam divergentes.
+    const deOutraAba = (e: StorageEvent) => {
+      if (e.key !== CHAVE || !e.newValue) return;
+      document.documentElement.setAttribute("data-tema", e.newValue);
+      setTema(e.newValue as Tema);
+    };
+    window.addEventListener("storage", deOutraAba);
+
+    // Sem escolha registrada, seguir o sistema em tempo real.
+    const midia = window.matchMedia("(prefers-color-scheme: light)");
+    const doSistema = (e: MediaQueryListEvent) => {
+      let escolhido: string | null = null;
+      try { escolhido = localStorage.getItem(CHAVE); } catch {}
+      if (escolhido) return;
+      const novo: Tema = e.matches ? "claro" : "escuro";
+      document.documentElement.setAttribute("data-tema", novo);
+      setTema(novo);
+    };
+    midia.addEventListener("change", doSistema);
+
+    return () => {
+      window.removeEventListener("storage", deOutraAba);
+      midia.removeEventListener("change", doSistema);
+    };
   }, []);
 
   function trocar() {

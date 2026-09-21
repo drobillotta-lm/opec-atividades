@@ -1,80 +1,119 @@
 @import "tailwindcss";
 
-/* Tokens do tema escuro, que e o padrao de uma ferramenta que fica aberta o dia todo. */
-@theme {
-  --color-fundo: #0e1014;
-  --color-fundo-nav: #0b0d11;
-  --color-superficie: #161a20;
-  --color-superficie-2: #12151a;
-  --color-elevado: #1e232b;
-  --color-linha: #2a313b;
-  --color-linha-2: #22282f;
-  --color-tinta: #e6eaf0;
-  --color-tinta-2: #c3ccd8;
-  --color-tinta-3: #93a0b0;
-  --color-tinta-4: #7c8998;
-  --color-azul: #3794f4;
-  --color-azul-claro: #7fbbfa;
-  --color-azul-fundo: #16263a;
-  --color-azul-borda: #27486e;
-  --color-verde: #28ab72;
-  --color-verde-claro: #6fcca2;
-  --color-ambar: #b8892d;
-  --color-ambar-claro: #c9a45f;
-  --color-rosa: #e05a7a;
-  --color-vidro: rgb(18 22 28 / 0.72);
-  --color-vidro-borda: rgb(255 255 255 / 0.09);
+/*
+  IMPORTANTE: os valores moram em variaveis cruas aqui embaixo, e o @theme la no fim
+  so APONTA pra elas com `inline`. Com `@theme` puro o Tailwind congela o valor no
+  build e escreve a cor literal em cada utilidade, entao trocar a variavel em tempo
+  de execucao nao muda nada. Foi exatamente o que aconteceu na primeira versao:
+  --color-fundo virava claro e o fundo continuava escuro.
+*/
+
+:root {
+  --fundo: #0e1014;
+  --fundo-nav: #0b0d11;
+  --superficie: #161a20;
+  --superficie-2: #12151a;
+  --elevado: #1e232b;
+  --linha: #2a313b;
+  --linha-2: #22282f;
+  --tinta: #e6eaf0;
+  --tinta-2: #c3ccd8;
+  --tinta-3: #93a0b0;
+  --tinta-4: #7c8998;
+  --azul: #3794f4;
+  --azul-claro: #7fbbfa;
+  --azul-fundo: #16263a;
+  --azul-borda: #27486e;
+  --verde: #28ab72;
+  --verde-claro: #6fcca2;
+  --ambar: #b8892d;
+  --ambar-claro: #c9a45f;
+  --rosa: #e05a7a;
+  --vidro: rgb(18 22 28 / 0.72);
+  --vidro-borda: rgb(255 255 255 / 0.09);
+  --vidro-sombra: 0 18px 44px rgb(0 0 0 / .45), inset 0 1px 0 rgb(255 255 255 / .07);
+  color-scheme: dark;
+}
+
+/* Claro: papel levemente frio, tinta grafite. Contraste conferido, tinta sobre papel
+   passa de 12:1 e os acentos passam de 4.5:1. */
+:root[data-tema="claro"] {
+  --fundo: #f6f8fa;
+  --fundo-nav: #eef1f5;
+  --superficie: #ffffff;
+  --superficie-2: #f3f5f8;
+  --elevado: #e9edf2;
+  --linha: #dbe2ea;
+  --linha-2: #e6ebf1;
+  --tinta: #141a21;
+  --tinta-2: #2f3a46;
+  --tinta-3: #56616e;
+  --tinta-4: #6b7683;
+  --azul: #1567c8;
+  --azul-claro: #0f57ac;
+  --azul-fundo: #e4effc;
+  --azul-borda: #b5d2f5;
+  --verde: #0f7a4d;
+  --verde-claro: #0a6440;
+  --ambar: #8a6414;
+  --ambar-claro: #75530e;
+  --rosa: #b62c4b;
+  --vidro: rgb(255 255 255 / 0.8);
+  --vidro-borda: rgb(16 20 26 / 0.1);
+  --vidro-sombra: 0 18px 44px rgb(16 20 26 / .16), inset 0 1px 0 rgb(255 255 255 / .7);
+  color-scheme: light;
+}
+
+@theme inline {
+  --color-fundo: var(--fundo);
+  --color-fundo-nav: var(--fundo-nav);
+  --color-superficie: var(--superficie);
+  --color-superficie-2: var(--superficie-2);
+  --color-elevado: var(--elevado);
+  --color-linha: var(--linha);
+  --color-linha-2: var(--linha-2);
+  --color-tinta: var(--tinta);
+  --color-tinta-2: var(--tinta-2);
+  --color-tinta-3: var(--tinta-3);
+  --color-tinta-4: var(--tinta-4);
+  --color-azul: var(--azul);
+  --color-azul-claro: var(--azul-claro);
+  --color-azul-fundo: var(--azul-fundo);
+  --color-azul-borda: var(--azul-borda);
+  --color-verde: var(--verde);
+  --color-verde-claro: var(--verde-claro);
+  --color-ambar: var(--ambar);
+  --color-ambar-claro: var(--ambar-claro);
+  --color-rosa: var(--rosa);
   --font-sans: Archivo, "Segoe UI", system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;
 }
 
-/* Claro. Mesma familia, invertida: papel levemente quente, tinta grafite.
-   Contraste conferido: tinta em papel passa de 12:1, e os acentos passam de 4.5:1. */
-:root[data-tema="claro"] {
-  --color-fundo: #f7f8fa;
-  --color-fundo-nav: #f1f3f6;
-  --color-superficie: #ffffff;
-  --color-superficie-2: #f4f6f8;
-  --color-elevado: #eaeef3;
-  --color-linha: #dde3ea;
-  --color-linha-2: #e7ecf1;
-  --color-tinta: #161a20;
-  --color-tinta-2: #333d49;
-  --color-tinta-3: #5a6673;
-  --color-tinta-4: #6d7885;
-  --color-azul: #1567c8;
-  --color-azul-claro: #0f5bb5;
-  --color-azul-fundo: #e5effc;
-  --color-azul-borda: #b9d4f5;
-  --color-verde: #0f7a4d;
-  --color-verde-claro: #0b6741;
-  --color-ambar: #8a6414;
-  --color-ambar-claro: #7a570f;
-  --color-rosa: #bb2f4f;
-  --color-vidro: rgb(255 255 255 / 0.78);
-  --color-vidro-borda: rgb(16 20 26 / 0.1);
-}
-
 html, body {
-  background: var(--color-fundo);
-  color: var(--color-tinta);
+  background: var(--fundo);
+  color: var(--tinta);
   -webkit-font-smoothing: antialiased;
 }
 
-/* Troca de tema sem piscar em cada elemento: so o fundo e a tinta transicionam. */
-html { color-scheme: dark; }
-:root[data-tema="claro"] { color-scheme: light; }
-html, body, aside, section, dialog { transition: background-color .18s ease, color .18s ease, border-color .18s ease; }
+html, body, aside, section, dialog, .vidro {
+  transition: background-color .18s ease, color .18s ease, border-color .18s ease;
+}
 
 .num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 
-/* Vidro: translucido com desfoque, para o que flutua sobre outra coisa. */
+/* Vidro: o que flutua sobre outra coisa. */
 .vidro {
-  background: var(--color-vidro);
-  backdrop-filter: blur(20px) saturate(160%);
-  -webkit-backdrop-filter: blur(20px) saturate(160%);
-  border: 1px solid var(--color-vidro-borda);
-  box-shadow: 0 18px 44px rgb(0 0 0 / .42), inset 0 1px 0 rgb(255 255 255 / .07);
+  background: var(--vidro);
+  backdrop-filter: blur(22px) saturate(170%);
+  -webkit-backdrop-filter: blur(22px) saturate(170%);
+  border: 1px solid var(--vidro-borda);
+  box-shadow: var(--vidro-sombra);
+}
+
+/* Dentro da janela flutuante o espaco e escasso: encolhe o respiro. */
+@media (display-mode: picture-in-picture) {
+  body { padding: 0; }
+  .vidro { border-radius: 14px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
