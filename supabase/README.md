@@ -22,6 +22,8 @@ no projeto, em ordem. O modelo e as regras de acesso estão explicados em
 | `011_tipo_do_evento_e_cadeia_por_competicao.sql` | `eventos.tipo`, cadeia própria por competição, atividade `compacto` |
 | `012_gerar_tarefas_v2.sql` | Geração respeitando tipo, cadeia da competição e regra do escalado |
 | `013_classificar_competicao_propaga_para_eventos.sql` | Classificar uma competição reclassifica os eventos dela |
+| `014_entrega_comercial.sql` | `competicoes.entrega_padrao` e `eventos.entrega`, com os padrões medidos em setembro |
+| `015_gerar_tarefas_v3_so_com_entrega.sql` | Só gera tarefa para evento com entrega |
 
 ## Regras
 
@@ -34,6 +36,11 @@ no projeto, em ordem. O modelo e as regras de acesso estão explicados em
 - Competição sem frente em `competicoes` não gera tarefa e aparece no Admin pedindo
   classificação. Nunca some em silêncio, que é o que o `gerar_semana.py` faz hoje.
 - `gerar_tarefas(inicio, fim)` é idempotente e roda só com a service role.
+- **Só evento com entrega comercial vira atividade.** Quem decide é o líder, na coluna
+  "tem entrega?" da planilha Escala OPEC. Enquanto ele não decide, o app prevê pelo
+  padrão da competição; competição sem padrão deixa o evento esperando.
+- Nada que já tem tempo medido é apagado por mudança de regra. As limpezas das
+  migrations 011 e 014 excluem tarefa com sessão ou ajuste.
 
 ## Sincronizacao com o Airtable
 
