@@ -45,9 +45,9 @@ acompanham o arquivo.
 
 | Serviço | Estado |
 |---|---|
-| Supabase | organização `drobillotta OPEC` |
-| Vercel | conta `drobillotta-2740` |
-| Google OAuth | a criar no Google Cloud Console |
+| Supabase | projeto `opec-atividades`, ref `igzrrsqmweuritiqrmrh`, região sa-east-1 |
+| Vercel | projeto `opec-atividades`, no ar em https://opec-atividades.vercel.app |
+| Google OAuth | a criar. Callback: `https://igzrrsqmweuritiqrmrh.supabase.co/auth/v1/callback` |
 
 Segredos ficam em `.env.local`, fora do versionamento, e nas variáveis de ambiente da Vercel.
 Este arquivo registra onde as coisas estão, nunca o valor delas.
