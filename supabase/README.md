@@ -24,6 +24,8 @@ no projeto, em ordem. O modelo e as regras de acesso estão explicados em
 | `013_classificar_competicao_propaga_para_eventos.sql` | Classificar uma competição reclassifica os eventos dela |
 | `014_entrega_comercial.sql` | `competicoes.entrega_padrao` e `eventos.entrega`, com os padrões medidos em setembro |
 | `015_gerar_tarefas_v3_so_com_entrega.sql` | Só gera tarefa para evento com entrega |
+| `016_janela_da_atividade.sql` | Cada atividade ganha janela relativa ao evento, e `tarefas_da_semana` |
+| `017_gerar_tarefas_v4_com_janela.sql` | Geração recebe janela de trabalho, não janela de eventos |
 
 ## Regras
 
@@ -39,6 +41,12 @@ no projeto, em ordem. O modelo e as regras de acesso estão explicados em
 - **Só evento com entrega comercial vira atividade.** Quem decide é o líder, na coluna
   "tem entrega?" da planilha Escala OPEC. Enquanto ele não decide, o app prevê pelo
   padrão da competição; competição sem padrão deixa o evento esperando.
+- **A semana de uma pessoa não é "os eventos desta semana".** Materiais e roteiro abrem
+  antes do evento, auditoria vence depois. Então a semana mistura evento da semana
+  passada e da semana que vem. Use `tarefas_da_semana(inicio, fim)`, nunca filtre por
+  data de evento.
+- Os deslocamentos em `cadeia.abre_offset_dias` e `prazo_offset_dias` são um palpite
+  inicial e generoso, a confirmar com os líderes. Melhor tarefa a mais do que a menos.
 - Nada que já tem tempo medido é apagado por mudança de regra. As limpezas das
   migrations 011 e 014 excluem tarefa com sessão ou ajuste.
 
