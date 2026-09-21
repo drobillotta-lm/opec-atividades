@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { semanaDe, deslocarSemana, rotuloSemana, diaCurto, hhmm, ROTULO_ATIVIDADE } from "@/lib/semana";
-import { Relogio, Submit, TempoParado } from "./Cronometro";
+import { Relogio, Submit, TempoParado, DialogoEntrega, tempoLegivel } from "./Cronometro";
 import { iniciar, pausar, entregar } from "../acoes";
 
 export const dynamic = "force-dynamic";
@@ -39,6 +39,9 @@ export default async function MinhaSemana({
     ? await supabase.from("v_tempo_tarefa").select("*").in("tarefa_id", ids)
     : { data: [] as { tarefa_id: string; minutos_total: number; sessao_aberta_desde: string | null }[] };
 
+  const { data: time } = await supabase
+    .from("pessoas").select("id, nome").is("saida", null).order("nome");
+
   const porId = new Map((tempos ?? []).map((t) => [t.tarefa_id, t]));
   const comTempo = tarefas.map((t) => ({
     ...t,
@@ -49,7 +52,9 @@ export default async function MinhaSemana({
   }));
 
   const emCurso = comTempo.find((t) => t.correndo);
-  const pendentes = comTempo.filter((t) => t.status === "pendente" && !t.correndo);
+  const paradas = comTempo.filter((t) => t.status === "pendente" && !t.correndo);
+  const pausadas = paradas.filter((t) => t.minutos > 0);
+  const pendentes = paradas.filter((t) => t.minutos <= 0);
   const entregues = comTempo.filter((t) => t.status === "entregue" || t.status === "fora_do_prazo");
   const horasPrevistas = comTempo.reduce((s, t) => s + t.estimativa_min, 0);
   const horasFeitas = comTempo.reduce((s, t) => s + t.minutos, 0);
@@ -94,13 +99,61 @@ export default async function MinhaSemana({
                 Pausar
               </Submit>
             </form>
-            <form action={entregar.bind(null, emCurso.id, undefined, undefined)}>
-              <Submit ocupado="..." className="flex items-center gap-2 min-h-[42px] px-3.5 rounded-[9px] bg-verde text-[#07120d] text-[12.5px] font-semibold hover:brightness-110 transition">
-                Entregar
-              </Submit>
-            </form>
+            <DialogoEntrega
+              acao={entregar.bind(null, emCurso.id)}
+              titulo={`${ROTULO_ATIVIDADE[emCurso.atividade] ?? emCurso.atividade} · ${emCurso.frente?.nome}`}
+              subtitulo={emCurso.evento?.competicao ?? ""}
+              minutosMedidos={emCurso.minutos}
+              estimativaMin={emCurso.estimativa_min}
+              escaladoId={emCurso.escalado_id}
+              time={time ?? []}
+              rotuloBotao="Entregar"
+              classeBotao="flex items-center gap-2 min-h-[42px] px-3.5 rounded-[9px] bg-verde text-[#07120d] text-[12.5px] font-semibold hover:brightness-110 transition"
+            />
           </div>
         </div>
+      )}
+
+      {pausadas.length > 0 && (
+        <Secao titulo="Pausadas" contagem={`${pausadas.length} · ${tempoLegivel(pausadas.reduce((s, t) => s + t.minutos, 0))} ja contados`}>
+          {pausadas.map((t) => (
+            <Linha key={t.id} pausada>
+              <span className="inline-flex items-center gap-1.5 rounded-md bg-elevado border border-[#3b4552] px-2.5 py-1 text-[11px] font-medium text-tinta-2 shrink-0">
+                <svg width="10" height="10" viewBox="0 0 13 13" fill="none" stroke="#C9A45F" strokeWidth="2" strokeLinecap="round" aria-hidden>
+                  <path d="M4.6 3v7M8.4 3v7" />
+                </svg>
+                Pausada
+              </span>
+              <div className="flex-1 min-w-0 flex flex-col gap-1">
+                <span className="text-[13.5px] font-medium">
+                  {ROTULO_ATIVIDADE[t.atividade] ?? t.atividade} · {t.frente?.nome}
+                </span>
+                <span className="text-[11.5px] text-tinta-3 truncate">
+                  {t.evento?.competicao} · entrega até {diaCurto(t.prazo_em.slice(0, 10))}
+                </span>
+              </div>
+              <TempoParado minutos={t.minutos} estimativa={t.estimativa_min} />
+              <div className="flex gap-2 shrink-0">
+                <form action={iniciar.bind(null, t.id)}>
+                  <Submit ocupado="..." className="flex items-center gap-2 min-h-[38px] px-3.5 rounded-[9px] border border-azul-borda bg-azul-fundo text-azul-claro text-[12.5px] font-medium hover:brightness-125 transition">
+                    Retomar
+                  </Submit>
+                </form>
+                <DialogoEntrega
+                  acao={entregar.bind(null, t.id)}
+                  titulo={`${ROTULO_ATIVIDADE[t.atividade] ?? t.atividade} · ${t.frente?.nome}`}
+                  subtitulo={t.evento?.competicao ?? ""}
+                  minutosMedidos={t.minutos}
+                  estimativaMin={t.estimativa_min}
+                  escaladoId={t.escalado_id}
+                  time={time ?? []}
+                  rotuloBotao="Entregar"
+                  classeBotao="min-h-[38px] px-3.5 rounded-[9px] bg-verde text-[#07120d] text-[12.5px] font-semibold hover:brightness-110 transition"
+                />
+              </div>
+            </Linha>
+          ))}
+        </Secao>
       )}
 
       <Secao titulo="Pendentes" contagem={`${pendentes.length}`}>
@@ -126,11 +179,17 @@ export default async function MinhaSemana({
                     Iniciar
                   </Submit>
                 </form>
-                <form action={entregar.bind(null, t.id, undefined, undefined)}>
-                  <Submit ocupado="..." className="min-h-[38px] px-3 rounded-[9px] border border-linha bg-superficie-2 text-[12.5px] text-tinta-3 hover:text-tinta-2 transition">
-                    Entregar
-                  </Submit>
-                </form>
+                <DialogoEntrega
+                  acao={entregar.bind(null, t.id)}
+                  titulo={`${ROTULO_ATIVIDADE[t.atividade] ?? t.atividade} · ${t.frente?.nome}`}
+                  subtitulo={t.evento?.competicao ?? ""}
+                  minutosMedidos={t.minutos}
+                  estimativaMin={t.estimativa_min}
+                  escaladoId={t.escalado_id}
+                  time={time ?? []}
+                  rotuloBotao="Entregar"
+                  classeBotao="min-h-[38px] px-3 rounded-[9px] border border-linha bg-superficie-2 text-[12.5px] text-tinta-3 hover:text-tinta-2 transition"
+                />
               </div>
             </Linha>
           );
@@ -183,10 +242,10 @@ function Secao({ titulo, contagem, children }: { titulo: string; contagem: strin
   );
 }
 
-function Linha({ children, destaque, apagada }: { children: React.ReactNode; destaque?: boolean; apagada?: boolean }) {
+function Linha({ children, destaque, apagada, pausada }: { children: React.ReactNode; destaque?: boolean; apagada?: boolean; pausada?: boolean }) {
   return (
     <div className={`flex items-center gap-3.5 rounded-[10px] px-4 py-3 border ${
-      destaque ? "bg-superficie border-[#3a3226]" : apagada ? "bg-superficie-2 border-linha-2" : "bg-superficie border-linha"
+      pausada ? "bg-[#161d26] border-[#2f3a48]" : destaque ? "bg-superficie border-[#3a3226]" : apagada ? "bg-superficie-2 border-linha-2" : "bg-superficie border-linha"
     }`}>
       {children}
     </div>
