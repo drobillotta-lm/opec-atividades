@@ -8,45 +8,51 @@ em sessões, então cada fatia precisa caber numa sessão e terminar em algo que
 - [x] Ler o dimensionamento e extrair o domínio real
 - [x] Telas aprovadas no mockup
 - [x] Repositório, documentação e GitHub Project
-- [ ] Projeto Supabase (bloqueado: plano free ja tem 2 projetos) e projeto Vercel
-- [ ] Credenciais do Google OAuth
+- [x] Projeto Supabase (`igzrrsqmweuritiqrmrh`) e projeto Vercel, no ar
+- [x] Credenciais do Google OAuth
 
 **Pronta quando** o repositório existe com a documentação, as issues estão no Project, e um
 deploy vazio sobe na Vercel falando com o Supabase.
 
 ## Fase 1 — entrar e executar
 
-1. Scaffold Next.js com TypeScript e Tailwind, deploy vazio na Vercel
-2. Migrations das tabelas, views e RLS conforme `02-modelo-dados.md`
-3. Login com Google restrito ao domínio, mais a tela de fora do time
-4. Semear pessoas e frentes a partir do dimensionamento
-5. Importar o mapa aprovado de uma competência
-6. Importar eventos e gerar as tarefas da semana, com estimativa pela taxa e prazo de 48h
-7. Minha semana: pendentes, entregues, plantão em leitura
-8. Cronômetro: iniciar, pausar, entregar, trocar; uma sessão aberta por pessoa
-9. Retomar sessão ao reabrir a aba
-10. Ajuste manual de tempo com motivo
-11. Entregar informando quem fez de verdade e se houve exceção
+1. [x] Scaffold Next.js com TypeScript e Tailwind, deploy vazio na Vercel
+2. [x] Migrations das tabelas, views e RLS conforme `02-modelo-dados.md`
+3. [x] Login com Google restrito ao domínio, mais a tela de fora do time
+4. [x] Semear pessoas e frentes a partir do dimensionamento
+5. [x] Importar o mapa aprovado de uma competência — setembro/2026, 18 linhas
+6. [x] Importar eventos e gerar as tarefas da semana — pela **janela** da atividade e só
+   para evento com entrega comercial, não mais "evento + 48h" para todos
+7. [~] Minha semana: pendentes e entregues prontos; **plantão em leitura ainda não**
+8. [x] Cronômetro: iniciar, pausar, entregar, trocar; uma sessão aberta por pessoa
+9. [x] Retomar sessão ao reabrir a aba — a sessão vive no banco, a tela volta rodando
+10. [~] Ajuste manual de tempo com motivo: a ação existe e a entrega já grava a diferença
+    como ajuste; falta a entrada avulsa na tela de tarefa
+11. [~] Entregar informando quem fez de verdade: pronto. **Exceção ainda não tem campo**
 
 **Pronta quando** o Daniel passa dois dias reais registrando as tarefas de Nacional sem
 perder nada.
 
 ## Fase 2 — o dock
 
-12. Janela Picture-in-Picture com os três estados do mockup
-13. Atalhos de teclado para mostrar e para pausar
-14. Posição lembrada entre sessões
+12. [x] Janela Picture-in-Picture com a tarefa atual, barra contra a taxa, pausar e entregar
+13. [ ] Atalhos de teclado para mostrar e para pausar
+14. [ ] Posição lembrada entre sessões — a API de PiP não deixa posicionar por código;
+    o que dá é o atalho de desktop do `instalar.ps1`, que abre o dock em janela própria
 
 **Pronta quando** dá para trabalhar um dia inteiro sem abrir o app inteiro.
 
 ## Fase 3 — liderar
 
-15. Tela da frente: a semana inteira, escalado ao lado de quem fez
-16. Preencher quem fez direto na linha
-17. Fechar a semana, com os mesmos números do `fechar_semana.py`
-18. Painel do mês: horas medidas contra previstas, por pessoa e por frente
-19. Exportar CSV no formato de `acompanhamento/registro/`
-20. Tela de admin: pessoas, frentes, de onde veio o mapa
+15. [x] Tela da frente: a semana inteira, escalado ao lado de quem fez. Gestor vê todas as
+    frentes, líder vê a sua
+16. [x] Preencher quem fez direto na linha, e marcar se o evento tem entrega
+17. [ ] Fechar a semana, com os mesmos números do `fechar_semana.py`
+18. [~] Painel do mês: `v_mes_pessoa` e `v_taxa_real` na tela, competência ainda fixa em
+    setembro/2026 no código. Falta o corte por frente
+19. [ ] Exportar CSV no formato de `acompanhamento/registro/`
+20. [~] Admin: pessoas, frentes, competição sem frente e evento com entrega indefinida.
+    Ainda é leitura; falta editar e falta mostrar de que versão do mapa a importação veio
 
 **Pronta quando** a Bárbara fecha uma semana de Programas no app em vez do CSV, e os números
 batem com o que o script geraria.

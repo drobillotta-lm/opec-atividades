@@ -47,7 +47,8 @@ acompanham o arquivo.
 |---|---|
 | Supabase | projeto `opec-atividades`, ref `igzrrsqmweuritiqrmrh`, região sa-east-1 |
 | Vercel | projeto `opec-atividades`, no ar em https://opec-atividades.vercel.app |
-| Google OAuth | a criar. Callback: `https://igzrrsqmweuritiqrmrh.supabase.co/auth/v1/callback` |
+| Google OAuth | criado e funcionando, restrito a `@livemode.com`. Callback: `https://igzrrsqmweuritiqrmrh.supabase.co/auth/v1/callback` |
+| Airtable (Matriz) | fonte dos eventos. Varredura manual de 14/09 a 04/10 em 21/09; a chave é o record id |
 
 Segredos ficam em `.env.local`, fora do versionamento, e nas variáveis de ambiente da Vercel.
 Este arquivo registra onde as coisas estão, nunca o valor delas.

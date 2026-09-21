@@ -71,3 +71,63 @@ Sessões com início e fim, uma aberta por pessoa. Fechar a aba não fecha a ses
 o app pergunta. Ajuste manual de minutos existe e exige motivo, e fica registrado como ajuste,
 separado do que o cronômetro mediu. Motivo: ninguém lembra de iniciar o timer toda vez, e um
 número que a pessoa não confia é pior que nenhum número.
+
+---
+
+As decisões abaixo foram tomadas durante a construção, na madrugada de 21/09, e estavam só
+no código e nos comentários das migrations até serem registradas aqui.
+
+## 21/09/2026 — a fonte dos eventos é o Airtable, não o CSV da Matriz
+
+A tabela `eventos` nasce da varredura da base do Airtable, e a chave é o `record id` de lá
+(`010`), não mais o par competição + data. Motivo: o mesmo par se repete no dia, e o record
+id é o único identificador que sobrevive a uma edição de nome. `evento_id_origem` continua
+existindo, mas como rótulo legível, com índice não único.
+
+Junto veio a tabela `competicoes` (`007`): competição é cadastro, com frente, origem e
+estado. Um evento pode nascer **sem frente** (`009`) quando a competição ainda não foi
+classificada; classificar a competição propaga para os eventos dela por trigger (`013`).
+Hoje há 46 competições, 2 ainda sem frente.
+
+## 21/09/2026 — só vira tarefa o evento que tem entrega comercial
+
+Quem decide é o líder, na coluna "tem entrega?" da planilha da Escala OPEC. Como essa coluna
+só começou a ser preenchida em setembro (68% do mês, 0% antes), o app parte de um padrão por
+competição (`competicoes.entrega_padrao`) e deixa o líder confirmar evento a evento
+(`eventos.entrega` mais `entrega_origem`: previsto, escala ou líder). `gerar_tarefas` ignora
+evento sem entrega (`014`, `015`).
+
+Motivo: gerar a cadeia para todo evento da Matriz enche a semana de tarefa que ninguém deve
+fazer, e a primeira coisa que mata um app de registro é pedir que a pessoa ignore linhas.
+
+## 21/09/2026 — a atividade tem janela, não só prazo
+
+Nem tudo acontece depois do evento: materiais e roteiro são preparação. Cada linha de
+`cadeia` ganhou `abre_offset_dias` e `prazo_offset_dias` em dias relativos ao evento, e a
+tarefa passou a carregar `abre_em` além de `prazo_em` (`016`, `017`). A semana de uma pessoa
+é o trabalho cuja **janela** cruza a semana, e não os eventos daquela semana.
+
+Os deslocamentos atuais são um palpite deliberadamente generoso, decidido com o Daniel:
+prefere tarefa a mais e corrigir depois a tarefa que não aparece. Cada linha é editável.
+
+## 21/09/2026 — o tempo é guardado em segundos
+
+`v_tempo_tarefa` arredondava a soma das sessões para minutos inteiros e o relógio parecia
+"voltar" ao pausar e retomar. Agora a view guarda segundos com precisão e o minuto é
+derivado, nunca a fonte (`020`).
+
+## 21/09/2026 — o dock é uma janela Document Picture-in-Picture
+
+É a única forma de uma página web ficar acima das outras janelas: Chrome e Edge desde a 116,
+Firefox desde a 151, Safari não tem. Para a janela não nascer sem estilo, ela carrega um
+iframe apontando para a rota `/dock`, que chega inteira e busca os próprios dados.
+
+Limites aceitos: exige gesto do usuário e HTTPS, só uma janela por vez, não dá para
+posicionar por código, e ela fecha junto com a aba de origem. Por isso o cronômetro vive no
+banco e nunca só na tela. Tauri continua sendo o plano B, não o plano.
+
+## 21/09/2026 — tema claro e escuro
+
+O mockup é escuro, de sala de controle, e continua sendo o padrão. Mas o app fica aberto o
+dia inteiro ao lado de planilha e navegador claros, então existe um botão de tema, guardado
+por pessoa. A janela do dock é outro documento: o tema é espelhado nela por observador.

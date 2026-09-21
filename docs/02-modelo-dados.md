@@ -45,14 +45,63 @@ importado_em   timestamptz not null default now()
 unique (frente_id, atividade, competencia)
 ```
 
+### `competicoes`
+Cadastro, criado em `007`. Competição nova aparece na varredura do Airtable e fica sem
+frente até alguém classificar; classificar propaga para os eventos dela, por trigger (`013`).
+```
+nome            text not null unique
+frente_id       uuid references frentes      -- null = ainda não classificada
+origem          text                         -- 'airtable' | 'manual'
+entrega_padrao  text not null default 'lider_decide'   -- 'sim'|'nao'|'lider_decide'
+ativa           boolean not null default true
+```
+
+### `taxas`
+`config/taxas.yaml` com data de vigência (`008`). Medir para poder mudar é o ponto do app,
+então a taxa não pode ser constante no código.
+```
+atividade   text not null
+minutos     integer not null check (minutos > 0)
+vigente_de  date not null
+fonte       text                  -- ex.: 'medicao de campo jul/2026'
+unique (atividade, vigente_de)
+```
+`private.taxa_min(atividade, data)` devolve a taxa vigente naquela data.
+
+### `cadeia`
+Qual cadeia cada frente executa por evento, e **quando** cada elo acontece (`008`, `011`, `016`).
+```
+frente_id          uuid references frentes not null
+competicao_id      uuid references competicoes     -- exceção para uma competição só
+atividade          text not null
+ordem              integer not null
+escalado_regra     text not null default 'mapa'
+abre_offset_dias   integer not null default 0      -- dias relativos ao evento, negativo = antes
+prazo_offset_dias  integer not null default 2
+```
+A linha com `competicao_id` vence a linha genérica da frente.
+
 ### `eventos`
-Vem do export da Matriz. Um evento é competição mais data, não jogo individual.
+Vem da varredura do Airtable. Um evento é competição mais data, não jogo individual.
 ```
-evento_id_origem  text not null unique   -- ex.: 'La Liga 2026_2026-09-22'
-competicao        text not null
-data              date not null
-frente_id         uuid references frentes not null
+evento_id_origem    text not null        -- rótulo legível, com índice não único (010)
+airtable_record_id  text                 -- a chave de verdade: o record id do Airtable
+competicao          text not null
+competicao_id       uuid references competicoes
+data                date not null
+inicio_brt          timestamptz
+frente_id           uuid references frentes      -- pode nascer null (009)
+tipo                text not null default 'normal'
+                    -- 'normal'|'reprise'|'gravacao'|'externa'|'sem_narracao'|'pre_jogo'
+entrega             boolean              -- tem entrega comercial? null = indefinido
+entrega_origem      text                 -- 'previsto'|'escala'|'lider'
+status_origem       text
+detentor            text
+last_modified       timestamptz          -- do Airtable, para varredura incremental
+sincronizado_em     timestamptz
 ```
+Só evento com `entrega = true` gera tarefa. Evento de tipo diferente de `normal` não gera
+cadeia.
 
 ### `tarefas`
 A unidade de trabalho: um evento cruzado com uma tarefa da cadeia.
@@ -64,7 +113,8 @@ competencia          date not null
 escalado_id          uuid references pessoas not null    -- do mapa
 responsavel_real_id  uuid references pessoas             -- quem fez; null enquanto pendente
 estimativa_min       integer not null                    -- da taxa, não digitada
-prazo_em             timestamptz not null                -- evento + 48h
+abre_em              date not null                       -- evento + abre_offset_dias (016)
+prazo_em             timestamptz not null                -- evento + prazo_offset_dias, fim do dia
 status               text not null default 'pendente'
                      -- 'pendente'|'entregue'|'fora_do_prazo'|'na'
 concluida_em         timestamptz
@@ -109,7 +159,10 @@ importado_em  timestamptz not null default now()
 
 ## Views
 
-**`v_tempo_tarefa`** — soma das sessões fechadas mais os ajustes, por tarefa.
+**`v_tempo_tarefa`** — soma das sessões fechadas mais os ajustes, por tarefa, **em segundos**
+(`segundos_cronometro`, `minutos_ajuste`, `segundos_total`, `minutos_total` derivado, e
+`sessao_aberta_desde`). O minuto nunca é a fonte: arredondar aqui fazia o relógio voltar
+(`020`).
 
 **`v_semana_frente`** — o fechamento semanal que hoje sai do `fechar_semana.py`:
 tarefas, entregues, pendentes, fora do prazo, desvios de escala, exceções.
@@ -119,6 +172,20 @@ estimativas), desvio percentual, entregues, fora do prazo, desvios de escala.
 
 **`v_taxa_real`** — por atividade e competência: média do tempo medido contra a taxa vigente.
 É a view que diz se `config/taxas.yaml` ainda vale.
+
+## Funções
+
+| Função | O que faz |
+|---|---|
+| `gerar_tarefas(inicio, fim)` | Cria as tarefas dos eventos do período: só evento com `entrega = true` e `tipo = 'normal'`, uma tarefa por elo da `cadeia`, estimativa pela taxa vigente, janela pelos offsets. Está na v4 (`017`) |
+| `tarefas_da_semana(inicio, fim)` | A semana de uma pessoa: tarefa cuja janela cruza a semana pedida, não os eventos da semana (`016`) |
+| `private.taxa_min(atividade, data)` | A taxa vigente naquela data |
+| `private.eu()`, `private.meu_papel()`, `private.sou_gestor()`, `private.lidero(frente)` | Quem está pedindo, usadas nas policies |
+| `private.liga_conta()` | Trigger de primeiro login: acha `pessoas` pelo e-mail e preenche `auth_user_id` |
+| `private.propaga_frente()` | Trigger: classificar a competição preenche a frente dos eventos dela (`013`) |
+
+As funções de permissão vivem no schema `private` e ficam **fora da API** (`006`). Em
+`public` elas viravam endpoint `/rpc/` no PostgREST; as policies continuam podendo chamá-las.
 
 ## Permissões (RLS)
 
