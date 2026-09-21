@@ -15,6 +15,8 @@ no projeto, em ordem. O modelo e as regras de acesso estão explicados em
 | `004_semear_pessoas_e_frentes.sql` | As 9 pessoas e as 6 frentes, do dimensionamento |
 | `005_mapa_setembro.sql` | O mapa aprovado de setembro, 18 linhas |
 | `006_funcoes_fora_da_api.sql` | Move as funções auxiliares para um schema que a API não expõe |
+| `007_competicoes_e_origem_airtable.sql` | Tabela `competicoes` (competição → frente) e os campos de origem do Airtable em `eventos` |
+| `008_taxas_cadeia_e_geracao.sql` | Tabelas `taxas` e `cadeia`, e a função `gerar_tarefas` |
 
 ## Regras
 
@@ -24,3 +26,6 @@ no projeto, em ordem. O modelo e as regras de acesso estão explicados em
 - A service role ignora RLS. Essa chave nunca vai para o cliente.
 - Depois de mexer em policy, rodar o verificador de segurança do Supabase e conferir
   que volta limpo.
+- Competição sem frente em `competicoes` não gera tarefa e aparece no Admin pedindo
+  classificação. Nunca some em silêncio, que é o que o `gerar_semana.py` faz hoje.
+- `gerar_tarefas(inicio, fim)` é idempotente e roda só com a service role.
