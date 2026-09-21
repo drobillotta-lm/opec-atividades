@@ -47,6 +47,13 @@ export function hhmm(minutos: number) {
   return `${Math.floor(m / 60)}h${String(m % 60).padStart(2, "0")}`;
 }
 
+/** Tempo curto nao pode virar 0h00: quem acabou de cronometrar precisa ver que contou. */
+export function tempoLegivel(minutos: number) {
+  if (minutos <= 0) return "0h00";
+  if (minutos < 1) return "<1min";
+  return hhmm(minutos);
+}
+
 /** Segundos -> "1:12:38", para o cronometro correndo. */
 export function relogio(segundos: number) {
   const s = Math.max(0, Math.floor(segundos));

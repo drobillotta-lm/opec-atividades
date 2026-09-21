@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { criarClienteServidor } from "@/lib/supabase/server";
-import { semanaDe, deslocarSemana, rotuloSemana, diaCurto, hhmm, ROTULO_ATIVIDADE } from "@/lib/semana";
-import { Relogio, Submit, TempoParado, DialogoEntrega, tempoLegivel } from "./Cronometro";
+import { semanaDe, deslocarSemana, rotuloSemana, diaCurto, hhmm, tempoLegivel, ROTULO_ATIVIDADE } from "@/lib/semana";
+import { Relogio, Submit, TempoParado, DialogoEntrega } from "./Cronometro";
 import { iniciar, pausar, entregar } from "../acoes";
 
 export const dynamic = "force-dynamic";

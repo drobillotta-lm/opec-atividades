@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
-import { relogio, hhmm } from "@/lib/semana";
+import { relogio, hhmm, tempoLegivel } from "@/lib/semana";
 
 export function Relogio({ desde, baseMin }: { desde: string; baseMin: number }) {
   const [seg, setSeg] = useState(() => calc(desde, baseMin));
@@ -24,13 +24,6 @@ export function Submit({ children, ocupado, className }: { children: React.React
       {pending ? ocupado : children}
     </button>
   );
-}
-
-/** Tempo curto nao pode virar 0h00: quem acabou de cronometrar precisa ver que contou. */
-export function tempoLegivel(minutos: number) {
-  if (minutos <= 0) return "0h00";
-  if (minutos < 1) return "<1min";
-  return hhmm(minutos);
 }
 
 export function TempoParado({ minutos, estimativa }: { minutos: number; estimativa: number }) {
