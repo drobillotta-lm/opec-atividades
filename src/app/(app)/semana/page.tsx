@@ -3,6 +3,7 @@ import { criarClienteServidor } from "@/lib/supabase/server";
 import { semanaDe, deslocarSemana, rotuloSemana, diaCurto, hhmm, tempoLegivel, ROTULO_ATIVIDADE } from "@/lib/semana";
 import { Relogio, Submit, TempoParado, DialogoEntrega } from "./Cronometro";
 import { iniciar, pausar, entregar } from "../acoes";
+import { AbrirDock } from "@/componentes/AbrirDock";
 
 export const dynamic = "force-dynamic";
 
@@ -70,6 +71,7 @@ export default async function MinhaSemana({
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <AbrirDock />
           <Seta href={`/semana?semana=${anterior}`} rotulo="Semana anterior">‹</Seta>
           <Seta href="/semana" rotulo="Semana atual">hoje</Seta>
           <Seta href={`/semana?semana=${proxima}`} rotulo="Próxima semana">›</Seta>

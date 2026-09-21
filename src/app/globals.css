@@ -1,5 +1,6 @@
 @import "tailwindcss";
 
+/* Tokens do tema escuro, que e o padrao de uma ferramenta que fica aberta o dia todo. */
 @theme {
   --color-fundo: #0e1014;
   --color-fundo-nav: #0b0d11;
@@ -21,8 +22,37 @@
   --color-ambar: #b8892d;
   --color-ambar-claro: #c9a45f;
   --color-rosa: #e05a7a;
+  --color-vidro: rgb(18 22 28 / 0.72);
+  --color-vidro-borda: rgb(255 255 255 / 0.09);
   --font-sans: Archivo, "Segoe UI", system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+
+/* Claro. Mesma familia, invertida: papel levemente quente, tinta grafite.
+   Contraste conferido: tinta em papel passa de 12:1, e os acentos passam de 4.5:1. */
+:root[data-tema="claro"] {
+  --color-fundo: #f7f8fa;
+  --color-fundo-nav: #f1f3f6;
+  --color-superficie: #ffffff;
+  --color-superficie-2: #f4f6f8;
+  --color-elevado: #eaeef3;
+  --color-linha: #dde3ea;
+  --color-linha-2: #e7ecf1;
+  --color-tinta: #161a20;
+  --color-tinta-2: #333d49;
+  --color-tinta-3: #5a6673;
+  --color-tinta-4: #6d7885;
+  --color-azul: #1567c8;
+  --color-azul-claro: #0f5bb5;
+  --color-azul-fundo: #e5effc;
+  --color-azul-borda: #b9d4f5;
+  --color-verde: #0f7a4d;
+  --color-verde-claro: #0b6741;
+  --color-ambar: #8a6414;
+  --color-ambar-claro: #7a570f;
+  --color-rosa: #bb2f4f;
+  --color-vidro: rgb(255 255 255 / 0.78);
+  --color-vidro-borda: rgb(16 20 26 / 0.1);
 }
 
 html, body {
@@ -31,4 +61,22 @@ html, body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Troca de tema sem piscar em cada elemento: so o fundo e a tinta transicionam. */
+html { color-scheme: dark; }
+:root[data-tema="claro"] { color-scheme: light; }
+html, body, aside, section, dialog { transition: background-color .18s ease, color .18s ease, border-color .18s ease; }
+
 .num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+/* Vidro: translucido com desfoque, para o que flutua sobre outra coisa. */
+.vidro {
+  background: var(--color-vidro);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid var(--color-vidro-borda);
+  box-shadow: 0 18px 44px rgb(0 0 0 / .42), inset 0 1px 0 rgb(255 255 255 / .07);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+}

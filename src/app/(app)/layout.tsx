@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { sair } from "./acoes";
+import { BotaoTema } from "@/componentes/Tema";
 
 export default async function LayoutApp({ children }: { children: React.ReactNode }) {
   const supabase = await criarClienteServidor();
@@ -55,11 +56,14 @@ export default async function LayoutApp({ children }: { children: React.ReactNod
               <span className="text-[11px] text-tinta-4">{rotuloPapel}</span>
             </div>
           </div>
-          <form action={encerrar}>
-            <button type="submit" className="w-full text-left px-3 py-2 text-[12px] text-tinta-4 hover:text-tinta-2 transition">
-              Sair
-            </button>
-          </form>
+          <div className="flex items-center justify-between">
+            <BotaoTema />
+            <form action={encerrar}>
+              <button type="submit" className="px-3 py-2 text-[12px] text-tinta-4 hover:text-tinta-2 transition">
+                Sair
+              </button>
+            </form>
+          </div>
         </div>
       </aside>
 
