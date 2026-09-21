@@ -26,6 +26,8 @@ no projeto, em ordem. O modelo e as regras de acesso estão explicados em
 | `015_gerar_tarefas_v3_so_com_entrega.sql` | Só gera tarefa para evento com entrega |
 | `016_janela_da_atividade.sql` | Cada atividade ganha janela relativa ao evento, e `tarefas_da_semana` |
 | `017_gerar_tarefas_v4_com_janela.sql` | Geração recebe janela de trabalho, não janela de eventos |
+| `018_competicoes_novas_de_3_semanas.sql` | 9 competições que o mapeamento do dimensionamento não conhece |
+| `019_mais_tipos_de_evento.sql` | `[SEM NARRAÇÃO]` e `Pré Jogo` viram tipo próprio |
 
 ## Regras
 
@@ -47,6 +49,10 @@ no projeto, em ordem. O modelo e as regras de acesso estão explicados em
   data de evento.
 - Os deslocamentos em `cadeia.abre_offset_dias` e `prazo_offset_dias` são um palpite
   inicial e generoso, a confirmar com os líderes. Melhor tarefa a mais do que a menos.
+- Tipos de evento que não geram cadeia: reprise, gravação, externa, sem narração e
+  pré-jogo. O tipo é derivado do texto do Match ID, porque a Matriz não tem campo próprio.
+- **Não há carga de setembro até o dia 20.** Esse período é passado e ninguém cronometrou.
+  O app conta a partir de 21/09. Eventos anteriores só entram se alguma janela alcançar.
 - Nada que já tem tempo medido é apagado por mudança de regra. As limpezas das
   migrations 011 e 014 excluem tarefa com sessão ou ajuste.
 
