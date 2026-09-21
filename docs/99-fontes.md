@@ -5,7 +5,7 @@
 | O quê | Onde |
 |---|---|
 | Modelo de dimensionamento | `github.com/ymuanes/opec-dimensionamento` (privado, Python, branch `master`) |
-| Este app | `github.com/<conta do Daniel>/opec-atividades` (privado) |
+| Este app | `github.com/drobillotta-lm/opec-atividades` (privado) |
 
 ### O que cada arquivo do dimensionamento nos dá
 

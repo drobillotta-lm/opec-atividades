@@ -8,7 +8,7 @@ em sessões, então cada fatia precisa caber numa sessão e terminar em algo que
 - [x] Ler o dimensionamento e extrair o domínio real
 - [x] Telas aprovadas no mockup
 - [x] Repositório, documentação e GitHub Project
-- [ ] Projeto Supabase e projeto Vercel
+- [ ] Projeto Supabase (bloqueado: plano free ja tem 2 projetos) e projeto Vercel
 - [ ] Credenciais do Google OAuth
 
 **Pronta quando** o repositório existe com a documentação, as issues estão no Project, e um
