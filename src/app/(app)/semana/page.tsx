@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { semanaDe, deslocarSemana, rotuloSemana, diaCurto, hhmm, ROTULO_ATIVIDADE } from "@/lib/semana";
-import { Relogio, BotaoIniciar, BotoesEmCurso, TempoParado } from "./Cronometro";
+import { Relogio, Submit, TempoParado } from "./Cronometro";
+import { iniciar, pausar, entregar } from "../acoes";
 
 export const dynamic = "force-dynamic";
 
@@ -87,7 +88,18 @@ export default async function MinhaSemana({
             <Relogio desde={emCurso.correndo!} baseMin={emCurso.minutos} />
             <span className="num text-[11px] text-tinta-4">de {hhmm(emCurso.estimativa_min)}</span>
           </div>
-          <BotoesEmCurso id={emCurso.id} />
+          <div className="flex gap-2">
+            <form action={pausar}>
+              <Submit ocupado="..." className="flex items-center gap-2 min-h-[42px] px-3.5 rounded-[9px] border border-[#3b4552] bg-elevado text-[12.5px] font-medium hover:bg-linha transition">
+                Pausar
+              </Submit>
+            </form>
+            <form action={entregar.bind(null, emCurso.id, undefined, undefined)}>
+              <Submit ocupado="..." className="flex items-center gap-2 min-h-[42px] px-3.5 rounded-[9px] bg-verde text-[#07120d] text-[12.5px] font-semibold hover:brightness-110 transition">
+                Entregar
+              </Submit>
+            </form>
+          </div>
         </div>
       )}
 
@@ -108,7 +120,18 @@ export default async function MinhaSemana({
                 </span>
               </div>
               <TempoParado minutos={t.minutos} estimativa={t.estimativa_min} />
-              <BotaoIniciar id={t.id} />
+              <div className="flex gap-2 shrink-0">
+                <form action={iniciar.bind(null, t.id)}>
+                  <Submit ocupado="..." className="flex items-center gap-2 min-h-[38px] px-3.5 rounded-[9px] border border-[#3b4552] bg-elevado text-[12.5px] font-medium hover:bg-linha transition">
+                    Iniciar
+                  </Submit>
+                </form>
+                <form action={entregar.bind(null, t.id, undefined, undefined)}>
+                  <Submit ocupado="..." className="min-h-[38px] px-3 rounded-[9px] border border-linha bg-superficie-2 text-[12.5px] text-tinta-3 hover:text-tinta-2 transition">
+                    Entregar
+                  </Submit>
+                </form>
+              </div>
             </Linha>
           );
         })}

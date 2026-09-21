@@ -76,3 +76,34 @@ export async function sair() {
   const supabase = await criarClienteServidor();
   await supabase.auth.signOut();
 }
+
+/** O lider resolve a linha: quem de fato executou. Desvio e responsavel != escalado. */
+export async function definirQuemFez(tarefaId: string, formData: FormData) {
+  const { supabase } = await eu();
+  const quem = String(formData.get("pessoa") ?? "");
+  if (!quem) return;
+  const { data: tarefa } = await supabase
+    .from("tarefas").select("prazo_em, status").eq("id", tarefaId).single();
+  const noPrazo = tarefa ? new Date() <= new Date(tarefa.prazo_em) : true;
+  const { error } = await supabase
+    .from("tarefas")
+    .update({
+      responsavel_real_id: quem,
+      status: tarefa?.status === "pendente" ? (noPrazo ? "entregue" : "fora_do_prazo") : tarefa?.status,
+      concluida_em: tarefa?.status === "pendente" ? new Date().toISOString() : undefined,
+    })
+    .eq("id", tarefaId);
+  if (error) throw new Error(error.message);
+  revalidatePath("/frente");
+}
+
+/** O lider ou o gestor diz se o evento tem entrega comercial. */
+export async function definirEntrega(eventoId: string, tem: boolean) {
+  const { supabase } = await eu();
+  const { error } = await supabase
+    .from("eventos")
+    .update({ entrega: tem, entrega_origem: "lider" })
+    .eq("id", eventoId);
+  if (error) throw new Error(error.message);
+  revalidatePath("/frente");
+}
