@@ -17,6 +17,11 @@ no projeto, em ordem. O modelo e as regras de acesso estão explicados em
 | `006_funcoes_fora_da_api.sql` | Move as funções auxiliares para um schema que a API não expõe |
 | `007_competicoes_e_origem_airtable.sql` | Tabela `competicoes` (competição → frente) e os campos de origem do Airtable em `eventos` |
 | `008_taxas_cadeia_e_geracao.sql` | Tabelas `taxas` e `cadeia`, e a função `gerar_tarefas` |
+| `009_evento_pode_nascer_sem_frente.sql` | `eventos.frente_id` passa a aceitar nulo |
+| `010_chave_do_evento_e_o_record_id.sql` | Tira a unicidade do Match ID, que não é chave |
+| `011_tipo_do_evento_e_cadeia_por_competicao.sql` | `eventos.tipo`, cadeia própria por competição, atividade `compacto` |
+| `012_gerar_tarefas_v2.sql` | Geração respeitando tipo, cadeia da competição e regra do escalado |
+| `013_classificar_competicao_propaga_para_eventos.sql` | Classificar uma competição reclassifica os eventos dela |
 
 ## Regras
 
