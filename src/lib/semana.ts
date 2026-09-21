@@ -47,11 +47,16 @@ export function hhmm(minutos: number) {
   return `${Math.floor(m / 60)}h${String(m % 60).padStart(2, "0")}`;
 }
 
-/** Tempo curto nao pode virar 0h00: quem acabou de cronometrar precisa ver que contou. */
-export function tempoLegivel(minutos: number) {
-  if (minutos <= 0) return "0h00";
-  if (minutos < 1) return "<1min";
-  return hhmm(minutos);
+/**
+ * Recebe SEGUNDOS. Abaixo de um minuto mostra os segundos, senao hora e minuto.
+ * Guardar minuto arredondado escondia o trabalho curto: 40s virava 0h00 e, ao
+ * retomar, o relogio parecia voltar no tempo.
+ */
+export function tempoLegivel(segundos: number) {
+  const s = Math.max(0, segundos);
+  if (s < 1) return "0h00";
+  if (s < 60) return `${Math.round(s)}s`;
+  return hhmm(s / 60);
 }
 
 /** Segundos -> "1:12:38", para o cronometro correndo. */

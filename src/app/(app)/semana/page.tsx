@@ -37,7 +37,7 @@ export default async function MinhaSemana({
 
   const { data: tempos } = ids.length
     ? await supabase.from("v_tempo_tarefa").select("*").in("tarefa_id", ids)
-    : { data: [] as { tarefa_id: string; minutos_total: number; sessao_aberta_desde: string | null }[] };
+    : { data: [] as { tarefa_id: string; segundos_total: number; sessao_aberta_desde: string | null }[] };
 
   const { data: time } = await supabase
     .from("pessoas").select("id, nome").is("saida", null).order("nome");
@@ -47,17 +47,17 @@ export default async function MinhaSemana({
     ...t,
     frente: Array.isArray(t.frentes) ? t.frentes[0] : t.frentes,
     evento: Array.isArray(t.eventos) ? t.eventos[0] : t.eventos,
-    minutos: porId.get(t.id)?.minutos_total ?? 0,
+    segundos: Number(porId.get(t.id)?.segundos_total ?? 0),
     correndo: porId.get(t.id)?.sessao_aberta_desde ?? null,
   }));
 
   const emCurso = comTempo.find((t) => t.correndo);
   const paradas = comTempo.filter((t) => t.status === "pendente" && !t.correndo);
-  const pausadas = paradas.filter((t) => t.minutos > 0);
-  const pendentes = paradas.filter((t) => t.minutos <= 0);
+  const pausadas = paradas.filter((t) => t.segundos > 0);
+  const pendentes = paradas.filter((t) => t.segundos <= 0);
   const entregues = comTempo.filter((t) => t.status === "entregue" || t.status === "fora_do_prazo");
   const horasPrevistas = comTempo.reduce((s, t) => s + t.estimativa_min, 0);
-  const horasFeitas = comTempo.reduce((s, t) => s + t.minutos, 0);
+  const segundosFeitos = comTempo.reduce((s, t) => s + t.segundos, 0);
   const agora = Date.now();
 
   return (
@@ -66,7 +66,7 @@ export default async function MinhaSemana({
         <div className="flex flex-col gap-1.5">
           <h1 className="text-[23px] font-semibold tracking-[-0.02em]">Minha semana</h1>
           <p className="text-[12.5px] text-tinta-3">
-            {rotuloSemana(inicio, fim)} · {comTempo.length} tarefas · {hhmm(horasFeitas)} de {hhmm(horasPrevistas)}
+            {rotuloSemana(inicio, fim)} · {comTempo.length} tarefas · {tempoLegivel(segundosFeitos)} de {hhmm(horasPrevistas)}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -90,7 +90,7 @@ export default async function MinhaSemana({
             </span>
           </div>
           <div className="flex flex-col items-end">
-            <Relogio desde={emCurso.correndo!} baseMin={emCurso.minutos} />
+            <Relogio desde={emCurso.correndo!} baseSeg={emCurso.segundos} />
             <span className="num text-[11px] text-tinta-4">de {hhmm(emCurso.estimativa_min)}</span>
           </div>
           <div className="flex gap-2">
@@ -103,7 +103,7 @@ export default async function MinhaSemana({
               acao={entregar.bind(null, emCurso.id)}
               titulo={`${ROTULO_ATIVIDADE[emCurso.atividade] ?? emCurso.atividade} · ${emCurso.frente?.nome}`}
               subtitulo={emCurso.evento?.competicao ?? ""}
-              minutosMedidos={emCurso.minutos}
+              segundosMedidos={emCurso.segundos}
               estimativaMin={emCurso.estimativa_min}
               escaladoId={emCurso.escalado_id}
               time={time ?? []}
@@ -115,7 +115,7 @@ export default async function MinhaSemana({
       )}
 
       {pausadas.length > 0 && (
-        <Secao titulo="Pausadas" contagem={`${pausadas.length} · ${tempoLegivel(pausadas.reduce((s, t) => s + t.minutos, 0))} ja contados`}>
+        <Secao titulo="Pausadas" contagem={`${pausadas.length} · ${tempoLegivel(pausadas.reduce((s, t) => s + t.segundos, 0))} ja contados`}>
           {pausadas.map((t) => (
             <Linha key={t.id} pausada>
               <span className="inline-flex items-center gap-1.5 rounded-md bg-elevado border border-[#3b4552] px-2.5 py-1 text-[11px] font-medium text-tinta-2 shrink-0">
@@ -132,7 +132,7 @@ export default async function MinhaSemana({
                   {t.evento?.competicao} · entrega até {diaCurto(t.prazo_em.slice(0, 10))}
                 </span>
               </div>
-              <TempoParado minutos={t.minutos} estimativa={t.estimativa_min} />
+              <TempoParado segundos={t.segundos} estimativaMin={t.estimativa_min} />
               <div className="flex gap-2 shrink-0">
                 <form action={iniciar.bind(null, t.id)}>
                   <Submit ocupado="..." className="flex items-center gap-2 min-h-[38px] px-3.5 rounded-[9px] border border-azul-borda bg-azul-fundo text-azul-claro text-[12.5px] font-medium hover:brightness-125 transition">
@@ -143,7 +143,7 @@ export default async function MinhaSemana({
                   acao={entregar.bind(null, t.id)}
                   titulo={`${ROTULO_ATIVIDADE[t.atividade] ?? t.atividade} · ${t.frente?.nome}`}
                   subtitulo={t.evento?.competicao ?? ""}
-                  minutosMedidos={t.minutos}
+                  segundosMedidos={t.segundos}
                   estimativaMin={t.estimativa_min}
                   escaladoId={t.escalado_id}
                   time={time ?? []}
@@ -172,7 +172,7 @@ export default async function MinhaSemana({
                   {atrasada ? "prazo venceu" : "entrega até"} {diaCurto(t.prazo_em.slice(0, 10))}
                 </span>
               </div>
-              <TempoParado minutos={t.minutos} estimativa={t.estimativa_min} />
+              <TempoParado segundos={t.segundos} estimativaMin={t.estimativa_min} />
               <div className="flex gap-2 shrink-0">
                 <form action={iniciar.bind(null, t.id)}>
                   <Submit ocupado="..." className="flex items-center gap-2 min-h-[38px] px-3.5 rounded-[9px] border border-[#3b4552] bg-elevado text-[12.5px] font-medium hover:bg-linha transition">
@@ -183,7 +183,7 @@ export default async function MinhaSemana({
                   acao={entregar.bind(null, t.id)}
                   titulo={`${ROTULO_ATIVIDADE[t.atividade] ?? t.atividade} · ${t.frente?.nome}`}
                   subtitulo={t.evento?.competicao ?? ""}
-                  minutosMedidos={t.minutos}
+                  segundosMedidos={t.segundos}
                   estimativaMin={t.estimativa_min}
                   escaladoId={t.escalado_id}
                   time={time ?? []}
@@ -197,7 +197,7 @@ export default async function MinhaSemana({
       </Secao>
 
       {entregues.length > 0 && (
-        <Secao titulo="Entregues" contagem={`${entregues.length} · ${hhmm(entregues.reduce((s, t) => s + t.minutos, 0))}`}>
+        <Secao titulo="Entregues" contagem={`${entregues.length} · ${hhmm(entregues.reduce((s, t) => s + t.segundos, 0))}`}>
           {entregues.map((t) => (
             <Linha key={t.id} apagada>
               <span className="inline-flex items-center gap-1.5 rounded-md bg-elevado border border-linha px-2.5 py-1 text-[11px] font-medium text-tinta-2 shrink-0">
@@ -212,7 +212,7 @@ export default async function MinhaSemana({
                 </span>
                 <span className="text-[11.5px] text-tinta-4 truncate">{t.evento?.competicao}</span>
               </div>
-              <TempoParado minutos={t.minutos} estimativa={t.estimativa_min} />
+              <TempoParado segundos={t.segundos} estimativaMin={t.estimativa_min} />
             </Linha>
           ))}
         </Secao>

@@ -4,18 +4,19 @@ import { useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { relogio, hhmm, tempoLegivel } from "@/lib/semana";
 
-export function Relogio({ desde, baseMin }: { desde: string; baseMin: number }) {
-  const [seg, setSeg] = useState(() => calc(desde, baseMin));
+export function Relogio({ desde, baseSeg }: { desde: string; baseSeg: number }) {
+  const [seg, setSeg] = useState(() => calc(desde, baseSeg));
   useEffect(() => {
-    setSeg(calc(desde, baseMin));
-    const t = setInterval(() => setSeg(calc(desde, baseMin)), 1000);
+    setSeg(calc(desde, baseSeg));
+    const t = setInterval(() => setSeg(calc(desde, baseSeg)), 1000);
     return () => clearInterval(t);
-  }, [desde, baseMin]);
+  }, [desde, baseSeg]);
   return <span className="num text-[29px] font-medium tracking-[-0.02em]">{relogio(seg)}</span>;
 }
 
-const calc = (desde: string, baseMin: number) =>
-  baseMin * 60 + (Date.now() - new Date(desde).getTime()) / 1000;
+/** Total na tarefa: o que ja estava somado mais esta sessao correndo. */
+const calc = (desde: string, baseSeg: number) =>
+  baseSeg + (Date.now() - new Date(desde).getTime()) / 1000;
 
 export function Submit({ children, ocupado, className }: { children: React.ReactNode; ocupado: string; className: string }) {
   const { pending } = useFormStatus();
@@ -26,10 +27,10 @@ export function Submit({ children, ocupado, className }: { children: React.React
   );
 }
 
-export function TempoParado({ minutos, estimativa }: { minutos: number; estimativa: number }) {
+export function TempoParado({ segundos, estimativaMin }: { segundos: number; estimativaMin: number }) {
   return (
     <span className="num text-[12.5px] text-tinta-4 shrink-0">
-      {tempoLegivel(minutos)} / {hhmm(estimativa)}
+      {tempoLegivel(segundos)} / {hhmm(estimativaMin)}
     </span>
   );
 }
@@ -40,7 +41,7 @@ export function DialogoEntrega({
   acao,
   titulo,
   subtitulo,
-  minutosMedidos,
+  segundosMedidos,
   estimativaMin,
   escaladoId,
   time,
@@ -50,7 +51,7 @@ export function DialogoEntrega({
   acao: (formData: FormData) => void | Promise<void>;
   titulo: string;
   subtitulo: string;
-  minutosMedidos: number;
+  segundosMedidos: number;
   estimativaMin: number;
   escaladoId: string;
   time: Pessoa[];
@@ -58,11 +59,11 @@ export function DialogoEntrega({
   rotuloBotao: string;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
-  const [minutos, setMinutos] = useState(Math.max(0, Math.round(minutosMedidos)));
+  const [minutos, setMinutos] = useState(Math.max(0, Math.round(segundosMedidos / 60)));
 
   return (
     <>
-      <button type="button" onClick={() => { setMinutos(Math.max(0, Math.round(minutosMedidos))); ref.current?.showModal(); }} className={classeBotao}>
+      <button type="button" onClick={() => { setMinutos(Math.max(0, Math.round(segundosMedidos / 60))); ref.current?.showModal(); }} className={classeBotao}>
         {rotuloBotao}
       </button>
 
@@ -87,10 +88,10 @@ export function DialogoEntrega({
                 onChange={(e) => setMinutos(Number(e.target.value))}
                 className="num w-28 min-h-10 px-3 rounded-lg border border-linha bg-superficie-2 text-[14px]"
               />
-              <span className="text-[12.5px] text-tinta-4">minutos · {tempoLegivel(minutos)}</span>
+              <span className="text-[12.5px] text-tinta-4">minutos · {hhmm(minutos)}</span>
             </div>
             <p className="text-[11.5px] text-tinta-4">
-              O cronômetro mediu {tempoLegivel(minutosMedidos)}. A taxa prevista é {hhmm(estimativaMin)}.
+              O cronômetro mediu {tempoLegivel(segundosMedidos)}. A taxa prevista é {hhmm(estimativaMin)}.
               Se você mudar o número, a diferença fica registrada como ajuste, separada do que o relógio contou.
             </p>
           </div>

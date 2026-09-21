@@ -49,9 +49,9 @@ export async function entregar(tarefaId: string, formData: FormData) {
   const { data: tarefa } = await supabase
     .from("tarefas").select("prazo_em, escalado_id").eq("id", tarefaId).single();
   const { data: tempo } = await supabase
-    .from("v_tempo_tarefa").select("minutos_total").eq("tarefa_id", tarefaId).maybeSingle();
+    .from("v_tempo_tarefa").select("segundos_total").eq("tarefa_id", tarefaId).maybeSingle();
 
-  const medido = Math.round(tempo?.minutos_total ?? 0);
+  const medido = Math.round(Number(tempo?.segundos_total ?? 0) / 60);
   const informado = Math.round(Number(formData.get("minutos")));
   if (Number.isFinite(informado) && informado !== medido) {
     await supabase.from("ajustes_tempo").insert({
