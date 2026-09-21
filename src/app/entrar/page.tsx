@@ -11,7 +11,11 @@ export default async function Entrar() {
     "use server";
     const supabase = await criarClienteServidor();
     const h = await headers();
-    const origem = h.get("origin") ?? `https://${h.get("host")}`;
+    // `origin` pode nao vir em Server Action; montar a partir do host e do proto
+    // que o proxy da Vercel envia e mais confiavel, e localhost fica em http.
+    const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
+    const proto = h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
+    const origem = h.get("origin") ?? `${proto}://${host}`;
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {

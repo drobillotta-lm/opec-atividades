@@ -21,8 +21,19 @@ export async function middleware(req: NextRequest) {
     },
   );
 
-  const { data: { user } } = await supabase.auth.getUser();
   const caminho = req.nextUrl.pathname;
+
+  // Retorno do OAuth. Quando a redirectTo pedida nao esta na lista de Redirect URLs,
+  // o Supabase manda o usuario para o Site URL e o ?code cai em qualquer caminho.
+  // Levar para o callback antes de qualquer checagem de sessao, senao o code se perde.
+  const code = req.nextUrl.searchParams.get("code");
+  if (code && caminho !== "/auth/callback") {
+    const url = req.nextUrl.clone();
+    url.pathname = "/auth/callback";
+    return NextResponse.redirect(url);
+  }
+
+  const { data: { user } } = await supabase.auth.getUser();
   const publica = PUBLICAS.some((p) => caminho.startsWith(p));
 
   if (!user && !publica) {
