@@ -62,8 +62,8 @@ plantões até isso ser aprovado — não é bug.
 3. **Fechar a semana** reproduzindo os números do `fechar_semana.py`, e exportar o CSV no
    formato de `acompanhamento/registro/`. É o que tira a Bárbara do CSV.
 4. **Painel sem competência fixa.** Hoje setembro/2026 está escrito no código.
-5. **Admin que escreve.** Classificar competição e resolver entrega já aparecem como fila,
-   mas a edição de pessoas e frentes ainda é só leitura.
+5. **Admin: só pessoas e frentes continuam só leitura.** Classificar competição e resolver
+   entrega já escrevem de verdade (`/admin/eventos`, 23/09) — Daniel e Yuri, os dois gestores.
 
 ## Armadilhas que já custaram tempo
 

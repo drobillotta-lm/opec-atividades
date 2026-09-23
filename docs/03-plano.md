@@ -52,8 +52,9 @@ perder nada.
 18. [~] Painel do mês: `v_mes_pessoa` e `v_taxa_real` na tela, competência ainda fixa em
     setembro/2026 no código. Falta o corte por frente
 19. [ ] Exportar CSV no formato de `acompanhamento/registro/`
-20. [~] Admin: pessoas, frentes, competição sem frente e evento com entrega indefinida.
-    Ainda é leitura; falta editar e falta mostrar de que versão do mapa a importação veio
+20. [x] Admin: classificar competição sem frente e resolver entrega indefinida, ambos
+    editáveis (`/admin/eventos` é a gestão por evento: entrega + tarefas + responsáveis).
+    Falta mostrar de que versão do mapa a importação veio, e pessoas/frentes ainda é leitura
 
 **Pronta quando** a Bárbara fecha uma semana de Programas no app em vez do CSV, e os números
 batem com o que o script geraria.
