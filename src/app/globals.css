@@ -30,6 +30,7 @@
   --verde-borda: #235140;
   --ambar: #b8892d;
   --ambar-claro: #c9a45f;
+  --ambar-fundo: #1a1710;
   --rosa: #e05a7a;
   --vidro: rgb(18 22 28 / 0.72);
   --vidro-borda: rgb(255 255 255 / 0.09);
@@ -61,6 +62,7 @@
   --verde-borda: #b6dcc7;
   --ambar: #8a6414;
   --ambar-claro: #75530e;
+  --ambar-fundo: #fbf1de;
   --rosa: #b62c4b;
   --vidro: rgb(255 255 255 / 0.8);
   --vidro-borda: rgb(16 20 26 / 0.1);
@@ -90,6 +92,7 @@
   --color-verde-borda: var(--verde-borda);
   --color-ambar: var(--ambar);
   --color-ambar-claro: var(--ambar-claro);
+  --color-ambar-fundo: var(--ambar-fundo);
   --color-rosa: var(--rosa);
   --font-sans: Archivo, "Segoe UI", system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;

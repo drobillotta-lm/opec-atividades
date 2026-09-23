@@ -29,7 +29,9 @@ deploy vazio sobe na Vercel falando com o Supabase.
 9. [x] Retomar sessão ao reabrir a aba — a sessão vive no banco, a tela volta rodando
 10. [~] Ajuste manual de tempo com motivo: a ação existe e a entrega já grava a diferença
     como ajuste; falta a entrada avulsa na tela de tarefa
-11. [~] Entregar informando quem fez de verdade: pronto. **Exceção ainda não tem campo**
+11. [x] Entregar informando quem fez de verdade, e "atividade desnecessária" (exceção) —
+    o status `na` e os campos `excecao`/`excecao_desc` já existiam desde a `002`/`003`,
+    só faltava o botão
 12. [x] Buscar e ajudar tarefa de outra pessoa, por evento ou por nome (`022` abre a
     leitura); "puxar" e "fazer em conjunto" são o mesmo botão — iniciar uma sessão, que
     nunca checou dono da tarefa
@@ -57,9 +59,10 @@ perder nada.
 19. [~] Painel do mês: `v_mes_pessoa` e `v_taxa_real` na tela, competência ainda fixa em
     setembro/2026 no código. Falta o corte por frente
 20. [ ] Exportar CSV no formato de `acompanhamento/registro/`
-21. [x] Admin: classificar competição sem frente e resolver entrega indefinida, ambos
-    editáveis (`/admin/eventos` é a gestão por evento: entrega + tarefas + responsáveis).
-    Falta mostrar de que versão do mapa a importação veio, e pessoas/frentes ainda é leitura
+21. [x] Admin: classificar competição sem frente (ou criar frente nova na hora, `025`
+    tirou a sigla de lista fechada) e ver a entrega por evento (`/admin/eventos`) — a
+    decisão de "tem entrega?" virou leitura aqui, quem decide é o líder na Escala (23/09).
+    Falta mostrar de que versão do mapa a importação veio, e pessoas ainda é leitura
 22. [x] Quadro (`/kanban`): pendente / fazendo / feita, por frente que o líder lidera ou
     todas pro gestor — visão que nem `/frente` (tabela) nem `/painel` (números do mês) dão
 

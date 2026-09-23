@@ -116,18 +116,6 @@ export async function definirQuemFez(tarefaId: string, formData: FormData) {
   revalidatePath("/frente");
 }
 
-/** O lider ou o gestor diz se o evento tem entrega comercial. */
-export async function definirEntrega(eventoId: string, tem: boolean) {
-  const { supabase } = await eu();
-  const { error } = await supabase
-    .from("eventos")
-    .update({ entrega: tem, entrega_origem: "lider" })
-    .eq("id", eventoId);
-  if (error) throw new Error(error.message);
-  revalidatePath("/frente");
-  revalidatePath("/admin/eventos");
-}
-
 /** O gestor classifica uma competição nova, que chega sem frente até alguém decidir. */
 export async function classificarCompeticao(nome: string, formData: FormData) {
   const { supabase } = await eu();
@@ -137,4 +125,59 @@ export async function classificarCompeticao(nome: string, formData: FormData) {
   if (error) throw new Error(error.message);
   revalidatePath("/admin");
   revalidatePath("/admin/eventos");
+}
+
+/** Só um evento específico, não a competição inteira — o caso "esse é diferente dos outros". */
+export async function classificarEvento(eventoId: string, formData: FormData) {
+  const { supabase } = await eu();
+  const frenteId = String(formData.get("frente_id") || "");
+  if (!frenteId) return;
+  const { error } = await supabase.from("eventos").update({ frente_id: frenteId }).eq("id", eventoId);
+  if (error) throw new Error(error.message);
+  revalidatePath("/admin/eventos");
+}
+
+/** Competição nova que ainda não tem frente cadastrada — cria e já classifica de uma vez. */
+export async function criarFrenteEClassificar(nomeCompeticao: string, formData: FormData) {
+  const { supabase } = await eu();
+  const nome = String(formData.get("nome_frente") || "").trim();
+  const sigla = String(formData.get("sigla") || "").trim().toUpperCase();
+  const regime = String(formData.get("regime") || "rotacao_mensal");
+  if (!nome || !sigla) throw new Error("frente precisa de nome e sigla");
+
+  const { data: frente, error: erroFrente } = await supabase
+    .from("frentes").insert({ nome, sigla, regime }).select("id").single();
+  if (erroFrente) throw new Error(erroFrente.message);
+
+  const { error } = await supabase.from("competicoes").update({ frente_id: frente.id }).eq("nome", nomeCompeticao);
+  if (error) throw new Error(error.message);
+  revalidatePath("/admin");
+  revalidatePath("/admin/eventos");
+}
+
+/** Tarefa que não precisa acontecer (ex.: sem material novo para materiais/sincronização
+ * cobrirem) — deixa de contar sem virar "entregue", que seria mentir sobre o que aconteceu. */
+export async function marcarDesnecessaria(tarefaId: string, formData: FormData) {
+  const { supabase } = await eu();
+  const motivo = String(formData.get("motivo") || "").trim();
+  const { error } = await supabase
+    .from("tarefas")
+    .update({ status: "na", excecao: "desnecessaria", excecao_desc: motivo || null, concluida_em: new Date().toISOString() })
+    .eq("id", tarefaId);
+  if (error) throw new Error(error.message);
+  revalidatePath("/semana");
+  revalidatePath("/frente");
+  revalidatePath("/kanban");
+}
+
+export async function reverterDesnecessaria(tarefaId: string) {
+  const { supabase } = await eu();
+  const { error } = await supabase
+    .from("tarefas")
+    .update({ status: "pendente", excecao: null, excecao_desc: null, concluida_em: null })
+    .eq("id", tarefaId);
+  if (error) throw new Error(error.message);
+  revalidatePath("/semana");
+  revalidatePath("/frente");
+  revalidatePath("/kanban");
 }

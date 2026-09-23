@@ -139,3 +139,58 @@ export function DialogoEntrega({
     </>
   );
 }
+
+/** "Atividade desnecessária" — materiais/sincronização só fazem sentido se tiver
+ * material novo pra aquela competição; sem isso, nem o líder nem quem for fazer
+ * conseguem saber de antemão. Fica pra quem chegou na tarefa decidir, sem virar
+ * "entregue" mentindo sobre o que aconteceu. */
+export function DialogoDesnecessaria({
+  acao,
+  titulo,
+}: {
+  acao: (formData: FormData) => void | Promise<void>;
+  titulo: string;
+}) {
+  const ref = useRef<HTMLDialogElement>(null);
+
+  return (
+    <>
+      <button type="button" onClick={() => ref.current?.showModal()}
+        className="min-h-8 px-2.5 rounded-md border border-linha-2 bg-superficie-2 text-[11.5px] text-tinta-4 hover:text-tinta-2 transition">
+        não necessária
+      </button>
+
+      <dialog
+        ref={ref}
+        onClick={(e) => { if (e.target === ref.current) ref.current?.close(); }}
+        className="m-auto w-[min(420px,92vw)] rounded-xl bg-superficie text-tinta border border-linha p-0 backdrop:bg-black/60"
+      >
+        <form action={acao} className="flex flex-col gap-4 p-5">
+          <div className="flex flex-col gap-1">
+            <h2 className="text-[17px] font-semibold tracking-[-0.01em]">Marcar como não necessária</h2>
+            <p className="text-[13px] text-tinta-2">{titulo}</p>
+            <p className="text-[11.5px] text-tinta-4">
+              Sai da contagem de pendentes sem virar &quot;entregue&quot; — o sistema não vai cobrar tempo dela.
+            </p>
+          </div>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="motivo" className="text-[12.5px] font-medium text-tinta-2">
+              Por quê <span className="text-tinta-4 font-normal">(opcional)</span>
+            </label>
+            <textarea id="motivo" name="motivo" rows={2} placeholder="ex.: sem material novo pra essa competição"
+              className="px-3 py-2 rounded-lg border border-linha bg-superficie-2 text-[13px] resize-none" />
+          </div>
+          <div className="flex gap-2 justify-end pt-1">
+            <button type="button" onClick={() => ref.current?.close()}
+              className="min-h-10 px-4 rounded-lg border border-linha bg-superficie-2 text-[13px] text-tinta-3 hover:text-tinta-2">
+              Cancelar
+            </button>
+            <Submit ocupado="..." className="min-h-10 px-4 rounded-lg border border-linha bg-elevado text-[13px] font-semibold text-tinta-2 hover:bg-linha">
+              Confirmar
+            </Submit>
+          </div>
+        </form>
+      </dialog>
+    </>
+  );
+}

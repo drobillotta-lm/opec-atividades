@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { diaCurto, ROTULO_ATIVIDADE, ROTULO_STATUS } from "@/lib/semana";
-import { definirEntrega } from "../../acoes";
-import { Submit } from "../../semana/Cronometro";
+import { classificarCompeticao, classificarEvento, criarFrenteEClassificar } from "../../acoes";
+import { ClassificarEvento } from "./ClassificarEvento";
 
 export const dynamic = "force-dynamic";
+
+const ESCALA_ENTREGA_URL = "https://escala-opec.vercel.app/entrega.html";
 
 function somarDias(base: string, dias: number) {
   const d = new Date(base + "T00:00:00");
@@ -40,6 +42,8 @@ export default async function GestaoEventos() {
   const { data: pessoas } = await supabase.from("pessoas").select("id, nome");
   const nomePor = new Map((pessoas ?? []).map((p) => [p.id, p.nome]));
 
+  const { data: frentes } = await supabase.from("frentes").select("id, nome").eq("ativa", true).order("nome");
+
   const tarefasPorEvento = new Map<string, typeof tarefasBrutas>();
   (tarefasBrutas ?? []).forEach((t) => {
     const lista = tarefasPorEvento.get(t.evento_id) ?? [];
@@ -56,6 +60,12 @@ export default async function GestaoEventos() {
         <h1 className="text-[23px] font-semibold tracking-[-0.02em]">Gestão de eventos</h1>
         <p className="text-[12.5px] text-tinta-3">
           {diaCurto(de)} a {diaCurto(ate)} · {eventos.length} eventos · {pendentesDeDecisao} sem decisão de entrega
+        </p>
+        <p className="text-[11.5px] text-tinta-4">
+          Quem decide &quot;tem entrega?&quot; é o líder de frente, na Escala — aqui é só a visão.{" "}
+          <a href={ESCALA_ENTREGA_URL} target="_blank" rel="noreferrer" className="text-azul-claro hover:underline">
+            abrir a fila de entrega na Escala ↗
+          </a>
         </p>
       </header>
 
@@ -77,7 +87,7 @@ export default async function GestaoEventos() {
                     {diaCurto(e.data)} · {e.competicao} {e.frente ? `· ${e.frente.sigla}` : "· sem frente"}
                   </span>
                 </div>
-                <EntregaControle eventoId={e.id} entrega={e.entrega} origem={e.entrega_origem} />
+                <EntregaBadge entrega={e.entrega} origem={e.entrega_origem} />
               </div>
 
               {tarefas.length > 0 && (
@@ -86,13 +96,18 @@ export default async function GestaoEventos() {
                     const desvio = t.responsavel_real_id && t.responsavel_real_id !== t.escalado_id;
                     const cor = t.status === "entregue" ? "text-verde-claro border-verde-borda bg-verde-fundo"
                       : t.status === "fora_do_prazo" ? "text-rosa border-linha bg-superficie-2"
+                      : t.status === "na" ? "text-tinta-4 border-linha-2 bg-superficie-2 line-through decoration-tinta-4"
                       : "text-tinta-3 border-linha bg-superficie-2";
                     return (
                       <span key={t.id} className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[11px] ${cor}`}>
                         {ROTULO_ATIVIDADE[t.atividade] ?? t.atividade}
-                        <span className="text-tinta-4">·</span>
-                        {nomePor.get(desvio ? t.responsavel_real_id! : t.escalado_id) ?? "—"}
-                        {desvio && <span className="text-ambar-claro">(desvio)</span>}
+                        {t.status !== "na" && (
+                          <>
+                            <span className="text-tinta-4">·</span>
+                            {nomePor.get(desvio ? t.responsavel_real_id! : t.escalado_id) ?? "—"}
+                            {desvio && <span className="text-ambar-claro">(desvio)</span>}
+                          </>
+                        )}
                         <span className="text-tinta-4">· {ROTULO_STATUS[t.status] ?? t.status}</span>
                       </span>
                     );
@@ -105,6 +120,15 @@ export default async function GestaoEventos() {
                   Tem entrega mas nenhuma tarefa gerada — confira se a competição já tem frente e cadeia.
                 </p>
               )}
+
+              {!e.frente && (
+                <ClassificarEvento
+                  acaoClassificarCompeticao={classificarCompeticao.bind(null, e.competicao)}
+                  acaoClassificarEvento={classificarEvento.bind(null, e.id)}
+                  acaoCriarFrente={criarFrenteEClassificar.bind(null, e.competicao)}
+                  frentes={frentes ?? []}
+                />
+              )}
             </div>
           );
         })}
@@ -113,21 +137,12 @@ export default async function GestaoEventos() {
   );
 }
 
-function EntregaControle({ eventoId, entrega, origem }: { eventoId: string; entrega: boolean | null; origem: string | null }) {
+function EntregaBadge({ entrega, origem }: { entrega: boolean | null; origem: string | null }) {
   if (entrega === null) {
     return (
-      <div className="flex gap-1.5 shrink-0">
-        <form action={definirEntrega.bind(null, eventoId, true)}>
-          <Submit ocupado="..." className="min-h-8 px-2.5 rounded-md border border-linha bg-elevado text-[12px] text-tinta-2 hover:bg-linha">
-            tem entrega
-          </Submit>
-        </form>
-        <form action={definirEntrega.bind(null, eventoId, false)}>
-          <Submit ocupado="..." className="min-h-8 px-2.5 rounded-md border border-linha bg-superficie-2 text-[12px] text-tinta-4 hover:text-tinta-2">
-            sem entrega
-          </Submit>
-        </form>
-      </div>
+      <span className="shrink-0 rounded-md border border-linha bg-superficie-2 px-2.5 py-1 text-[11px] font-medium text-tinta-4">
+        sem decisão
+      </span>
     );
   }
   return (

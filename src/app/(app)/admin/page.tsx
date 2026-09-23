@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { criarClienteServidor } from "@/lib/supabase/server";
-import { classificarCompeticao } from "../acoes";
-import { Submit } from "../semana/Cronometro";
+import { classificarCompeticao, criarFrenteEClassificar } from "../acoes";
+import { ClassificarFrente } from "@/componentes/ClassificarFrente";
 
 export const dynamic = "force-dynamic";
 
@@ -35,15 +35,11 @@ export default async function Admin() {
                 <span className="truncate">{c.nome}</span>
                 <span className="text-tinta-4 text-[11px]">entrega padrão: {c.entrega_padrao}</span>
               </div>
-              <form action={classificarCompeticao.bind(null, c.nome)} className="flex gap-1.5 shrink-0">
-                <label htmlFor={`f-${c.nome}`} className="sr-only">Classificar {c.nome}</label>
-                <select id={`f-${c.nome}`} name="frente_id" defaultValue=""
-                  className="min-h-8 px-2 rounded-md border border-linha bg-superficie-2 text-[12px] text-tinta-2">
-                  <option value="" disabled>qual frente?</option>
-                  {frentesAtivas.map((f) => <option key={f.id} value={f.id}>{f.nome}</option>)}
-                </select>
-                <Submit ocupado="..." className="min-h-8 px-2.5 rounded-md border border-linha bg-elevado text-[12px] text-tinta-2">ok</Submit>
-              </form>
+              <ClassificarFrente
+                acaoClassificar={classificarCompeticao.bind(null, c.nome)}
+                acaoCriar={criarFrenteEClassificar.bind(null, c.nome)}
+                frentes={frentesAtivas}
+              />
             </div>
           ))}
         </Cartao>
@@ -54,7 +50,7 @@ export default async function Admin() {
           className="rounded-xl bg-superficie border border-linha p-5 flex items-center justify-between gap-3 hover:bg-elevado transition">
           <div className="flex flex-col gap-1">
             <h2 className="text-[11.5px] font-semibold uppercase tracking-[0.1em] text-tinta-3">Eventos esperando decisão de entrega</h2>
-            <span className="text-[12.5px] text-tinta-3">{indefinidos} eventos sem decisão — ver e resolver</span>
+            <span className="text-[12.5px] text-tinta-3">{indefinidos} eventos — a decisão é tomada na Escala, aqui é só a visão</span>
           </div>
           <span className="text-tinta-4">→</span>
         </Link>

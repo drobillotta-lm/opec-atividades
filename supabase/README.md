@@ -32,6 +32,8 @@ no projeto, em ordem. O modelo e as regras de acesso estão explicados em
 | `021_importar_da_escala.sql` | `status_origem` aceita `'Manual'` (evento criado direto na Escala); `aplicar_previsao_entrega()`, a previsão da `014` virada função |
 | `022_ajudar_tarefa_de_outra_pessoa.sql` | `le_tarefas` abre pra qualquer autenticado (buscar tarefa de outra pessoa); `escreve_tarefas` aceita quem tem sessão na tarefa, mesmo sem ser escalado |
 | `023_search_path_da_previsao_de_entrega.sql` | Fecha o `search_path` mutável de `aplicar_previsao_entrega`, apontado pelo verificador de segurança |
+| `024_evento_novo_herda_frente_da_competicao.sql` | Gatilho `before insert`: evento novo já nasce com a frente da competição, se ela já foi classificada — antes só propagava retroativo (013). Achado com o import da Escala: 233 dos 365 eventos ficaram sem frente por causa disso |
+| `025_sigla_de_frente_deixa_de_ser_lista_fechada.sql` | `frentes.sigla` era uma lista fechada (FI/OL/PR/CP/NA/KG) — vira formato (2 a 6 letras), pra dar pra criar frente pela tela |
 
 ## Regras
 
@@ -44,9 +46,19 @@ no projeto, em ordem. O modelo e as regras de acesso estão explicados em
 - Competição sem frente em `competicoes` não gera tarefa e aparece no Admin pedindo
   classificação. Nunca some em silêncio, que é o que o `gerar_semana.py` faz hoje.
 - `gerar_tarefas(inicio, fim)` é idempotente e roda só com a service role.
-- **Só evento com entrega comercial vira atividade.** Quem decide é o líder, na coluna
-  "tem entrega?" da planilha Escala OPEC. Enquanto ele não decide, o app prevê pelo
-  padrão da competição; competição sem padrão deixa o evento esperando.
+- **Só evento com entrega comercial vira atividade.** Desde 23/09, quem decide é o líder
+  de frente **na Escala** (`entrega.html` de lá, fila própria por líder) — este app só lê
+  `entrega`/`entrega_origem` depois que o import (`021`) sincroniza. Enquanto ninguém
+  decide, o app prevê pelo padrão da competição; competição sem padrão deixa o evento
+  esperando. `/admin/eventos` aqui é só visão, com link pra Escala.
+- **Frente pode ser exceção por evento, não só por competição.** `eventos.frente_id`
+  normalmente segue `competicoes.frente_id` (gatilho da `013`/`024`), mas dá pra
+  classificar só um evento diferente do padrão da competição (`classificarEvento`,
+  23/09) — cuidado: reclassificar a competição inteira depois **sobrescreve** essa
+  exceção (`013` não tem guarda pra isso; não implementado porque o caso é raro).
+- **"Atividade desnecessária" já era um status pronto (`na`), só faltava botão.**
+  `v_semana_frente` já contava `nao_aplicaveis` e `excecoes` desde a `002`/`003`. Usa
+  `status='na'` + `excecao='desnecessaria'` + `excecao_desc` livre (23/09).
 - **A semana de uma pessoa não é "os eventos desta semana".** Materiais e roteiro abrem
   antes do evento, auditoria vence depois. Então a semana mistura evento da semana
   passada e da semana que vem. Use `tarefas_da_semana(inicio, fim)`, nunca filtre por

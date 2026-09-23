@@ -1,15 +1,15 @@
 import Link from "next/link";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { semanaDe, deslocarSemana, rotuloSemana, diaCurto, hhmm, tempoLegivel, ROTULO_ATIVIDADE } from "@/lib/semana";
-import { Relogio, Submit, TempoParado, DialogoEntrega } from "./Cronometro";
-import { iniciar, pausar, entregar } from "../acoes";
+import { Relogio, Submit, TempoParado, DialogoEntrega, DialogoDesnecessaria } from "./Cronometro";
+import { iniciar, pausar, entregar, marcarDesnecessaria, reverterDesnecessaria } from "../acoes";
 import { AbrirDock } from "@/componentes/AbrirDock";
 import { AutoAtualiza } from "@/componentes/AutoAtualiza";
 
 export const dynamic = "force-dynamic";
 
 const CAMPOS_TAREFA = `id, atividade, status, estimativa_min, abre_em, prazo_em, concluida_em,
-             escalado_id, responsavel_real_id,
+             escalado_id, responsavel_real_id, excecao_desc,
              frentes ( sigla, nome ),
              eventos ( competicao, data, evento_id_origem )`;
 
@@ -127,6 +127,7 @@ export default async function MinhaSemana({
   const pausadas = paradas.filter((t) => t.segundos > 0);
   const pendentes = paradas.filter((t) => t.segundos <= 0);
   const entregues = comTempo.filter((t) => t.status === "entregue" || t.status === "fora_do_prazo");
+  const naoAplicaveis = comTempo.filter((t) => t.status === "na");
   const horasPrevistas = comTempo.reduce((s, t) => s + t.estimativa_min, 0);
   const segundosFeitos = comTempo.reduce((s, t) => s + t.segundos, 0);
   const agora = Date.now();
@@ -243,6 +244,10 @@ export default async function MinhaSemana({
                   rotuloBotao="Entregar"
                   classeBotao="min-h-[38px] px-3.5 rounded-[9px] bg-verde text-[#07120d] text-[12.5px] font-semibold hover:brightness-110 transition"
                 />
+                <DialogoDesnecessaria
+                  acao={marcarDesnecessaria.bind(null, t.id)}
+                  titulo={`${ROTULO_ATIVIDADE[t.atividade] ?? t.atividade} · ${t.frente?.nome}`}
+                />
               </div>
             </Linha>
           ))}
@@ -289,6 +294,10 @@ export default async function MinhaSemana({
                   rotuloBotao="Entregar"
                   classeBotao="min-h-[38px] px-3 rounded-[9px] border border-linha bg-superficie-2 text-[12.5px] text-tinta-3 hover:text-tinta-2 transition"
                 />
+                <DialogoDesnecessaria
+                  acao={marcarDesnecessaria.bind(null, t.id)}
+                  titulo={`${ROTULO_ATIVIDADE[t.atividade] ?? t.atividade} · ${t.frente?.nome}`}
+                />
               </div>
             </Linha>
           );
@@ -312,6 +321,31 @@ export default async function MinhaSemana({
                 <span className="text-[11.5px] text-tinta-4 truncate">{t.evento?.competicao}</span>
               </div>
               <TempoParado segundos={t.segundos} estimativaMin={t.estimativa_min} />
+            </Linha>
+          ))}
+        </Secao>
+      )}
+
+      {naoAplicaveis.length > 0 && (
+        <Secao titulo="Não aplicável" contagem={`${naoAplicaveis.length}`}>
+          {naoAplicaveis.map((t) => (
+            <Linha key={t.id} apagada>
+              <span className="inline-flex items-center gap-1.5 rounded-md bg-elevado border border-linha-2 px-2.5 py-1 text-[11px] font-medium text-tinta-4 shrink-0">
+                não necessária
+              </span>
+              <div className="flex-1 min-w-0 flex flex-col gap-1">
+                <span className="text-[13.5px] text-tinta-3 line-through decoration-tinta-4">
+                  {ROTULO_ATIVIDADE[t.atividade] ?? t.atividade} · {t.frente?.nome}
+                </span>
+                <span className="text-[11.5px] text-tinta-4 truncate">
+                  {t.evento?.competicao}{t.excecao_desc ? ` · ${t.excecao_desc}` : ""}
+                </span>
+              </div>
+              <form action={reverterDesnecessaria.bind(null, t.id)}>
+                <Submit ocupado="..." className="min-h-8 px-2.5 rounded-md border border-linha bg-superficie-2 text-[11.5px] text-tinta-3 hover:text-tinta-2 transition">
+                  desfazer
+                </Submit>
+              </form>
             </Linha>
           ))}
         </Secao>

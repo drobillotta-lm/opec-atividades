@@ -61,7 +61,9 @@ export default async function Kanban() {
 
   const pendente = comTempo.filter((t) => t.status === "pendente" && t.segundos <= 0 && t.rodando.length === 0);
   const fazendo = comTempo.filter((t) => t.status === "pendente" && (t.segundos > 0 || t.rodando.length > 0));
-  const feita = comTempo.filter((t) => t.status === "entregue" || t.status === "fora_do_prazo");
+  // "na" (nao necessaria) entra em Feita: resolvida, so que sem entrega — nao sobra
+  // pendurada em Pendente/Fazendo pra sempre.
+  const feita = comTempo.filter((t) => t.status === "entregue" || t.status === "fora_do_prazo" || t.status === "na");
 
   return (
     <div className="p-6 px-8 flex flex-col gap-5 max-w-[1280px]">
@@ -115,10 +117,11 @@ function Coluna({ titulo, cor, tarefas, nomePor }: { titulo: string; cor: string
         {tarefas.map((t) => {
           const desvio = t.responsavel_real_id && t.responsavel_real_id !== t.escalado_id;
           const quem = t.responsavel_real_id ?? t.escalado_id;
+          const naoNecessaria = t.status === "na";
           return (
-            <div key={t.id} className="rounded-[10px] bg-superficie border border-linha p-3 flex flex-col gap-1.5">
+            <div key={t.id} className={`rounded-[10px] bg-superficie border border-linha p-3 flex flex-col gap-1.5 ${naoNecessaria ? "opacity-60" : ""}`}>
               <div className="flex items-center justify-between gap-2">
-                <span className="text-[12.5px] font-medium">
+                <span className={`text-[12.5px] font-medium ${naoNecessaria ? "line-through decoration-tinta-4" : ""}`}>
                   {ROTULO_ATIVIDADE[t.atividade] ?? t.atividade}
                 </span>
                 <span className="text-[10.5px] text-tinta-4 shrink-0">{t.frente?.sigla}</span>
@@ -128,7 +131,7 @@ function Coluna({ titulo, cor, tarefas, nomePor }: { titulo: string; cor: string
               </span>
               <div className="flex items-center justify-between gap-2 pt-0.5">
                 <span className="text-[11.5px] text-tinta-3">
-                  {nomePor.get(quem) ?? "—"}{desvio ? " · desvio" : ""}
+                  {naoNecessaria ? "não necessária" : `${nomePor.get(quem) ?? "—"}${desvio ? " · desvio" : ""}`}
                 </span>
                 {t.rodando.length > 0 && (
                   <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-verde-claro truncate">
