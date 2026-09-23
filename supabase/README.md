@@ -28,6 +28,8 @@ no projeto, em ordem. O modelo e as regras de acesso estão explicados em
 | `017_gerar_tarefas_v4_com_janela.sql` | Geração recebe janela de trabalho, não janela de eventos |
 | `018_competicoes_novas_de_3_semanas.sql` | 9 competições que o mapeamento do dimensionamento não conhece |
 | `019_mais_tipos_de_evento.sql` | `[SEM NARRAÇÃO]` e `Pré Jogo` viram tipo próprio |
+| `020_tempo_em_segundos_sem_arredondar.sql` | `v_tempo_tarefa` guarda segundos; o minuto nunca é a fonte |
+| `021_importar_da_escala.sql` | `status_origem` aceita `'Manual'` (evento criado direto na Escala); `aplicar_previsao_entrega()`, a previsão da `014` virada função |
 
 ## Regras
 
@@ -56,7 +58,35 @@ no projeto, em ordem. O modelo e as regras de acesso estão explicados em
 - Nada que já tem tempo medido é apagado por mudança de regra. As limpezas das
   migrations 011 e 014 excluem tarefa com sessão ou ajuste.
 
-## Sincronizacao com o Airtable
+## Sincronização com a Escala (021, atual)
+
+Desde `021` o app não fala mais direto com o Airtable: a Escala (`opec-escala`) já ingere
+a Matriz de hora em hora, com a classificação de elegibilidade da seção 4 do doc 03 dela.
+Reimplementar essa leitura aqui só criaria duas fontes divergentes.
+
+`src/app/api/importar-escala/route.ts` roda 2x/dia (08h e 20h BRT, ver
+`.github/workflows/importar-escala.yml` — o Vercel Hobby só permite cron nativo 1x/dia,
+o GitHub Actions faz de relógio), chama `POST /api/agent/exportar` na Escala com um token
+próprio (`EXPORTAR_TOKEN` lá, `ESCALA_AGENTE_TOKEN` aqui — **não** o `AGENTE_TOKEN` que os
+workflows n8n usam, para não arriscar quebrar os dois mexendo num token só) e:
+
+- upserta `competicoes` (novas ficam sem frente, como sempre) e `eventos` por
+  `airtable_record_id`, reclassificando `tipo` pelo mesmo regex das migrations `011`/`019`
+  contra `jogo` (o texto que aqui vira `evento_id_origem`)
+- marca `entrega`/`entrega_origem='escala'` a partir de `tem_entrega`, **sem nunca
+  sobrescrever `entrega_origem='lider'`** — só uma decisão manual no Admin vence a Escala
+- roda `aplicar_previsao_entrega()` para quem ainda não tem nenhuma decisão
+- upserta `plantoes` dos 6 fixos (freela não entra — decisão de 21/09), mapeados **por
+  nome**: o e-mail diverge entre os apps (`breis@` na Escala, `barbara@` aqui). Duas
+  alocações no mesmo dia viram uma linha só (`unique(pessoa_id, data)`): é o mesmo turno,
+  não dobra a carga
+- chama `gerar_tarefas` na janela tocada
+
+## Sincronizacao com o Airtable (histórico, pré-021)
+
+A varredura direta abaixo foi usada manualmente até a `021`. Fica registrada porque a
+classificação de `tipo` e os campos do Airtable que ela documenta continuam sendo os
+mesmos que a Escala aplica antes de exportar — só o transporte mudou.
 
 Base `appwE9LmmTxynTGFY`, tabela `tblpibvwAIGBQXr0H` (Matriz de Eventos LiveMode),
 leitura apenas.

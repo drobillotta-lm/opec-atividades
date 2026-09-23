@@ -23,7 +23,8 @@ deploy vazio sobe na Vercel falando com o Supabase.
 5. [x] Importar o mapa aprovado de uma competência — setembro/2026, 18 linhas
 6. [x] Importar eventos e gerar as tarefas da semana — pela **janela** da atividade e só
    para evento com entrega comercial, não mais "evento + 48h" para todos
-7. [~] Minha semana: pendentes e entregues prontos; **plantão em leitura ainda não**
+7. [x] Minha semana: pendentes e entregues prontos; plantão em leitura, importado da
+   Escala 2x/dia (`021`, `src/app/api/importar-escala`)
 8. [x] Cronômetro: iniciar, pausar, entregar, trocar; uma sessão aberta por pessoa
 9. [x] Retomar sessão ao reabrir a aba — a sessão vive no banco, a tela volta rodando
 10. [~] Ajuste manual de tempo com motivo: a ação existe e a entrega já grava a diferença
@@ -69,7 +70,6 @@ ninguém cobrar, e o fechamento do app bate com o do script.
 
 ## Depois
 
-- Importar o plantão da Escala automaticamente
 - Devolver a taxa medida para o dimensionamento, como proposta de ajuste em `taxas.yaml`
 - Instalar como PWA no celular
 - Dock nativo em Tauri, se a janela do navegador não bastar

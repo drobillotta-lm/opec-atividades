@@ -1,0 +1,19 @@
+name: Importar da Escala
+
+# 08h e 20h BRT = 11h e 23h UTC (Brasil sem horario de verao hoje, opec-escala/docs/21-onde-paramos.md).
+# O Vercel Hobby so permite cron nativo 1x/dia; o GitHub Actions fica no papel de
+# relogio para as duas rodadas, chamando a rota que faz o trabalho de verdade.
+on:
+  schedule:
+    - cron: "0 11,23 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  importar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Chamar /api/importar-escala
+        run: |
+          curl -sf -X POST "https://opec-atividades.vercel.app/api/importar-escala" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "content-type: application/json"
