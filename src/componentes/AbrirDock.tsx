@@ -1,104 +1,45 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const L = 372, A = 188;
 
-type ApiPiP = {
-  requestWindow: (o: { width?: number; height?: number; disallowReturnToOpener?: boolean; preferInitialWindowPlacement?: boolean }) => Promise<Window>;
-  window: Window | null;
-};
-const api = () => (window as unknown as { documentPictureInPicture?: ApiPiP }).documentPictureInPicture;
-
 /**
- * Document Picture-in-Picture e a unica forma de uma pagina web ficar acima das
- * outras janelas. Chrome e Edge desde a 116, Firefox desde a 151, Safari nao tem.
+ * Janela comum (`window.open`), não Document Picture-in-Picture.
  *
- * A dor conhecida dessa API e a janela nascer sem estilo, porque voce precisa
- * clonar as folhas na mao. Aqui montamos um iframe apontando pra /dock: a rota
- * chega inteira e ja estilizada, e ainda busca os proprios dados.
+ * A PiP ficava sempre por cima de tudo, mas o navegador fecha ela junto com a
+ * aba que abriu — é regra da API, não dá pra evitar (o Daniel topou trocar
+ * isso por ficar aberta o dia inteiro independente da aba principal).
  *
- * Limites confirmados na especificacao: exige gesto do usuario e HTTPS, so uma
- * janela por vez, nao da pra posicionar por codigo, e ela fecha junto com a aba
- * de origem. Por isso o cronometro vive no banco, nunca so na tela.
+ * Sem iframe, sem mirror de tema: `/dock` é uma página normal, com o mesmo
+ * script anti-pisca do layout raiz — o tema já chega certo sozinho, e
+ * `BotaoTema` já ouve o evento `storage` de outra janela.
  */
 export function AbrirDock() {
-  const [suportado, setSuportado] = useState(false);
   const [aberto, setAberto] = useState(false);
-  const [erro, setErro] = useState<string | null>(null);
   const janelaRef = useRef<Window | null>(null);
+  const [erro, setErro] = useState<string | null>(null);
 
   useEffect(() => {
-    const disponivel = typeof window !== "undefined" && "documentPictureInPicture" in window;
-    setSuportado(disponivel);
-    if (disponivel) setAberto(Boolean(api()?.window));
+    const t = setInterval(() => {
+      if (janelaRef.current?.closed) { janelaRef.current = null; setAberto(false); }
+    }, 1000);
+    return () => clearInterval(t);
   }, []);
 
-  // A janela flutuante e outro documento: a troca de tema na aba nao chega la sozinha.
-  const espelharTema = useCallback((janela: Window) => {
-    const tema = document.documentElement.getAttribute("data-tema") ?? "escuro";
-    janela.document.documentElement.setAttribute("data-tema", tema);
-    const quadro = janela.document.querySelector("iframe");
-    quadro?.contentDocument?.documentElement.setAttribute("data-tema", tema);
-  }, []);
-
-  useEffect(() => {
-    if (!aberto) return;
-    const observador = new MutationObserver(() => {
-      if (janelaRef.current && !janelaRef.current.closed) espelharTema(janelaRef.current);
-    });
-    observador.observe(document.documentElement, { attributes: true, attributeFilter: ["data-tema"] });
-    return () => observador.disconnect();
-  }, [aberto, espelharTema]);
-
-  async function abrir() {
+  function abrir() {
     setErro(null);
-    const pip = api();
-    if (!pip) return;
-    if (pip.window) { pip.window.focus(); return; }
+    if (janelaRef.current && !janelaRef.current.closed) { janelaRef.current.focus(); return; }
 
-    try {
-      const janela = await pip.requestWindow({
-        width: L,
-        height: A,
-        disallowReturnToOpener: true,
-        preferInitialWindowPlacement: true,
-      });
-      janelaRef.current = janela;
-
-      const estilo = janela.document.createElement("style");
-      estilo.textContent =
-        "html,body{margin:0;padding:0;height:100%;background:transparent;overflow:hidden}" +
-        "iframe{border:0;width:100%;height:100%;display:block;color-scheme:normal}";
-      janela.document.head.append(estilo);
-
-      const quadro = janela.document.createElement("iframe");
-      quadro.src = "/dock";
-      quadro.title = "Dock de atividades";
-      quadro.addEventListener("load", () => espelharTema(janela));
-      janela.document.body.append(quadro);
-
-      espelharTema(janela);
-      setAberto(true);
-      janela.addEventListener("pagehide", () => { janelaRef.current = null; setAberto(false); });
-    } catch (e) {
-      const nome = (e as Error)?.name;
-      setErro(
-        nome === "NotAllowedError"
-          ? "O navegador pediu um clique direto. Tente de novo."
-          : "Não consegui abrir a janela flutuante.",
-      );
-    }
-  }
-
-  if (!suportado) {
-    return (
-      <a href="/dock" target="_blank" rel="noreferrer"
-        className="flex items-center gap-2 min-h-[38px] px-3 rounded-[9px] border border-linha bg-superficie text-[12.5px] text-tinta-2 hover:bg-elevado transition"
-        title="Seu navegador não tem janela flutuante; isto abre o dock numa aba">
-        <IconeDock /> Abrir dock
-      </a>
+    const esquerda = window.screen.width - L - 24;
+    const janela = window.open(
+      "/dock",
+      "opec-dock",
+      `width=${L},height=${A},left=${esquerda},top=24,menubar=no,toolbar=no,location=no,status=no,resizable=yes`,
     );
+    if (!janela) { setErro("O navegador bloqueou a janela. Permita pop-ups para continuar."); return; }
+    janelaRef.current = janela;
+    setAberto(true);
   }
 
   return (

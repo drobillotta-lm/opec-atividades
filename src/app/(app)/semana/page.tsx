@@ -4,6 +4,7 @@ import { semanaDe, deslocarSemana, rotuloSemana, diaCurto, hhmm, tempoLegivel, R
 import { Relogio, Submit, TempoParado, DialogoEntrega } from "./Cronometro";
 import { iniciar, pausar, entregar } from "../acoes";
 import { AbrirDock } from "@/componentes/AbrirDock";
+import { AutoAtualiza } from "@/componentes/AutoAtualiza";
 
 export const dynamic = "force-dynamic";
 
@@ -63,6 +64,7 @@ export default async function MinhaSemana({
 
   return (
     <div className="p-6 px-8 flex flex-col gap-5 max-w-[1080px]">
+      <AutoAtualiza segundos={30} />
       <header className="flex items-end justify-between gap-5">
         <div className="flex flex-col gap-1.5">
           <h1 className="text-[23px] font-semibold tracking-[-0.02em]">Minha semana</h1>

@@ -3,7 +3,12 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-/** O dock fica aberto o dia inteiro; sem isto ele congela no estado da abertura. */
+/**
+ * O dock e a aba principal são documentos separados: uma ação no dock (pausar,
+ * iniciar) não empurra nada pra aba já aberta, só invalida o cache do servidor.
+ * Sem isto, a aba fica mostrando o estado de quando carregou até alguém mexer
+ * nela de novo.
+ */
 export function AutoAtualiza({ segundos }: { segundos: number }) {
   const router = useRouter();
   useEffect(() => {

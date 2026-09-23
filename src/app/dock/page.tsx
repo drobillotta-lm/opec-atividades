@@ -3,7 +3,7 @@ import { hhmm, tempoLegivel, ROTULO_ATIVIDADE } from "@/lib/semana";
 import { iniciar, pausar } from "../(app)/acoes";
 import { Relogio, Submit } from "../(app)/semana/Cronometro";
 import { BotaoTema } from "@/componentes/Tema";
-import { AutoAtualiza } from "./AutoAtualiza";
+import { AutoAtualiza } from "@/componentes/AutoAtualiza";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -42,9 +42,14 @@ export default async function Dock() {
     correndo: porId.get(t.id)?.sessao_aberta_desde ?? null,
   }));
 
-  // Rodando vale sempre; parada só entra como sugestão se a janela já abriu.
+  // Rodando vale sempre. Sem nada rodando, sugere pelo mesmo criterio de
+  // "/semana": pausada (ja tem tempo, so retomar) antes de pendente nova, e so
+  // entre quem a janela ja abriu.
   const hoje = new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
-  const atual = com.find((t) => t.correndo) ?? com.find((t) => t.abre_em <= hoje);
+  const abertas = com.filter((t) => t.abre_em <= hoje);
+  const atual = com.find((t) => t.correndo)
+    ?? abertas.find((t) => t.segundos > 0)
+    ?? abertas[0];
   const pct = atual ? Math.min(100, (100 * atual.segundos) / (atual.estimativa_min * 60)) : 0;
 
   return (
