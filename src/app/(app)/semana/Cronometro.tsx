@@ -37,6 +37,8 @@ export function TempoParado({ segundos, estimativaMin }: { segundos: number; est
 
 type Pessoa = { id: string; nome: string };
 
+type Contribuinte = { nome: string; segundos: number };
+
 export function DialogoEntrega({
   acao,
   titulo,
@@ -45,6 +47,7 @@ export function DialogoEntrega({
   estimativaMin,
   escaladoId,
   time,
+  contribuintes,
   classeBotao,
   rotuloBotao,
 }: {
@@ -55,6 +58,7 @@ export function DialogoEntrega({
   estimativaMin: number;
   escaladoId: string;
   time: Pessoa[];
+  contribuintes?: Contribuinte[];
   classeBotao: string;
   rotuloBotao: string;
 }) {
@@ -78,6 +82,14 @@ export function DialogoEntrega({
             <p className="text-[13px] text-tinta-2">{titulo}</p>
             <p className="text-[11.5px] text-tinta-4">{subtitulo}</p>
           </div>
+
+          {contribuintes && contribuintes.length > 1 && (
+            <p className="text-[11.5px] text-tinta-3 rounded-lg bg-superficie-2 border border-linha px-3 py-2">
+              Mais de uma pessoa cronometrou esta tarefa: {contribuintes.map((c, i) => (
+                <span key={c.nome}>{i > 0 && ", "}<strong className="text-tinta-2 font-medium">{c.nome}</strong> ({tempoLegivel(c.segundos)})</span>
+              ))}. O comentário abaixo é o lugar de registrar quem fez o quê.
+            </p>
+          )}
 
           <div className="flex flex-col gap-2">
             <label htmlFor="minutos" className="text-[12.5px] font-medium text-tinta-2">Tempo gasto</label>

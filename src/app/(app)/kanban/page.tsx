@@ -42,14 +42,25 @@ export default async function Kanban() {
     : { data: [] as { tarefa_id: string; segundos_total: number; sessao_aberta_desde: string | null }[] };
   const porId = new Map((tempos ?? []).map((t) => [t.tarefa_id, t]));
 
+  // Quem exatamente está rodando agora — pode ser mais de uma pessoa na mesma tarefa.
+  const { data: sessoesAbertas } = ids.length
+    ? await supabase.from("sessoes").select("tarefa_id, pessoa_id").in("tarefa_id", ids).is("fim", null)
+    : { data: [] as { tarefa_id: string; pessoa_id: string }[] };
+  const rodandoPorTarefa = new Map<string, string[]>();
+  (sessoesAbertas ?? []).forEach((s) => {
+    const lista = rodandoPorTarefa.get(s.tarefa_id) ?? [];
+    lista.push(nomePor.get(s.pessoa_id) ?? "alguém");
+    rodandoPorTarefa.set(s.tarefa_id, lista);
+  });
+
   const comTempo = tarefas.map((t) => ({
     ...t,
     segundos: Number(porId.get(t.id)?.segundos_total ?? 0),
-    correndo: porId.get(t.id)?.sessao_aberta_desde ?? null,
+    rodando: rodandoPorTarefa.get(t.id) ?? [],
   }));
 
-  const pendente = comTempo.filter((t) => t.status === "pendente" && t.segundos <= 0 && !t.correndo);
-  const fazendo = comTempo.filter((t) => t.status === "pendente" && (t.segundos > 0 || t.correndo));
+  const pendente = comTempo.filter((t) => t.status === "pendente" && t.segundos <= 0 && t.rodando.length === 0);
+  const fazendo = comTempo.filter((t) => t.status === "pendente" && (t.segundos > 0 || t.rodando.length > 0));
   const feita = comTempo.filter((t) => t.status === "entregue" || t.status === "fora_do_prazo");
 
   return (
@@ -87,7 +98,7 @@ type Tarefa = {
   frente: { sigla: string } | null;
   evento: { competicao: string; data: string } | null;
   segundos: number;
-  correndo: string | null;
+  rodando: string[];
 };
 
 function Coluna({ titulo, cor, tarefas, nomePor }: { titulo: string; cor: string; tarefas: Tarefa[]; nomePor: Map<string, string> }) {
@@ -119,9 +130,9 @@ function Coluna({ titulo, cor, tarefas, nomePor }: { titulo: string; cor: string
                 <span className="text-[11.5px] text-tinta-3">
                   {nomePor.get(quem) ?? "—"}{desvio ? " · desvio" : ""}
                 </span>
-                {t.correndo && (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-verde-claro">
-                    <span className="w-1.5 h-1.5 rounded-full bg-verde" />rodando
+                {t.rodando.length > 0 && (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-verde-claro truncate">
+                    <span className="w-1.5 h-1.5 rounded-full bg-verde shrink-0" />{t.rodando.join(", ")}
                   </span>
                 )}
               </div>

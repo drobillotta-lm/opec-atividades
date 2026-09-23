@@ -60,10 +60,12 @@ Rotas: `/entrar`, `/fora-do-time`, `/semana`, `/frente`, `/kanban`, `/painel`, `
   toda chamada virava 307 pra `/entrar` antes do handler ver o `CRON_SECRET`.
 - **Minuto não pode ser a fonte do tempo.** Arredondar a soma das sessões fazia o relógio
   "voltar" ao pausar e retomar. Corrigido na `020`: a view guarda segundos.
-- **`v_tempo_tarefa.sessao_aberta_desde` é da tarefa, não da pessoa.** Duas pessoas na
-  mesma tarefa (`022`, ajudar em conjunto): se uma está rodando e a outra não, a tela da
-  segunda também mostra "Em andamento". Só vira ruído se as duas cronometrarem ao mesmo
-  tempo.
+- **`v_tempo_tarefa.sessao_aberta_desde` é da tarefa, não da pessoa.** Bateu na prática
+  no mesmo dia: o botão Pausar de uma pessoa mostrava "Em andamento" só porque outra
+  cronometrava a mesma tarefa. Corrigido: `/semana` e `/dock` agora buscam `sessoes`
+  direto e calculam "minha sessão aberta" à parte do total agregado (que continua certo,
+  soma todo mundo). `/kanban` é o único lugar que ainda quer o agregado — é visão de
+  gestor, "alguém está nisso" é a pergunta certa lá, e agora mostra o nome de quem.
 - **Cor de tema presa em hex cru vira caixa preta no tema claro.** `bg-[#13211b]` e
   companhia não mudavam com `data-tema`. Regra: cor que depende de tema é variável CSS
   (`--verde-fundo` etc.), nunca hex direto no className.

@@ -44,16 +44,25 @@ export default async function Dock() {
     frente: Array.isArray(t.frentes) ? t.frentes[0] : t.frentes,
     evento: Array.isArray(t.eventos) ? t.eventos[0] : t.eventos,
   }));
+  const ids = lista.map((t) => t.id);
 
-  const { data: tempos } = lista.length
-    ? await supabase.from("v_tempo_tarefa").select("*").in("tarefa_id", lista.map((t) => t.id))
+  const { data: tempos } = ids.length
+    ? await supabase.from("v_tempo_tarefa").select("*").in("tarefa_id", ids)
     : { data: [] as { tarefa_id: string; segundos_total: number; sessao_aberta_desde: string | null }[] };
+
+  // O relogio agregado e por tarefa, nao por pessoa: "correndo" pro botao (Pausar vs
+  // Retomar) tem que ser A MINHA sessao, senao o dock mostra rodando so porque outra
+  // pessoa esta cronometrando a mesma tarefa em conjunto.
+  const { data: minhasAbertas } = ids.length
+    ? await supabase.from("sessoes").select("tarefa_id, inicio").eq("pessoa_id", pessoa!.id).in("tarefa_id", ids).is("fim", null)
+    : { data: [] as { tarefa_id: string; inicio: string }[] };
+  const inicioPorTarefa = new Map((minhasAbertas ?? []).map((s) => [s.tarefa_id, s.inicio]));
 
   const porId = new Map((tempos ?? []).map((t) => [t.tarefa_id, t]));
   const com = lista.map((t) => ({
     ...t,
     segundos: Number(porId.get(t.id)?.segundos_total ?? 0),
-    correndo: porId.get(t.id)?.sessao_aberta_desde ?? null,
+    correndo: inicioPorTarefa.get(t.id) ?? null,
   }));
 
   // Rodando vale sempre. Sem nada rodando, sugere pelo mesmo criterio de

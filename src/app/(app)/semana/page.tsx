@@ -78,17 +78,49 @@ export default async function MinhaSemana({
     ? await supabase.from("v_tempo_tarefa").select("*").in("tarefa_id", ids)
     : { data: [] as { tarefa_id: string; segundos_total: number; sessao_aberta_desde: string | null }[] };
 
+  // O relogio agregado (v_tempo_tarefa) e por tarefa, nao por pessoa -- correto pro
+  // total (varias pessoas cronometram a mesma tarefa), errado pro botao: "Pausar" tem
+  // que fechar A MINHA sessao, nao mostrar rodando so porque outra pessoa esta nela.
+  const { data: sessoesDaTarefa } = ids.length
+    ? await supabase.from("sessoes").select("tarefa_id, pessoa_id, inicio, fim").in("tarefa_id", ids)
+    : { data: [] as { tarefa_id: string; pessoa_id: string; inicio: string; fim: string | null }[] };
+
   const { data: time } = await supabase
     .from("pessoas").select("id, nome").is("saida", null).order("nome");
+  const nomePor = new Map((time ?? []).map((p) => [p.id, p.nome]));
 
   const porId = new Map((tempos ?? []).map((t) => [t.tarefa_id, t]));
-  const comTempo = tarefas.map((t) => ({
-    ...t,
-    frente: Array.isArray(t.frentes) ? t.frentes[0] : t.frentes,
-    evento: Array.isArray(t.eventos) ? t.eventos[0] : t.eventos,
-    segundos: Number(porId.get(t.id)?.segundos_total ?? 0),
-    correndo: porId.get(t.id)?.sessao_aberta_desde ?? null,
-  }));
+  const sessoesPorTarefa = new Map<string, typeof sessoesDaTarefa>();
+  (sessoesDaTarefa ?? []).forEach((s) => {
+    const lista = sessoesPorTarefa.get(s.tarefa_id) ?? [];
+    lista.push(s);
+    sessoesPorTarefa.set(s.tarefa_id, lista);
+  });
+
+  const comTempo = tarefas.map((t) => {
+    const sessoes = sessoesPorTarefa.get(t.id) ?? [];
+    const minhaAberta = sessoes.find((s) => s.pessoa_id === pessoa!.id && !s.fim);
+    const outrosRodando = [...new Set(
+      sessoes.filter((s) => s.pessoa_id !== pessoa!.id && !s.fim).map((s) => nomePor.get(s.pessoa_id) ?? "alguém"),
+    )];
+    const contribuintes = [...new Set(sessoes.map((s) => s.pessoa_id))]
+      .map((id) => ({
+        nome: nomePor.get(id) ?? "—",
+        segundos: sessoes.filter((s) => s.pessoa_id === id)
+          .reduce((soma, s) => soma + (new Date(s.fim ?? Date.now()).getTime() - new Date(s.inicio).getTime()) / 1000, 0),
+      }))
+      .filter((c) => c.segundos > 0);
+
+    return {
+      ...t,
+      frente: Array.isArray(t.frentes) ? t.frentes[0] : t.frentes,
+      evento: Array.isArray(t.eventos) ? t.eventos[0] : t.eventos,
+      segundos: Number(porId.get(t.id)?.segundos_total ?? 0),
+      correndo: minhaAberta?.inicio ?? null,
+      outrosRodando,
+      contribuintes,
+    };
+  });
 
   const emCurso = comTempo.find((t) => t.correndo);
   const paradas = comTempo.filter((t) => t.status === "pendente" && !t.correndo);
@@ -98,8 +130,6 @@ export default async function MinhaSemana({
   const horasPrevistas = comTempo.reduce((s, t) => s + t.estimativa_min, 0);
   const segundosFeitos = comTempo.reduce((s, t) => s + t.segundos, 0);
   const agora = Date.now();
-
-  const nomePor = new Map((time ?? []).map((p) => [p.id, p.nome]));
   const idsExistentes = new Set(ids);
   const resultados = (resultadosBusca ?? [])
     .map((r) => ({
@@ -139,6 +169,11 @@ export default async function MinhaSemana({
             <span className="text-[12px] text-tinta-3 truncate">
               {emCurso.evento?.competicao} · evento {emCurso.evento && diaCurto(emCurso.evento.data)}
             </span>
+            {emCurso.outrosRodando.length > 0 && (
+              <span className="text-[11px] text-verde-claro truncate">
+                {emCurso.outrosRodando.join(", ")} também {emCurso.outrosRodando.length > 1 ? "estão" : "está"} nisso agora
+              </span>
+            )}
           </div>
           <div className="flex flex-col items-end">
             <Relogio desde={emCurso.correndo!} baseSeg={emCurso.segundos} />
@@ -158,6 +193,7 @@ export default async function MinhaSemana({
               estimativaMin={emCurso.estimativa_min}
               escaladoId={emCurso.escalado_id}
               time={time ?? []}
+              contribuintes={emCurso.contribuintes}
               rotuloBotao="Entregar"
               classeBotao="flex items-center gap-2 min-h-[42px] px-3.5 rounded-[9px] bg-verde text-[#07120d] text-[12.5px] font-semibold hover:brightness-110 transition"
             />
@@ -182,6 +218,11 @@ export default async function MinhaSemana({
                 <span className="text-[11.5px] text-tinta-3 truncate">
                   {t.evento?.competicao} · entrega até {diaCurto(t.prazo_em.slice(0, 10))}
                 </span>
+                {t.outrosRodando.length > 0 && (
+                  <span className="text-[11px] text-verde-claro truncate">
+                    {t.outrosRodando.join(", ")} também {t.outrosRodando.length > 1 ? "estão" : "está"} nisso agora
+                  </span>
+                )}
               </div>
               <TempoParado segundos={t.segundos} estimativaMin={t.estimativa_min} />
               <div className="flex gap-2 shrink-0">
@@ -198,6 +239,7 @@ export default async function MinhaSemana({
                   estimativaMin={t.estimativa_min}
                   escaladoId={t.escalado_id}
                   time={time ?? []}
+                  contribuintes={t.contribuintes}
                   rotuloBotao="Entregar"
                   classeBotao="min-h-[38px] px-3.5 rounded-[9px] bg-verde text-[#07120d] text-[12.5px] font-semibold hover:brightness-110 transition"
                 />
@@ -222,6 +264,11 @@ export default async function MinhaSemana({
                   {t.evento?.competicao} · evento {t.evento && diaCurto(t.evento.data)} ·{" "}
                   {atrasada ? "prazo venceu" : "entrega até"} {diaCurto(t.prazo_em.slice(0, 10))}
                 </span>
+                {t.outrosRodando.length > 0 && (
+                  <span className="text-[11px] text-verde-claro truncate">
+                    {t.outrosRodando.join(", ")} também {t.outrosRodando.length > 1 ? "estão" : "está"} nisso agora
+                  </span>
+                )}
               </div>
               <TempoParado segundos={t.segundos} estimativaMin={t.estimativa_min} />
               <div className="flex gap-2 shrink-0">
@@ -238,6 +285,7 @@ export default async function MinhaSemana({
                   estimativaMin={t.estimativa_min}
                   escaladoId={t.escalado_id}
                   time={time ?? []}
+                  contribuintes={t.contribuintes}
                   rotuloBotao="Entregar"
                   classeBotao="min-h-[38px] px-3 rounded-[9px] border border-linha bg-superficie-2 text-[12.5px] text-tinta-3 hover:text-tinta-2 transition"
                 />
