@@ -1,7 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLICAS = ["/entrar", "/auth", "/fora-do-time"];
+// /api/importar-escala se autentica sozinho por CRON_SECRET (chamada do GitHub
+// Actions, sem sessao/cookie nenhum) -- sem isto o middleware manda pra /entrar
+// antes do handler ver o header.
+const PUBLICAS = ["/entrar", "/auth", "/fora-do-time", "/api/importar-escala"];
 
 export async function middleware(req: NextRequest) {
   let res = NextResponse.next({ request: req });
