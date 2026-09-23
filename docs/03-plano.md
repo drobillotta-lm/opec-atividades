@@ -30,41 +30,48 @@ deploy vazio sobe na Vercel falando com o Supabase.
 10. [~] Ajuste manual de tempo com motivo: a ação existe e a entrega já grava a diferença
     como ajuste; falta a entrada avulsa na tela de tarefa
 11. [~] Entregar informando quem fez de verdade: pronto. **Exceção ainda não tem campo**
+12. [x] Buscar e ajudar tarefa de outra pessoa, por evento ou por nome (`022` abre a
+    leitura); "puxar" e "fazer em conjunto" são o mesmo botão — iniciar uma sessão, que
+    nunca checou dono da tarefa
 
 **Pronta quando** o Daniel passa dois dias reais registrando as tarefas de Nacional sem
 perder nada.
 
 ## Fase 2 — o dock
 
-12. [x] Janela Picture-in-Picture com a tarefa atual, barra contra a taxa, pausar e entregar
-13. [ ] Atalhos de teclado para mostrar e para pausar
-14. [ ] Posição lembrada entre sessões — a API de PiP não deixa posicionar por código;
-    o que dá é o atalho de desktop do `instalar.ps1`, que abre o dock em janela própria
+13. [x] Janela flutuante com a tarefa atual, barra contra a taxa, pausar e entregar.
+    Era Document Picture-in-Picture (sempre por cima); virou `window.open` comum em
+    23/09 porque a PiP fecha junto com a aba de origem — sem contorno, é regra da API
+14. [ ] Atalhos de teclado para mostrar e para pausar
+15. [ ] Posição lembrada entre sessões — agora dá pra passar `left`/`top` pro
+    `window.open`, só falta guardar a posição de quando a pessoa arrasta a janela
 
 **Pronta quando** dá para trabalhar um dia inteiro sem abrir o app inteiro.
 
 ## Fase 3 — liderar
 
-15. [x] Tela da frente: a semana inteira, escalado ao lado de quem fez. Gestor vê todas as
+16. [x] Tela da frente: a semana inteira, escalado ao lado de quem fez. Gestor vê todas as
     frentes, líder vê a sua
-16. [x] Preencher quem fez direto na linha, e marcar se o evento tem entrega
-17. [ ] Fechar a semana, com os mesmos números do `fechar_semana.py`
-18. [~] Painel do mês: `v_mes_pessoa` e `v_taxa_real` na tela, competência ainda fixa em
+17. [x] Preencher quem fez direto na linha, e marcar se o evento tem entrega
+18. [ ] Fechar a semana, com os mesmos números do `fechar_semana.py`
+19. [~] Painel do mês: `v_mes_pessoa` e `v_taxa_real` na tela, competência ainda fixa em
     setembro/2026 no código. Falta o corte por frente
-19. [ ] Exportar CSV no formato de `acompanhamento/registro/`
-20. [x] Admin: classificar competição sem frente e resolver entrega indefinida, ambos
+20. [ ] Exportar CSV no formato de `acompanhamento/registro/`
+21. [x] Admin: classificar competição sem frente e resolver entrega indefinida, ambos
     editáveis (`/admin/eventos` é a gestão por evento: entrega + tarefas + responsáveis).
     Falta mostrar de que versão do mapa a importação veio, e pessoas/frentes ainda é leitura
+22. [x] Quadro (`/kanban`): pendente / fazendo / feita, por frente que o líder lidera ou
+    todas pro gestor — visão que nem `/frente` (tabela) nem `/painel` (números do mês) dão
 
 **Pronta quando** a Bárbara fecha uma semana de Programas no app em vez do CSV, e os números
 batem com o que o script geraria.
 
 ## Fase 4 — piloto
 
-21. Entrar as 7 pessoas
-22. Página explicando o que o líder vê e o que ninguém vê
-23. Duas semanas de uso real
-24. Comparar o fechamento do app com o do script, semana a semana
+23. Entrar as 7 pessoas
+24. Página explicando o que o líder vê e o que ninguém vê
+25. Duas semanas de uso real
+26. Comparar o fechamento do app com o do script, semana a semana
 
 **Pronta quando** pelo menos 5 das 7 pessoas continuam registrando na segunda semana sem
 ninguém cobrar, e o fechamento do app bate com o do script.

@@ -14,17 +14,31 @@ export default async function Dock() {
   const { data: pessoa } = await supabase
     .from("pessoas").select("id, nome").eq("auth_user_id", user!.id).single();
 
+  const CAMPOS = `id, atividade, estimativa_min, prazo_em, abre_em,
+             escalado_id, responsavel_real_id,
+             frentes ( nome ), eventos ( competicao )`;
+
   // Sem filtro por abre_em: /semana deixa iniciar uma tarefa antes da janela abrir
   // (nada trava isso lá), e o dock precisa achar a sessao aberta mesmo assim -- e
   // era exatamente essa a tarefa que sumia daqui.
-  const { data: brutas } = await supabase
+  const { data: minhas } = await supabase
     .from("tarefas")
-    .select(`id, atividade, estimativa_min, prazo_em, abre_em,
-             frentes ( nome ), eventos ( competicao )`)
-    .eq("escalado_id", pessoa!.id)
+    .select(CAMPOS)
+    .or(`escalado_id.eq.${pessoa!.id},responsavel_real_id.eq.${pessoa!.id}`)
     .eq("status", "pendente")
     .order("prazo_em");
 
+  // Tarefa que a pessoa puxou pela busca em /semana: não é escalada nem
+  // responsável, só tem sessão. Sem isto, sumia do dock assim que fechava a aba.
+  const { data: sessoesMinhas } = await supabase.from("sessoes").select("tarefa_id").eq("pessoa_id", pessoa!.id);
+  const idsComSessao = [...new Set((sessoesMinhas ?? []).map((s) => s.tarefa_id))];
+  const idsJaTem = new Set((minhas ?? []).map((t) => t.id));
+  const idsAjudando = idsComSessao.filter((id) => !idsJaTem.has(id));
+  const { data: ajudando } = idsAjudando.length
+    ? await supabase.from("tarefas").select(CAMPOS).eq("status", "pendente").in("id", idsAjudando)
+    : { data: [] as typeof minhas };
+
+  const brutas = [...(minhas ?? []), ...(ajudando ?? [])];
   const lista = (brutas ?? []).map((t) => ({
     ...t,
     frente: Array.isArray(t.frentes) ? t.frentes[0] : t.frentes,

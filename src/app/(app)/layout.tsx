@@ -42,6 +42,7 @@ export default async function LayoutApp({ children }: { children: React.ReactNod
         <nav className="flex flex-col gap-0.5" aria-label="Navegação principal">
           <Item href="/semana" ativo>Minha semana</Item>
           {lider && <Item href="/frente">Minha frente</Item>}
+          {lider && <Item href="/kanban">Quadro</Item>}
           {lider && <Item href="/painel">Painel</Item>}
           {gestor && <Item href="/admin">Admin</Item>}
         </nav>

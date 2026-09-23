@@ -8,10 +8,36 @@ import { AutoAtualiza } from "@/componentes/AutoAtualiza";
 
 export const dynamic = "force-dynamic";
 
+const CAMPOS_TAREFA = `id, atividade, status, estimativa_min, abre_em, prazo_em, concluida_em,
+             escalado_id, responsavel_real_id,
+             frentes ( sigla, nome ),
+             eventos ( competicao, data, evento_id_origem )`;
+
+/** Acha tarefa de qualquer pessoa, pelo nome do jogo/competição ou pelo nome de quem
+ * está escalado — pra alguém puxar pra si ou ajudar em conjunto (022 liberou a leitura). */
+async function buscarTarefas(supabase: Awaited<ReturnType<typeof criarClienteServidor>>, termo: string) {
+  const { data: pessoasAchadas } = await supabase.from("pessoas").select("id").ilike("nome", `%${termo}%`);
+  const idsPessoas = (pessoasAchadas ?? []).map((p) => p.id);
+  const condicoes = [
+    idsPessoas.length ? `escalado_id.in.(${idsPessoas.join(",")})` : null,
+    `eventos.evento_id_origem.ilike.%${termo}%`,
+    `eventos.competicao.ilike.%${termo}%`,
+  ].filter(Boolean).join(",");
+
+  return supabase
+    .from("tarefas")
+    .select(`id, atividade, status, estimativa_min, prazo_em, escalado_id,
+             frentes ( sigla ), eventos!inner ( competicao, data, evento_id_origem )`)
+    .in("status", ["pendente", "fora_do_prazo"])
+    .or(condicoes)
+    .order("prazo_em")
+    .limit(25);
+}
+
 export default async function MinhaSemana({
   searchParams,
 }: {
-  searchParams: Promise<{ semana?: string }>;
+  searchParams: Promise<{ semana?: string; busca?: string }>;
 }) {
   const sp = await searchParams;
   const { inicio, fim } = sp.semana ? deslocarSemana(sp.semana, 0) : semanaDe();
@@ -23,19 +49,30 @@ export default async function MinhaSemana({
   const { data: pessoa } = await supabase
     .from("pessoas").select("id, nome").eq("auth_user_id", user!.id).single();
 
-  const { data: brutas } = await supabase
+  const { data: minhas } = await supabase
     .from("tarefas")
-    .select(`id, atividade, status, estimativa_min, abre_em, prazo_em, concluida_em,
-             escalado_id, responsavel_real_id,
-             frentes ( sigla, nome ),
-             eventos ( competicao, data, evento_id_origem )`)
+    .select(CAMPOS_TAREFA)
     .lte("abre_em", fim)
     .gte("prazo_em", `${inicio}T00:00:00Z`)
-    .eq("escalado_id", pessoa!.id)
+    .or(`escalado_id.eq.${pessoa!.id},responsavel_real_id.eq.${pessoa!.id}`)
     .order("prazo_em");
 
-  const tarefas = brutas ?? [];
+  // Quem ajuda a tarefa de outra pessoa (puxou pela busca) tem sessao mas nao e
+  // escalado nem responsavel -- sem isto ela nunca aparece de volta aqui.
+  const { data: sessoesMinhas } = await supabase.from("sessoes").select("tarefa_id").eq("pessoa_id", pessoa!.id);
+  const idsComSessao = [...new Set((sessoesMinhas ?? []).map((s) => s.tarefa_id))];
+  const idsJaTem = new Set((minhas ?? []).map((t) => t.id));
+  const idsAjudando = idsComSessao.filter((id) => !idsJaTem.has(id));
+  const { data: ajudando } = idsAjudando.length
+    ? await supabase.from("tarefas").select(CAMPOS_TAREFA)
+        .lte("abre_em", fim).gte("prazo_em", `${inicio}T00:00:00Z`).in("id", idsAjudando)
+    : { data: [] as typeof minhas };
+
+  const tarefas = [...(minhas ?? []), ...(ajudando ?? [])];
   const ids = tarefas.map((t) => t.id);
+
+  const termo = sp.busca?.trim().replace(/[,()]/g, "");
+  const { data: resultadosBusca } = termo ? await buscarTarefas(supabase, termo) : { data: [] };
 
   const { data: tempos } = ids.length
     ? await supabase.from("v_tempo_tarefa").select("*").in("tarefa_id", ids)
@@ -61,6 +98,16 @@ export default async function MinhaSemana({
   const horasPrevistas = comTempo.reduce((s, t) => s + t.estimativa_min, 0);
   const segundosFeitos = comTempo.reduce((s, t) => s + t.segundos, 0);
   const agora = Date.now();
+
+  const nomePor = new Map((time ?? []).map((p) => [p.id, p.nome]));
+  const idsExistentes = new Set(ids);
+  const resultados = (resultadosBusca ?? [])
+    .map((r) => ({
+      ...r,
+      frente: Array.isArray(r.frentes) ? r.frentes[0] : r.frentes,
+      evento: Array.isArray(r.eventos) ? r.eventos[0] : r.eventos,
+    }))
+    .filter((r) => !idsExistentes.has(r.id));
 
   return (
     <div className="p-6 px-8 flex flex-col gap-5 max-w-[1080px]">
@@ -221,6 +268,42 @@ export default async function MinhaSemana({
           ))}
         </Secao>
       )}
+
+      <section className="flex flex-col gap-2 pt-2">
+        <h2 className="text-[11.5px] font-semibold uppercase tracking-[0.1em] text-tinta-3">Ajudar alguém</h2>
+        <form method="GET" className="flex gap-2">
+          {sp.semana && <input type="hidden" name="semana" value={sp.semana} />}
+          <input
+            type="text" name="busca" defaultValue={sp.busca ?? ""} placeholder="nome do jogo, da competição ou de alguém do time"
+            className="flex-1 min-h-9 px-3 rounded-[9px] border border-linha bg-superficie text-[12.5px]"
+          />
+          <button type="submit" className="min-h-9 px-3.5 rounded-[9px] border border-linha bg-elevado text-[12.5px] font-medium hover:bg-linha transition">
+            Buscar
+          </button>
+        </form>
+
+        {termo && resultados.length === 0 && (
+          <Vazio>Nada pendente com &quot;{termo}&quot; no jogo, na competição ou no nome de quem está escalado.</Vazio>
+        )}
+
+        {resultados.map((t) => (
+          <Linha key={t.id}>
+            <div className="flex-1 min-w-0 flex flex-col gap-1">
+              <span className="text-[13.5px] font-medium">
+                {ROTULO_ATIVIDADE[t.atividade] ?? t.atividade} · {t.frente?.sigla}
+              </span>
+              <span className="text-[11.5px] text-tinta-3 truncate">
+                {t.evento?.competicao} · evento {t.evento && diaCurto(t.evento.data)} · escalado: {nomePor.get(t.escalado_id) ?? "—"}
+              </span>
+            </div>
+            <form action={iniciar.bind(null, t.id)} className="shrink-0">
+              <Submit ocupado="..." className="flex items-center gap-2 min-h-[38px] px-3.5 rounded-[9px] border border-azul-borda bg-azul-fundo text-azul-claro text-[12.5px] font-medium hover:brightness-125 transition">
+                Puxar pra mim
+              </Submit>
+            </form>
+          </Linha>
+        ))}
+      </section>
     </div>
   );
 }

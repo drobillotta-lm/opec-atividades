@@ -30,6 +30,8 @@ no projeto, em ordem. O modelo e as regras de acesso estão explicados em
 | `019_mais_tipos_de_evento.sql` | `[SEM NARRAÇÃO]` e `Pré Jogo` viram tipo próprio |
 | `020_tempo_em_segundos_sem_arredondar.sql` | `v_tempo_tarefa` guarda segundos; o minuto nunca é a fonte |
 | `021_importar_da_escala.sql` | `status_origem` aceita `'Manual'` (evento criado direto na Escala); `aplicar_previsao_entrega()`, a previsão da `014` virada função |
+| `022_ajudar_tarefa_de_outra_pessoa.sql` | `le_tarefas` abre pra qualquer autenticado (buscar tarefa de outra pessoa); `escreve_tarefas` aceita quem tem sessão na tarefa, mesmo sem ser escalado |
+| `023_search_path_da_previsao_de_entrega.sql` | Fecha o `search_path` mutável de `aplicar_previsao_entrega`, apontado pelo verificador de segurança |
 
 ## Regras
 
@@ -57,6 +59,15 @@ no projeto, em ordem. O modelo e as regras de acesso estão explicados em
   O app conta a partir de 21/09. Eventos anteriores só entram se alguma janela alcançar.
 - Nada que já tem tempo medido é apagado por mudança de regra. As limpezas das
   migrations 011 e 014 excluem tarefa com sessão ou ajuste.
+- **`sessoes` nunca checou dono da tarefa** (`minhas_sessoes` só exige `pessoa_id = eu`,
+  desde a `003`) — ajudar em conjunto (`022`) não precisou mexer em `sessoes`, só em
+  `tarefas` (ler a de outra pessoa pra achar, escrever nela depois de ter sessão lá).
+- **`v_tempo_tarefa.sessao_aberta_desde` é da tarefa, não da pessoa** (`min(inicio) where
+  fim is null`, entre todas as sessões). Duas pessoas na mesma tarefa: se uma está
+  rodando e a outra não, a tela da segunda ainda mostra "Em andamento" — o total de
+  segundos é por tarefa de propósito, mas o rótulo de "quem está rodando agora" não
+  distingue. Vira ruído só se as duas cronometrarem ao mesmo tempo; separado no tempo,
+  não aparece.
 
 ## Sincronização com a Escala (021, atual)
 

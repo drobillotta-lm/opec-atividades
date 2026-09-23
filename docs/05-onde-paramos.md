@@ -1,41 +1,23 @@
 # Onde paramos — 23/09/2026
 
-Uma madrugada de trabalho, da fundação ao app no ar (21/09). Em 23/09, o plantão deixou de
-ser uma tabela vazia: entra pela Escala, 2x/dia. Este arquivo é o ponto de retomada.
+Uma madrugada de trabalho, da fundação ao app no ar (21/09). Em 23/09, o app ganhou uma
+sessão inteira de uso real: import da Escala ligado e testado ponta a ponta, três bugs
+achados testando (login, dock, tema) já corrigidos, Admin escreve de verdade, e duas
+funcionalidades novas (ajudar tarefa de outra pessoa, quadro kanban). Este arquivo é o
+ponto de retomada.
 
 ## O que está no ar
 
 | Coisa | Onde | Estado |
 |---|---|---|
 | App | https://opec-atividades.vercel.app | no ar, login funcionando |
-| Banco | Supabase `igzrrsqmweuritiqrmrh`, sa-east-1 | 21 migrations aplicadas |
-| Login | Google restrito a `@livemode.com` | 1 conta ligada (a do Daniel) |
-| Mockup | https://claude.ai/artifact/8xPnpgKwETbJKPFzdzfCFR | 7 artboards, referência visual |
-| Importação da Escala | `/api/importar-escala`, 2x/dia via GitHub Actions | **código pronto, falta ligar** — ver "23/09" abaixo |
+| Banco | Supabase `igzrrsqmweuritiqrmrh`, sa-east-1 | 23 migrations aplicadas |
+| Login | Google restrito a `@livemode.com` | funcionando (Site URL da Supabase corrigida em 23/09) |
+| Importação da Escala | `/api/importar-escala`, 2x/dia via GitHub Actions | **ligada e testada** — rodou de verdade, 362 eventos + 1 plantão gravados |
+| Mockup | https://claude.ai/artifact/8xPnpgKwETbJKPFzdzfCFR | 7 artboards, referência visual desatualizada (não tem busca nem quadro) |
 
-Rotas: `/entrar`, `/fora-do-time`, `/semana`, `/frente`, `/painel`, `/admin`, `/dock`.
-
-## 23/09 — importação da Escala, pronta e ainda não ligada
-
-`021` + `src/app/api/importar-escala` + `.github/workflows/importar-escala.yml`
-(detalhes em `supabase/README.md`). Três passos manuais **do Daniel** faltam antes de rodar:
-
-1. **`SUPABASE_SERVICE_ROLE_KEY` na Vercel do Atividades.** É a primeira vez que este app
-   escreve pelo servidor — não existia ainda. Pegar em Supabase → `opec-atividades` →
-   Settings → API → `service_role`, e rodar `vercel env add SUPABASE_SERVICE_ROLE_KEY
-   production` (escopo `drobillotta-2740`) de dentro do repo.
-2. **`CRON_SECRET` como secret do GitHub Actions** (repo `drobillotta-lm/opec-atividades`,
-   Settings → Secrets and variables → Actions). O valor já foi gerado e já está na Vercel;
-   falta só colar o mesmo valor lá — combinar comigo no chat, porque não há `gh` CLI
-   disponível nesta máquina para automatizar.
-3. **Deploy dos dois apps.** A Escala não está ligada ao Git (`npx vercel deploy --prod
-   --yes` de dentro de `app/`); o Atividades também precisa subir com a rota nova.
-
-**E, independente disso, não tem nada para importar ainda.** Todas as alocações
-confirmadas de fixo na Escala são de 13–20/09 — antes do piso de 21/09 que o Atividades
-conta. A rodada 22–28/09 tem escolhas pendentes em `/rodada.html` que o Daniel ainda não
-aprovou (ver a memória do projeto `opec-escala`). A importação vai rodar e devolver zero
-plantões até isso ser aprovado — não é bug.
+Rotas: `/entrar`, `/fora-do-time`, `/semana`, `/frente`, `/kanban`, `/painel`, `/admin`,
+`/admin/eventos`, `/dock`.
 
 ## O que o banco tem hoje
 
@@ -44,14 +26,12 @@ plantões até isso ser aprovado — não é bug.
 | pessoas | 9 (7 fixas mais gestores) |
 | frentes | 6 |
 | mapa | 18 (setembro/2026) |
-| competições | 46, sendo **2 ainda sem frente** |
-| taxas | 7 |
-| cadeia | 22 |
-| eventos | 28, sendo **6 com entrega indefinida** |
-| tarefas | 43, 2 entregues |
-| sessões | 18 |
+| competições | 52, sendo **8 ainda sem frente** — classificar em `/admin` |
+| eventos | 365, sendo **88 com entrega indefinida** — resolver em `/admin/eventos` |
+| tarefas | 53 (2 entregues) |
+| sessões | 27 |
 | ajustes de tempo | 1 |
-| plantões | 0 — importação pronta (23/09), falta ligar e falta a Escala ter algo confirmado no piso |
+| plantões | 1 (Lucas, 29/09) — cresce conforme a Escala aprovar rodadas |
 
 ## O que falta, em ordem
 
@@ -62,18 +42,35 @@ plantões até isso ser aprovado — não é bug.
 3. **Fechar a semana** reproduzindo os números do `fechar_semana.py`, e exportar o CSV no
    formato de `acompanhamento/registro/`. É o que tira a Bárbara do CSV.
 4. **Painel sem competência fixa.** Hoje setembro/2026 está escrito no código.
-5. **Admin: só pessoas e frentes continuam só leitura.** Classificar competição e resolver
-   entrega já escrevem de verdade (`/admin/eventos`, 23/09) — Daniel e Yuri, os dois gestores.
+5. **Admin: só pessoas e frentes continuam só leitura.**
+6. **A competição duplicada por aspas escapadas.** `Programa "Quem Fez, Fez!" 2026`
+   (classificada) e `"Programa ""Quem Fez, Fez!"" 2026"` (a mesma, vinda da Escala com
+   aspas duplicadas, sem frente) são a mesma competição em duas linhas. Mesclar em
+   `/admin` e, se voltar a acontecer, olhar a origem no lado da Escala.
 
 ## Armadilhas que já custaram tempo
 
 - **O `?code` do OAuth cai em qualquer caminho.** Quando a `redirectTo` não está na lista de
   Redirect URLs, o Supabase joga a pessoa no Site URL com o `code` na query. O middleware
   desvia para `/auth/callback` antes de qualquer checagem de sessão, senão o code se perde.
+  **Mordeu de verdade em 23/09**: o Site URL da Supabase ainda apontava pra
+  `localhost:3000` — corrigido em Authentication → URL Configuration.
+- **O middleware de sessão engole rota que se autentica sozinha.** `/api/importar-escala`
+  não tem cookie nenhum (é o GitHub Actions chamando direto); sem exceção no middleware,
+  toda chamada virava 307 pra `/entrar` antes do handler ver o `CRON_SECRET`.
 - **Minuto não pode ser a fonte do tempo.** Arredondar a soma das sessões fazia o relógio
   "voltar" ao pausar e retomar. Corrigido na `020`: a view guarda segundos.
-- **A janela do dock é outro documento.** Trocar o tema na aba não chega lá sozinho; existe
-  um observador que espelha. Vale para qualquer coisa nova que dependa do `data-tema`.
+- **`v_tempo_tarefa.sessao_aberta_desde` é da tarefa, não da pessoa.** Duas pessoas na
+  mesma tarefa (`022`, ajudar em conjunto): se uma está rodando e a outra não, a tela da
+  segunda também mostra "Em andamento". Só vira ruído se as duas cronometrarem ao mesmo
+  tempo.
+- **Cor de tema presa em hex cru vira caixa preta no tema claro.** `bg-[#13211b]` e
+  companhia não mudavam com `data-tema`. Regra: cor que depende de tema é variável CSS
+  (`--verde-fundo` etc.), nunca hex direto no className.
+- **Document Picture-in-Picture fecha junto com a aba que abriu — é regra da API, sem
+  contorno.** Trocado por `window.open` comum em 23/09: fica aberto o dia todo, perde o
+  "sempre por cima" automático. Sem iframe nem mirror de tema mais — `/dock` é uma página
+  igual a qualquer outra, o script anti-pisca do layout resolve sozinho.
 - **`gerar_tarefas` foi reescrita quatro vezes** (`008`, `012`, `015`, `017`). Se mexer nela,
   a versão viva é a v4: só evento `normal` com `entrega = true`, janela pela `cadeia`.
 - **Semana não é "os eventos da semana".** É a tarefa cuja janela cruza a semana. Usar
@@ -93,6 +90,9 @@ plantões até isso ser aprovado — não é bug.
   por script. Por isso a exportação da Escala usa um token próprio (`EXPORTAR_TOKEN`,
   distinto do `AGENTE_TOKEN`) — também protege os 3 workflows do n8n de um token trocado
   por engano.
+- **`sessoes` nunca checou dono da tarefa** — `minhas_sessoes` (RLS) só exige
+  `pessoa_id = eu` desde a `003`. Ajudar tarefa de outra pessoa (`022`) só precisou abrir
+  a leitura de `tarefas`, não mexer em `sessoes`.
 
 ## Combinado com o Daniel
 
