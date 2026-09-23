@@ -14,14 +14,15 @@ export default async function Dock() {
   const { data: pessoa } = await supabase
     .from("pessoas").select("id, nome").eq("auth_user_id", user!.id).single();
 
-  const hoje = new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+  // Sem filtro por abre_em: /semana deixa iniciar uma tarefa antes da janela abrir
+  // (nada trava isso lá), e o dock precisa achar a sessao aberta mesmo assim -- e
+  // era exatamente essa a tarefa que sumia daqui.
   const { data: brutas } = await supabase
     .from("tarefas")
-    .select(`id, atividade, estimativa_min, prazo_em,
+    .select(`id, atividade, estimativa_min, prazo_em, abre_em,
              frentes ( nome ), eventos ( competicao )`)
     .eq("escalado_id", pessoa!.id)
     .eq("status", "pendente")
-    .lte("abre_em", hoje)
     .order("prazo_em");
 
   const lista = (brutas ?? []).map((t) => ({
@@ -41,7 +42,9 @@ export default async function Dock() {
     correndo: porId.get(t.id)?.sessao_aberta_desde ?? null,
   }));
 
-  const atual = com.find((t) => t.correndo) ?? com[0];
+  // Rodando vale sempre; parada só entra como sugestão se a janela já abriu.
+  const hoje = new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+  const atual = com.find((t) => t.correndo) ?? com.find((t) => t.abre_em <= hoje);
   const pct = atual ? Math.min(100, (100 * atual.segundos) / (atual.estimativa_min * 60)) : 0;
 
   return (

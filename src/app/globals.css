@@ -26,6 +26,8 @@
   --azul-borda: #27486e;
   --verde: #28ab72;
   --verde-claro: #6fcca2;
+  --verde-fundo: #13211b;
+  --verde-borda: #235140;
   --ambar: #b8892d;
   --ambar-claro: #c9a45f;
   --rosa: #e05a7a;
@@ -55,6 +57,8 @@
   --azul-borda: #b5d2f5;
   --verde: #0f7a4d;
   --verde-claro: #0a6440;
+  --verde-fundo: #e5f3ec;
+  --verde-borda: #b6dcc7;
   --ambar: #8a6414;
   --ambar-claro: #75530e;
   --rosa: #b62c4b;
@@ -82,6 +86,8 @@
   --color-azul-borda: var(--azul-borda);
   --color-verde: var(--verde);
   --color-verde-claro: var(--verde-claro);
+  --color-verde-fundo: var(--verde-fundo);
+  --color-verde-borda: var(--verde-borda);
   --color-ambar: var(--ambar);
   --color-ambar-claro: var(--ambar-claro);
   --color-rosa: var(--rosa);

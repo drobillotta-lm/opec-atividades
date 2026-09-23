@@ -79,7 +79,7 @@ export default async function MinhaSemana({
       </header>
 
       {emCurso && (
-        <div className="flex items-center gap-5 rounded-xl bg-[#13211b] border border-[#235140] px-5 py-4">
+        <div className="flex items-center gap-5 rounded-xl bg-verde-fundo border border-verde-borda px-5 py-4">
           <div className="flex flex-col gap-1.5 flex-1 min-w-0">
             <span className="inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.11em] text-verde-claro">
               <span className="w-[7px] h-[7px] rounded-full bg-verde" />Em andamento
@@ -97,7 +97,7 @@ export default async function MinhaSemana({
           </div>
           <div className="flex gap-2">
             <form action={pausar}>
-              <Submit ocupado="..." className="flex items-center gap-2 min-h-[42px] px-3.5 rounded-[9px] border border-[#3b4552] bg-elevado text-[12.5px] font-medium hover:bg-linha transition">
+              <Submit ocupado="..." className="flex items-center gap-2 min-h-[42px] px-3.5 rounded-[9px] border border-linha bg-elevado text-[12.5px] font-medium hover:bg-linha transition">
                 Pausar
               </Submit>
             </form>
@@ -120,7 +120,7 @@ export default async function MinhaSemana({
         <Secao titulo="Pausadas" contagem={`${pausadas.length} · ${tempoLegivel(pausadas.reduce((s, t) => s + t.segundos, 0))} ja contados`}>
           {pausadas.map((t) => (
             <Linha key={t.id} pausada>
-              <span className="inline-flex items-center gap-1.5 rounded-md bg-elevado border border-[#3b4552] px-2.5 py-1 text-[11px] font-medium text-tinta-2 shrink-0">
+              <span className="inline-flex items-center gap-1.5 rounded-md bg-elevado border border-linha px-2.5 py-1 text-[11px] font-medium text-tinta-2 shrink-0">
                 <svg width="10" height="10" viewBox="0 0 13 13" fill="none" stroke="#C9A45F" strokeWidth="2" strokeLinecap="round" aria-hidden>
                   <path d="M4.6 3v7M8.4 3v7" />
                 </svg>
@@ -177,7 +177,7 @@ export default async function MinhaSemana({
               <TempoParado segundos={t.segundos} estimativaMin={t.estimativa_min} />
               <div className="flex gap-2 shrink-0">
                 <form action={iniciar.bind(null, t.id)}>
-                  <Submit ocupado="..." className="flex items-center gap-2 min-h-[38px] px-3.5 rounded-[9px] border border-[#3b4552] bg-elevado text-[12.5px] font-medium hover:bg-linha transition">
+                  <Submit ocupado="..." className="flex items-center gap-2 min-h-[38px] px-3.5 rounded-[9px] border border-linha bg-elevado text-[12.5px] font-medium hover:bg-linha transition">
                     Iniciar
                   </Submit>
                 </form>
@@ -247,7 +247,7 @@ function Secao({ titulo, contagem, children }: { titulo: string; contagem: strin
 function Linha({ children, destaque, apagada, pausada }: { children: React.ReactNode; destaque?: boolean; apagada?: boolean; pausada?: boolean }) {
   return (
     <div className={`flex items-center gap-3.5 rounded-[10px] px-4 py-3 border ${
-      pausada ? "bg-[#161d26] border-[#2f3a48]" : destaque ? "bg-superficie border-[#3a3226]" : apagada ? "bg-superficie-2 border-linha-2" : "bg-superficie border-linha"
+      pausada ? "bg-elevado border-linha" : destaque ? "bg-superficie border-ambar" : apagada ? "bg-superficie-2 border-linha-2" : "bg-superficie border-linha"
     }`}>
       {children}
     </div>
