@@ -1,4 +1,7 @@
+import Link from "next/link";
 import { criarClienteServidor } from "@/lib/supabase/server";
+import { classificarCompeticao } from "../acoes";
+import { Submit } from "../semana/Cronometro";
 
 export const dynamic = "force-dynamic";
 
@@ -7,14 +10,15 @@ export default async function Admin() {
   const { data: pessoas } = await supabase
     .from("pessoas").select("id, nome, nivel, h_dia, papel, saida, restrito_a").order("saida", { nullsFirst: true }).order("nome");
   const { data: frentes } = await supabase
-    .from("frentes").select("sigla, nome, regime, ativa, lider_id").order("sigla");
+    .from("frentes").select("id, sigla, nome, regime, ativa, lider_id").order("sigla");
   const { data: semFrente } = await supabase
     .from("competicoes").select("nome, entrega_padrao").is("frente_id", null).order("nome");
-  const { data: indefinidos } = await supabase
-    .from("eventos").select("id, evento_id_origem, competicao, data").is("entrega", null)
-    .gte("data", "2026-09-21").order("data").limit(20);
+  const { count: indefinidos } = await supabase
+    .from("eventos").select("id", { count: "exact", head: true }).is("entrega", null)
+    .gte("data", "2026-09-21");
 
   const nomePor = new Map((pessoas ?? []).map((p) => [p.id, p.nome]));
+  const frentesAtivas = (frentes ?? []).filter((f) => f.ativa);
 
   return (
     <div className="p-6 px-8 flex flex-col gap-5 max-w-[1080px]">
@@ -27,23 +31,43 @@ export default async function Admin() {
         <Cartao titulo="Competições sem frente" nota="não geram tarefa até alguém classificar">
           {(semFrente ?? []).map((c) => (
             <div key={c.nome} className="flex items-center justify-between gap-3 py-2 border-t border-linha-2 text-[12.5px]">
-              <span className="truncate">{c.nome}</span>
-              <span className="text-tinta-4 shrink-0">entrega: {c.entrega_padrao}</span>
+              <div className="flex flex-col min-w-0">
+                <span className="truncate">{c.nome}</span>
+                <span className="text-tinta-4 text-[11px]">entrega padrão: {c.entrega_padrao}</span>
+              </div>
+              <form action={classificarCompeticao.bind(null, c.nome)} className="flex gap-1.5 shrink-0">
+                <label htmlFor={`f-${c.nome}`} className="sr-only">Classificar {c.nome}</label>
+                <select id={`f-${c.nome}`} name="frente_id" defaultValue=""
+                  className="min-h-8 px-2 rounded-md border border-linha bg-superficie-2 text-[12px] text-tinta-2">
+                  <option value="" disabled>qual frente?</option>
+                  {frentesAtivas.map((f) => <option key={f.id} value={f.id}>{f.nome}</option>)}
+                </select>
+                <Submit ocupado="..." className="min-h-8 px-2.5 rounded-md border border-linha bg-elevado text-[12px] text-tinta-2">ok</Submit>
+              </form>
             </div>
           ))}
         </Cartao>
       )}
 
-      {(indefinidos ?? []).length > 0 && (
-        <Cartao titulo="Eventos esperando decisão de entrega" nota={`${indefinidos!.length} eventos`}>
-          {(indefinidos ?? []).map((e) => (
-            <div key={e.id} className="flex items-center justify-between gap-3 py-2 border-t border-linha-2 text-[12.5px]">
-              <span className="truncate">{e.evento_id_origem}</span>
-              <span className="num text-tinta-4 shrink-0">{e.data}</span>
-            </div>
-          ))}
-        </Cartao>
+      {!!indefinidos && indefinidos > 0 && (
+        <Link href="/admin/eventos"
+          className="rounded-xl bg-superficie border border-linha p-5 flex items-center justify-between gap-3 hover:bg-elevado transition">
+          <div className="flex flex-col gap-1">
+            <h2 className="text-[11.5px] font-semibold uppercase tracking-[0.1em] text-tinta-3">Eventos esperando decisão de entrega</h2>
+            <span className="text-[12.5px] text-tinta-3">{indefinidos} eventos sem decisão — ver e resolver</span>
+          </div>
+          <span className="text-tinta-4">→</span>
+        </Link>
       )}
+
+      <Link href="/admin/eventos"
+        className="rounded-xl bg-superficie border border-linha p-5 flex items-center justify-between gap-3 hover:bg-elevado transition">
+        <div className="flex flex-col gap-1">
+          <h2 className="text-[11.5px] font-semibold uppercase tracking-[0.1em] text-tinta-3">Gestão de eventos</h2>
+          <span className="text-[12.5px] text-tinta-3">Cada evento, se tem entrega, e as atividades e responsáveis que ele gerou</span>
+        </div>
+        <span className="text-tinta-4">→</span>
+      </Link>
 
       <Cartao titulo="Pessoas" nota={`${(pessoas ?? []).filter((p) => !p.saida).length} ativas`}>
         <div className="grid grid-cols-[1.2fr_1.1fr_0.5fr_1.4fr] gap-3 pb-2">

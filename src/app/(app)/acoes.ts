@@ -125,4 +125,16 @@ export async function definirEntrega(eventoId: string, tem: boolean) {
     .eq("id", eventoId);
   if (error) throw new Error(error.message);
   revalidatePath("/frente");
+  revalidatePath("/admin/eventos");
+}
+
+/** O gestor classifica uma competição nova, que chega sem frente até alguém decidir. */
+export async function classificarCompeticao(nome: string, formData: FormData) {
+  const { supabase } = await eu();
+  const frenteId = String(formData.get("frente_id") || "");
+  if (!frenteId) return;
+  const { error } = await supabase.from("competicoes").update({ frente_id: frenteId }).eq("nome", nome);
+  if (error) throw new Error(error.message);
+  revalidatePath("/admin");
+  revalidatePath("/admin/eventos");
 }
