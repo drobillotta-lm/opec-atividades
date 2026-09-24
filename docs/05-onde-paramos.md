@@ -34,19 +34,21 @@ Rotas: `/entrar`, `/fora-do-time`, `/semana`, `/frente`, `/kanban`, `/painel`, `
 
 ## O que falta, em ordem
 
-1. **Ajuste manual avulso.** A ação `ajustarTempo` existe; falta a entrada na tela. Só a
-   entrega grava ajuste, com o motivo "tempo confirmado na entrega".
-2. **Fechar a semana** reproduzindo os números do `fechar_semana.py`, e exportar o CSV no
+1. **Fechar a semana** reproduzindo os números do `fechar_semana.py`, e exportar o CSV no
    formato de `acompanhamento/registro/`. É o que tira a Bárbara do CSV.
-3. **Painel sem competência fixa.** Hoje setembro/2026 está escrito no código.
-4. **Admin: só pessoas continua só leitura** (frentes já ganhou criação em 23/09).
-5. **A competição duplicada por aspas escapadas.** `Programa "Quem Fez, Fez!" 2026`
+2. **Painel sem competência fixa.** Hoje setembro/2026 está escrito no código.
+3. **Admin: só pessoas continua só leitura** (frentes já ganhou criação em 23/09).
+4. **A competição duplicada por aspas escapadas.** `Programa "Quem Fez, Fez!" 2026`
    (classificada) e `"Programa ""Quem Fez, Fez!"" 2026"` (a mesma, vinda da Escala com
    aspas duplicadas, sem frente) são a mesma competição em duas linhas. Mesclar em
    `/admin` e, se voltar a acontecer, olhar a origem no lado da Escala.
-6. **A tela do líder na Escala é muito nova.** `entrega.html` foi commitada e deployada
+5. **A tela do líder na Escala é muito nova.** `entrega.html` foi commitada e deployada
    por outra sessão bem no meio do dia 23/09 — vale conferir com o Yuri se está fluindo
    na prática antes de assumir que "linkar pra lá" resolve de verdade.
+
+**Feito em 24/09**: ajuste manual avulso — botão "ajustar tempo" em pausadas, pendentes e
+entregues, mesma tabela `ajustes_tempo` da entrega (motivo obrigatório, minutos negativos
+descontam). Não existia entrada na tela antes; só a entrega gravava ajuste.
 
 ## Armadilhas que já custaram tempo
 
