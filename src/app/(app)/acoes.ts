@@ -81,14 +81,18 @@ export async function entregar(tarefaId: string, formData: FormData) {
   revalidatePath("/frente");
 }
 
-export async function ajustarTempo(tarefaId: string, minutos: number, motivo: string) {
+export async function ajustarTempo(tarefaId: string, formData: FormData) {
   const { supabase, pessoa } = await eu();
-  if (!minutos || !motivo.trim()) throw new Error("ajuste precisa de minutos e motivo");
+  const minutos = Math.round(Number(formData.get("minutos")));
+  const motivo = String(formData.get("motivo") || "").trim();
+  if (!minutos || !motivo) throw new Error("ajuste precisa de minutos e motivo");
   const { error } = await supabase
     .from("ajustes_tempo")
-    .insert({ tarefa_id: tarefaId, pessoa_id: pessoa.id, minutos_delta: minutos, motivo: motivo.trim() });
+    .insert({ tarefa_id: tarefaId, pessoa_id: pessoa.id, minutos_delta: minutos, motivo });
   if (error) throw new Error(error.message);
   revalidatePath("/semana");
+  revalidatePath("/frente");
+  revalidatePath("/painel");
 }
 
 export async function sair() {

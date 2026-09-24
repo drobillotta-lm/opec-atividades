@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { semanaDe, deslocarSemana, rotuloSemana, diaCurto, hhmm, tempoLegivel, ROTULO_ATIVIDADE } from "@/lib/semana";
-import { Relogio, Submit, TempoParado, DialogoEntrega, DialogoDesnecessaria } from "./Cronometro";
-import { iniciar, pausar, entregar, marcarDesnecessaria, reverterDesnecessaria } from "../acoes";
+import { Relogio, Submit, TempoParado, DialogoEntrega, DialogoDesnecessaria, DialogoAjuste } from "./Cronometro";
+import { iniciar, pausar, entregar, marcarDesnecessaria, reverterDesnecessaria, ajustarTempo } from "../acoes";
 import { AbrirDock } from "@/componentes/AbrirDock";
 import { AutoAtualiza } from "@/componentes/AutoAtualiza";
 
@@ -248,6 +248,10 @@ export default async function MinhaSemana({
                   acao={marcarDesnecessaria.bind(null, t.id)}
                   titulo={`${ROTULO_ATIVIDADE[t.atividade] ?? t.atividade} · ${t.frente?.nome}`}
                 />
+                <DialogoAjuste
+                  acao={ajustarTempo.bind(null, t.id)}
+                  titulo={`${ROTULO_ATIVIDADE[t.atividade] ?? t.atividade} · ${t.frente?.nome}`}
+                />
               </div>
             </Linha>
           ))}
@@ -298,6 +302,10 @@ export default async function MinhaSemana({
                   acao={marcarDesnecessaria.bind(null, t.id)}
                   titulo={`${ROTULO_ATIVIDADE[t.atividade] ?? t.atividade} · ${t.frente?.nome}`}
                 />
+                <DialogoAjuste
+                  acao={ajustarTempo.bind(null, t.id)}
+                  titulo={`${ROTULO_ATIVIDADE[t.atividade] ?? t.atividade} · ${t.frente?.nome}`}
+                />
               </div>
             </Linha>
           );
@@ -321,6 +329,10 @@ export default async function MinhaSemana({
                 <span className="text-[11.5px] text-tinta-4 truncate">{t.evento?.competicao}</span>
               </div>
               <TempoParado segundos={t.segundos} estimativaMin={t.estimativa_min} />
+              <DialogoAjuste
+                acao={ajustarTempo.bind(null, t.id)}
+                titulo={`${ROTULO_ATIVIDADE[t.atividade] ?? t.atividade} · ${t.frente?.nome}`}
+              />
             </Linha>
           ))}
         </Secao>
