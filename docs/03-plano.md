@@ -47,8 +47,8 @@ perder nada.
 14. [ ] Atalhos de teclado para mostrar e para pausar
 15. [ ] Posição lembrada entre sessões — agora dá pra passar `left`/`top` pro
     `window.open`, só falta guardar a posição de quando a pessoa arrasta a janela
-15b. [ ] Subdividir uma atividade em partes menores, pra quem quiser se organizar assim
-    (pedido de 28/09, forma a detalhar)
+15b. [ ] Sub-tarefas: escopo e cronômetro próprios, podem ser de outra pessoa, somam na
+    tarefa-mãe (`subtarefas` + `sessoes.subtarefa_id`; decisão de 28/09)
 
 **Pronta quando** dá para trabalhar um dia inteiro sem abrir o app inteiro.
 

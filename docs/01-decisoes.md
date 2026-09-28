@@ -175,8 +175,10 @@ Com o palpite, o primeiro login de cada um cairia em "fora do time" (`027`).
 ## 28/09/2026 — cadastro: Juliana lidera Nacional, Vitor está fora, Kings fica inativa
 
 Nacional não tinha líder (no `decisoes.yaml` é dupla fixa Daniel + Juliana, sem líder).
-Juliana lidera e também executa — a regra "líder não executa a própria frente" nunca valeu
-para a dupla fixa. Vitor já tinha `saida = 01/09` e zero linhas de mapa; nada a apagar,
+Juliana lidera e também executa. **Líder pode executar a própria frente** — a regra "líder
+não executa a própria frente" do `decisoes.yaml` do Yuri não vale neste app: quem diz quem
+faz o quê é o mapa, e o papel de líder é só o de ver a frente inteira e resolver quem fez.
+Vitor já tinha `saida = 01/09` e zero linhas de mapa; nada a apagar,
 só não aparece. Kings (KG) tem 3 competições e 3 eventos no banco, todos sem entrega;
 continua inativa até aparecer evento com entrega.
 
@@ -188,6 +190,10 @@ o que está no ar.
 
 ## 28/09/2026 — dock continua no plano, e ganha "subdividir atividade"
 
-Atalhos de teclado e posição lembrada continuam antes do piloto. Pedido novo do Daniel: a
-pessoa poder quebrar uma atividade em partes menores, para se organizar — a detalhar
-(sub-tarefa com cronômetro próprio? só checklist?).
+Atalhos de teclado e posição lembrada continuam antes do piloto. Pedido novo do Daniel:
+quebrar uma tarefa em **sub-tarefas**, cada uma com escopo próprio, cronômetro próprio e
+podendo ser de outra pessoa; o tempo da sub-tarefa soma na tarefa-mãe. É diferente de
+sessão: sessão é a mesma tarefa em vários trechos, sem escopo novo. Desenho: tabela
+`subtarefas` (tarefa, título, pessoa, status) e `sessoes.subtarefa_id` opcional — o total
+da tarefa continua saindo de `v_tempo_tarefa`, porque a sessão segue apontando para a
+tarefa. `gerar_tarefas` e a chave `(evento, atividade)` não mudam.

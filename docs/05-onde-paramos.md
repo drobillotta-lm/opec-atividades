@@ -58,8 +58,8 @@ Rotas: `/entrar`, `/fora-do-time`, `/semana`, `/frente`, `/kanban`, `/painel`, `
 2. **Relatório de período + CSV** no formato de `acompanhamento/registro/` (item 20 do
    plano). `v_semana_frente` já tem os números; falta a tela e o arquivo.
 3. **Painel: corte por frente.** A navegação por mês entrou em 28/09.
-4. **Dock**: atalhos, posição lembrada, e a forma de "subdividir atividade" (a detalhar com
-   o Daniel: sub-tarefa com cronômetro próprio, ou só uma lista de partes?).
+4. **Dock e sub-tarefas**: atalhos, posição lembrada, e sub-tarefas (escopo e cronômetro
+   próprios, podem ser de outra pessoa, somam na tarefa-mãe — desenho no `01-decisoes.md`).
 5. **Admin: pessoas** continua só leitura.
 6. **Competição duplicada por aspas** (`Programa "Quem Fez, Fez!" 2026` × versão com aspas
    dobradas). **A origem é a Escala**: `escala.competicoes` tem a linha com as aspas
