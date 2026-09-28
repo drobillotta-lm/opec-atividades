@@ -34,6 +34,10 @@ no projeto, em ordem. O modelo e as regras de acesso estão explicados em
 | `023_search_path_da_previsao_de_entrega.sql` | Fecha o `search_path` mutável de `aplicar_previsao_entrega`, apontado pelo verificador de segurança |
 | `024_evento_novo_herda_frente_da_competicao.sql` | Gatilho `before insert`: evento novo já nasce com a frente da competição, se ela já foi classificada — antes só propagava retroativo (013). Achado com o import da Escala: 233 dos 365 eventos ficaram sem frente por causa disso |
 | `025_sigla_de_frente_deixa_de_ser_lista_fechada.sql` | `frentes.sigla` era uma lista fechada (FI/OL/PR/CP/NA/KG) — vira formato (2 a 6 letras), pra dar pra criar frente pela tela |
+| `026_mapa_out_nov_dez.sql` | Mapa de outubro, novembro e dezembro do mesmo commit `a7a7f864` — a 005 só tinha trazido setembro, e outubro ficou sem escalado até 28/09 |
+| `027_emails_reais_e_lider_de_nacional.sql` | E-mails dos 6 fixos passam a ser os da Escala (`breis@` etc.; os antigos eram palpite e quebravam o primeiro login); Juliana lidera Nacional |
+| `028_desfazer_tarefa_de_evento_cancelado.sql` | `desfazer_tarefas_de_evento_cancelado()`: sem sessão nem ajuste a tarefa some, com tempo vira `na`/`cancelado`. Roda a cada sincronização |
+| `029_evento_herda_frente_na_sincronizacao.sql` | `herdar_frente_da_competicao()`: evento que já existia sem frente quando a competição foi classificada por outro caminho. Roda a cada sincronização |
 
 ## Regras
 

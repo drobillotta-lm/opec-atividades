@@ -10,9 +10,9 @@ cada mudança de 28/09.
 | Coisa | Onde | Estado |
 |---|---|---|
 | App | https://opec-atividades.vercel.app | no ar; **ligado ao Git desde 28/09** — `git push` na `main` publica sozinho |
-| Banco | Supabase `igzrrsqmweuritiqrmrh`, sa-east-1 | 28 migrations, banco = repo |
+| Banco | Supabase `igzrrsqmweuritiqrmrh`, sa-east-1 | 29 migrations, banco = repo |
 | Login | Google restrito a `@livemode.com` | e-mails reais desde a `027` — só o Daniel entrou até hoje |
-| Eventos, entrega, plantão | importados da Escala 2x/dia (`/api/importar-escala`, GitHub Actions) | funciona; **vai ser trocado por leitura direta** (abaixo) |
+| Eventos, entrega, plantão, líderes, competição × frente | **lidos direto do banco da Escala** (`src/lib/escala/sincronizar.ts`), de hora em hora aos :15 pelo n8n (`Atividades OPEC · Sincronizar Escala`, `WVmEyD6wboZR45dJ`) e pelo botão "Sincronizar agora" do `/admin` | no ar desde 28/09; a rota `/api/importar-escala` é só a casca que o n8n chama |
 | Mapa | `config/mapa_aprovado.csv` do Yuri, commit `a7a7f864` | setembro a dezembro importados (`005`, `026`) |
 | Mockup | — | abandonado; `04-telas.md` descreve o código |
 
@@ -41,33 +41,55 @@ Rotas: `/entrar`, `/fora-do-time`, `/semana`, `/frente`, `/kanban`, `/painel`, `
   Vitor está fora. Kings fica inativa. Mockup abandonado. Dock continua, e ganha
   "subdividir atividade".
 
+## Ler a Escala direto — como ficou (28/09)
+
+`sincronizarEscala()` (`src/lib/escala/sincronizar.ts`) abre um cliente no Supabase da
+Escala (`lbcvhgqxnchszqaudzui`, schema `escala`, service key em `ESCALA_SUPABASE_URL` +
+`ESCALA_SERVICE_KEY` na Vercel) e, numa passada:
+
+1. competições novas entram sem frente; as que a Escala já classificou
+   (`escala.competicoes.frente_codigo`) e aqui estavam sem frente recebem a de lá;
+2. líder vem de `escala.frentes.lider_pessoa_id` (por e-mail) quando existe — nunca apaga;
+3. `escala.eventos` desde 21/09 vira `eventos` local, chave `airtable_record_id` =
+   `airtable_id`, ou `escala:<id>` para evento manual (a exportação antiga descartava esses);
+   excluído na Escala vira `Cancelado`; depois `herdar_frente_da_competicao()` (`029`);
+4. `tem_entrega` sim/não vira `entrega` + `entrega_origem = 'escala'`, sem sobrescrever
+   `'lider'`; indefinido cai no padrão da competição (`aplicar_previsao_entrega`);
+5. plantão = `escala.alocacoes` confirmadas/realizadas dos fixos, casadas por e-mail;
+6. `gerar_tarefas(21/09, hoje + 21)` e `desfazer_tarefas_de_evento_cancelado()`.
+
+Primeira rodada real: 438 eventos (eram 379), 6 competições classificadas pela Escala,
+96 tarefas criadas, 8 desfeitas. A rota da Escala `api/agent/exportar.js` e o
+`EXPORTAR_TOKEN` ficaram sem uso — dá pra apagar lá.
+
+**Relógio**: n8n, `Atividades OPEC · Sincronizar Escala` (`WVmEyD6wboZR45dJ`), cron
+`15 * * * *`, credencial `Atividades OPEC · CRON_SECRET` (`PAyUEQ5IfjX8dKRw`), erro vai
+para o `Escala OPEC · Erro de workflow`. Recriar: `n8n/sincronizar_escala.js`. O GitHub
+Actions (`importar-escala.yml`) está **desativado**: a cobrança da conta do GitHub falhou
+e nenhum job iniciava desde 26/09 — e o `curl -f` engolia o erro, então o relógio ficou
+4 dias morto sem sinal. O `CRON_SECRET` foi girado em 28/09 e vive na Vercel, no secret
+do GitHub e na credencial do n8n.
+
+**Dado que fica faltando na origem**: 119 eventos da Escala não têm competição (a maioria
+é Externa, Gravação, Kit Mojo, Estúdio — não gera cadeia mesmo), mas dois são jogos de
+verdade com entrega "sim" (Mundial de Judô #8 e #14). E um evento manual chegou com a
+competição escrita `BUNDESLIGA`, que não casa com `Bundesliga 2026`. É de lá.
+
 ## O que falta, em ordem
 
-1. **Ler a Escala direto** (`lbcvhgqxnchszqaudzui`, schema `escala`). Proposta:
-   - O servidor do Atividades usa a service key da Escala (`ESCALA_SUPABASE_URL` +
-     `ESCALA_SERVICE_KEY` na Vercel) e lê `escala.eventos`, `escala.alocacoes` (plantão
-     confirmado dos fixos), `escala.frentes` (líderes) e `escala.competicoes`
-     (`frente_codigo`, `entrega_padrao`). Sem rota HTTP, sem `EXPORTAR_TOKEN`.
-   - `tarefas` continua apontando para o `eventos` local (chave `airtable_record_id`), então
-     a leitura sincroniza a tabela local — mas de hora em hora, disparada pelo n8n logo
-     depois do Ingestor da Escala (`:05`), mais um botão "Sincronizar agora" em `/admin`.
-   - A classificação competição × frente passa a vir da Escala; o `/admin` daqui só cobre o
-     que a Escala ainda não classificou.
-   - Alternativa considerada: foreign table (`postgres_fdw`) — mais elegante, mas exige
-     senha do banco da Escala no Vault e não elimina a tabela local por causa das chaves.
-2. **Relatório de período + CSV** no formato de `acompanhamento/registro/` (item 20 do
+1. **Relatório de período + CSV** no formato de `acompanhamento/registro/` (item 20 do
    plano). `v_semana_frente` já tem os números; falta a tela e o arquivo.
-3. **Painel: corte por frente.** A navegação por mês entrou em 28/09.
-4. **Dock e sub-tarefas**: atalhos, posição lembrada, e sub-tarefas (escopo e cronômetro
+2. **Painel: corte por frente.** A navegação por mês entrou em 28/09.
+3. **Dock e sub-tarefas**: atalhos, posição lembrada, e sub-tarefas (escopo e cronômetro
    próprios, podem ser de outra pessoa, somam na tarefa-mãe — desenho no `01-decisoes.md`).
-5. **Admin: pessoas** continua só leitura.
-6. **Competição duplicada por aspas** (`Programa "Quem Fez, Fez!" 2026` × versão com aspas
+4. **Admin: pessoas** continua só leitura.
+5. **Competição duplicada por aspas** (`Programa "Quem Fez, Fez!" 2026` × versão com aspas
    dobradas). **A origem é a Escala**: `escala.competicoes` tem a linha com as aspas
    dobradas. Corrigir lá; aqui, mesclar.
-7. ~~Ligar a Vercel ao Git~~ — feito em 28/09. Precisou de dois passos manuais na conta do
+6. ~~Ligar a Vercel ao Git~~ — feito em 28/09. Precisou de dois passos manuais na conta do
    Daniel: Login Connection com o GitHub na Vercel, e instalar o app da Vercel no GitHub
    (`github.com/apps/vercel`) com acesso ao repositório. A Escala continua manual.
-8. **Piloto.** Agora dá: e-mails certos, outubro gerado. Falta a página "o que o líder vê e
+7. **Piloto.** Agora dá: e-mails certos, outubro gerado. Falta a página "o que o líder vê e
    o que ninguém vê" (item 24) e chamar as pessoas.
 
 ## Armadilhas que já custaram tempo

@@ -161,6 +161,8 @@ export async function sincronizarEscala(): Promise<ResumoSincronizacao> {
     const { error } = await admin.from("eventos").upsert(linhasEvento, { onConflict: "airtable_record_id" });
     falha("upsert eventos", error);
   }
+  // Evento que ja existia sem frente quando a competicao foi classificada (029).
+  falha("herdar_frente_da_competicao", (await admin.rpc("herdar_frente_da_competicao")).error);
 
   // 4) a decisão "tem entrega?" da Escala, guardada contra o que o líder já resolveu aqui
   for (const valor of ["sim", "nao"] as const) {

@@ -63,8 +63,9 @@ perder nada.
     (28/09). Falta o corte por frente
 20. [ ] Relatório de período, sob demanda, com os mesmos números do `fechar_semana.py`, e
     exportar CSV no formato de `acompanhamento/registro/` — sem travar nada
-20b. [ ] Ler a Escala direto (eventos, entrega, plantão, líderes, competição × frente) em
-    vez da exportação HTTP 2x/dia — decisão de 28/09, forma em `05-onde-paramos.md`
+20b. [x] Ler a Escala direto (eventos, entrega, plantão, líderes, competição × frente) de
+    hora em hora pelo n8n, mais "Sincronizar agora" no Admin (28/09; como ficou em
+    `05-onde-paramos.md`)
 21. [x] Admin: classificar competição sem frente (ou criar frente nova na hora, `025`
     tirou a sigla de lista fechada) e ver a entrega por evento (`/admin/eventos`) — a
     decisão de "tem entrega?" virou leitura aqui, quem decide é o líder na Escala (23/09).
