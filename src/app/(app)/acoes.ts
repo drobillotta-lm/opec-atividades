@@ -2,6 +2,7 @@
 
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { sincronizarEscala } from "@/lib/escala/sincronizar";
 
 async function eu() {
   const supabase = await criarClienteServidor();
@@ -184,4 +185,12 @@ export async function reverterDesnecessaria(tarefaId: string) {
   revalidatePath("/semana");
   revalidatePath("/frente");
   revalidatePath("/kanban");
+}
+
+/** Botão do Admin: a mesma sincronização que o relógio roda de hora em hora. */
+export async function sincronizarAgora() {
+  const { pessoa } = await eu();
+  if (pessoa.papel !== "gestor") throw new Error("só gestor sincroniza");
+  await sincronizarEscala();
+  for (const rota of ["/admin", "/admin/eventos", "/semana", "/frente", "/kanban", "/painel"]) revalidatePath(rota);
 }

@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { criarClienteServidor } from "@/lib/supabase/server";
-import { classificarCompeticao, criarFrenteEClassificar } from "../acoes";
+import { classificarCompeticao, criarFrenteEClassificar, sincronizarAgora } from "../acoes";
 import { ClassificarFrente } from "@/componentes/ClassificarFrente";
+import { Submit } from "../semana/Cronometro";
 
 export const dynamic = "force-dynamic";
 
@@ -17,14 +18,29 @@ export default async function Admin() {
     .from("eventos").select("id", { count: "exact", head: true }).is("entrega", null)
     .gte("data", "2026-09-21");
 
+  const { data: ultimo } = await supabase
+    .from("eventos").select("sincronizado_em").not("sincronizado_em", "is", null)
+    .order("sincronizado_em", { ascending: false }).limit(1).maybeSingle();
+
   const nomePor = new Map((pessoas ?? []).map((p) => [p.id, p.nome]));
   const frentesAtivas = (frentes ?? []).filter((f) => f.ativa);
+  const ultimaSinc = ultimo?.sincronizado_em
+    ? new Date(ultimo.sincronizado_em).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })
+    : "nunca";
 
   return (
     <div className="p-6 px-8 flex flex-col gap-5 max-w-[1080px]">
-      <header className="flex flex-col gap-1.5">
-        <h1 className="text-[23px] font-semibold tracking-[-0.02em]">Admin</h1>
-        <p className="text-[12.5px] text-tinta-3">Só Yuri e Daniel abrem esta tela</p>
+      <header className="flex items-end justify-between gap-5">
+        <div className="flex flex-col gap-1.5">
+          <h1 className="text-[23px] font-semibold tracking-[-0.02em]">Admin</h1>
+          <p className="text-[12.5px] text-tinta-3">Só Yuri e Daniel abrem esta tela</p>
+        </div>
+        <form action={sincronizarAgora} className="flex items-center gap-3">
+          <span className="text-[11.5px] text-tinta-4">Escala lida às {ultimaSinc}</span>
+          <Submit ocupado="Sincronizando..." className="min-h-9 px-3.5 rounded-[9px] border border-linha bg-elevado text-[12.5px] font-medium hover:bg-linha transition">
+            Sincronizar agora
+          </Submit>
+        </form>
       </header>
 
       {(semFrente ?? []).length > 0 && (
