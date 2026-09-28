@@ -194,3 +194,67 @@ export async function sincronizarAgora() {
   await sincronizarEscala();
   for (const rota of ["/admin", "/admin/eventos", "/semana", "/frente", "/kanban", "/painel"]) revalidatePath(rota);
 }
+
+// ---------------------------------------------------------------------------------
+// Sub-tarefas (030): parte de uma tarefa, com nome, dono e cronômetro próprio. O tempo
+// soma na tarefa-mãe porque a sessão continua apontando para ela.
+
+const ROTAS_DE_TEMPO = ["/semana", "/frente", "/kanban", "/painel", "/dock"];
+function revalidarTempo() { for (const r of ROTAS_DE_TEMPO) revalidatePath(r); }
+
+export async function criarSubtarefa(tarefaId: string, formData: FormData) {
+  const { supabase, pessoa } = await eu();
+  const titulo = String(formData.get("titulo") || "").trim();
+  if (!titulo) return;
+  const quem = String(formData.get("pessoa") || "") || pessoa.id;
+  const { error } = await supabase
+    .from("subtarefas")
+    .insert({ tarefa_id: tarefaId, titulo, pessoa_id: quem, criada_por: pessoa.id });
+  if (error) throw new Error(error.message);
+  revalidarTempo();
+}
+
+export async function iniciarSubtarefa(subtarefaId: string) {
+  const { supabase, pessoa } = await eu();
+  const { data: parte } = await supabase.from("subtarefas").select("tarefa_id").eq("id", subtarefaId).single();
+  if (!parte) throw new Error("parte não encontrada");
+  await fecharAberta(supabase, pessoa.id, "troca");
+  const { error } = await supabase
+    .from("sessoes")
+    .insert({ tarefa_id: parte.tarefa_id, pessoa_id: pessoa.id, subtarefa_id: subtarefaId });
+  if (error) throw new Error(error.message);
+  revalidarTempo();
+}
+
+export async function concluirSubtarefa(subtarefaId: string) {
+  const { supabase, pessoa } = await eu();
+  // Se eu estava cronometrando esta parte, o trecho fecha junto.
+  await supabase.from("sessoes")
+    .update({ fim: new Date().toISOString(), motivo_fim: "entrega" })
+    .eq("pessoa_id", pessoa.id).eq("subtarefa_id", subtarefaId).is("fim", null);
+  const { error } = await supabase
+    .from("subtarefas")
+    .update({ status: "feita", concluida_em: new Date().toISOString() })
+    .eq("id", subtarefaId);
+  if (error) throw new Error(error.message);
+  revalidarTempo();
+}
+
+export async function reabrirSubtarefa(subtarefaId: string) {
+  const { supabase } = await eu();
+  const { error } = await supabase
+    .from("subtarefas").update({ status: "pendente", concluida_em: null }).eq("id", subtarefaId);
+  if (error) throw new Error(error.message);
+  revalidarTempo();
+}
+
+/** Só apaga parte sem tempo registrado: tempo gasto é dado, não se apaga. */
+export async function apagarSubtarefa(subtarefaId: string) {
+  const { supabase } = await eu();
+  const { count } = await supabase
+    .from("sessoes").select("id", { count: "exact", head: true }).eq("subtarefa_id", subtarefaId);
+  if (count) throw new Error("esta parte já tem tempo registrado; conclua em vez de apagar");
+  const { error } = await supabase.from("subtarefas").delete().eq("id", subtarefaId);
+  if (error) throw new Error(error.message);
+  revalidarTempo();
+}

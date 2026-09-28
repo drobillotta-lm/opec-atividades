@@ -2,7 +2,11 @@ import Link from "next/link";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { semanaDe, deslocarSemana, rotuloSemana, diaCurto, hhmm, tempoLegivel, ROTULO_ATIVIDADE } from "@/lib/semana";
 import { Relogio, Submit, TempoParado, DialogoEntrega, DialogoDesnecessaria, DialogoAjuste } from "./Cronometro";
-import { iniciar, pausar, entregar, marcarDesnecessaria, reverterDesnecessaria, ajustarTempo } from "../acoes";
+import { DialogoPartes, type Parte } from "./Partes";
+import {
+  iniciar, pausar, entregar, marcarDesnecessaria, reverterDesnecessaria, ajustarTempo,
+  criarSubtarefa, iniciarSubtarefa, concluirSubtarefa, reabrirSubtarefa, apagarSubtarefa,
+} from "../acoes";
 import { AbrirDock } from "@/componentes/AbrirDock";
 import { AutoAtualiza } from "@/componentes/AutoAtualiza";
 
@@ -58,9 +62,13 @@ export default async function MinhaSemana({
     .order("prazo_em");
 
   // Quem ajuda a tarefa de outra pessoa (puxou pela busca) tem sessao mas nao e
-  // escalado nem responsavel -- sem isto ela nunca aparece de volta aqui.
-  const { data: sessoesMinhas } = await supabase.from("sessoes").select("tarefa_id").eq("pessoa_id", pessoa!.id);
-  const idsComSessao = [...new Set((sessoesMinhas ?? []).map((s) => s.tarefa_id))];
+  // escalado nem responsavel -- sem isto ela nunca aparece de volta aqui. O mesmo vale
+  // para quem recebeu uma parte (030) e ainda nem comecou.
+  const [{ data: sessoesMinhas }, { data: partesMinhas }] = await Promise.all([
+    supabase.from("sessoes").select("tarefa_id").eq("pessoa_id", pessoa!.id),
+    supabase.from("subtarefas").select("tarefa_id").eq("pessoa_id", pessoa!.id).eq("status", "pendente"),
+  ]);
+  const idsComSessao = [...new Set([...(sessoesMinhas ?? []), ...(partesMinhas ?? [])].map((s) => s.tarefa_id))];
   const idsJaTem = new Set((minhas ?? []).map((t) => t.id));
   const idsAjudando = idsComSessao.filter((id) => !idsJaTem.has(id));
   const { data: ajudando } = idsAjudando.length
@@ -82,12 +90,21 @@ export default async function MinhaSemana({
   // total (varias pessoas cronometram a mesma tarefa), errado pro botao: "Pausar" tem
   // que fechar A MINHA sessao, nao mostrar rodando so porque outra pessoa esta nela.
   const { data: sessoesDaTarefa } = ids.length
-    ? await supabase.from("sessoes").select("tarefa_id, pessoa_id, inicio, fim").in("tarefa_id", ids)
-    : { data: [] as { tarefa_id: string; pessoa_id: string; inicio: string; fim: string | null }[] };
+    ? await supabase.from("sessoes").select("tarefa_id, pessoa_id, inicio, fim, subtarefa_id").in("tarefa_id", ids)
+    : { data: [] as { tarefa_id: string; pessoa_id: string; inicio: string; fim: string | null; subtarefa_id: string | null }[] };
 
-  const { data: time } = await supabase
-    .from("pessoas").select("id, nome").is("saida", null).order("nome");
+  const [{ data: time }, { data: subtarefas }, { data: temposParte }] = await Promise.all([
+    supabase.from("pessoas").select("id, nome").is("saida", null).order("nome"),
+    ids.length
+      ? supabase.from("subtarefas").select("id, tarefa_id, titulo, status, pessoa_id").in("tarefa_id", ids).order("created_at")
+      : Promise.resolve({ data: [] as { id: string; tarefa_id: string; titulo: string; status: "pendente" | "feita"; pessoa_id: string }[] }),
+    ids.length
+      ? supabase.from("v_tempo_subtarefa").select("subtarefa_id, segundos").in("tarefa_id", ids)
+      : Promise.resolve({ data: [] as { subtarefa_id: string; segundos: number }[] }),
+  ]);
   const nomePor = new Map((time ?? []).map((p) => [p.id, p.nome]));
+  const segundosParte = new Map((temposParte ?? []).map((t) => [t.subtarefa_id, Number(t.segundos)]));
+  const tituloParte = new Map((subtarefas ?? []).map((s) => [s.id, s.titulo]));
 
   const porId = new Map((tempos ?? []).map((t) => [t.tarefa_id, t]));
   const sessoesPorTarefa = new Map<string, typeof sessoesDaTarefa>();
@@ -111,14 +128,31 @@ export default async function MinhaSemana({
       }))
       .filter((c) => c.segundos > 0);
 
+    const partes: Parte[] = (subtarefas ?? [])
+      .filter((s) => s.tarefa_id === t.id)
+      .map((s) => ({
+        id: s.id,
+        titulo: s.titulo,
+        status: s.status,
+        pessoa_id: s.pessoa_id,
+        pessoa: nomePor.get(s.pessoa_id) ?? "—",
+        segundos: segundosParte.get(s.id) ?? 0,
+        rodandoPor: [...new Set(
+          sessoes.filter((x) => x.subtarefa_id === s.id && !x.fim && x.pessoa_id !== pessoa!.id).map((x) => nomePor.get(x.pessoa_id) ?? "alguém"),
+        )],
+        minha: minhaAberta?.subtarefa_id === s.id,
+      }));
+
     return {
       ...t,
       frente: Array.isArray(t.frentes) ? t.frentes[0] : t.frentes,
       evento: Array.isArray(t.eventos) ? t.eventos[0] : t.eventos,
       segundos: Number(porId.get(t.id)?.segundos_total ?? 0),
       correndo: minhaAberta?.inicio ?? null,
+      minhaParte: minhaAberta?.subtarefa_id ? tituloParte.get(minhaAberta.subtarefa_id) ?? null : null,
       outrosRodando,
       contribuintes,
+      partes,
     };
   });
 
@@ -170,6 +204,9 @@ export default async function MinhaSemana({
             <span className="text-[12px] text-tinta-3 truncate">
               {emCurso.evento?.competicao} · evento {emCurso.evento && diaCurto(emCurso.evento.data)}
             </span>
+            {emCurso.minhaParte && (
+              <span className="text-[12px] text-verde-claro truncate">parte: {emCurso.minhaParte}</span>
+            )}
             {emCurso.outrosRodando.length > 0 && (
               <span className="text-[11px] text-verde-claro truncate">
                 {emCurso.outrosRodando.join(", ")} também {emCurso.outrosRodando.length > 1 ? "estão" : "está"} nisso agora
@@ -197,6 +234,12 @@ export default async function MinhaSemana({
               contribuintes={emCurso.contribuintes}
               rotuloBotao="Entregar"
               classeBotao="flex items-center gap-2 min-h-[42px] px-3.5 rounded-[9px] bg-verde text-[#07120d] text-[12.5px] font-semibold hover:brightness-110 transition"
+            />
+            <DialogoPartes
+              titulo={`${ROTULO_ATIVIDADE[emCurso.atividade] ?? emCurso.atividade} · ${emCurso.frente?.nome}`}
+              partes={emCurso.partes} time={time ?? []} euId={pessoa!.id}
+              criar={criarSubtarefa.bind(null, emCurso.id)}
+              iniciar={iniciarSubtarefa} concluir={concluirSubtarefa} reabrir={reabrirSubtarefa} apagar={apagarSubtarefa}
             />
           </div>
         </div>
@@ -252,6 +295,12 @@ export default async function MinhaSemana({
                   acao={ajustarTempo.bind(null, t.id)}
                   titulo={`${ROTULO_ATIVIDADE[t.atividade] ?? t.atividade} · ${t.frente?.nome}`}
                 />
+                <DialogoPartes
+                  titulo={`${ROTULO_ATIVIDADE[t.atividade] ?? t.atividade} · ${t.frente?.nome}`}
+                  partes={t.partes} time={time ?? []} euId={pessoa!.id}
+                  criar={criarSubtarefa.bind(null, t.id)}
+                  iniciar={iniciarSubtarefa} concluir={concluirSubtarefa} reabrir={reabrirSubtarefa} apagar={apagarSubtarefa}
+                />
               </div>
             </Linha>
           ))}
@@ -305,6 +354,12 @@ export default async function MinhaSemana({
                 <DialogoAjuste
                   acao={ajustarTempo.bind(null, t.id)}
                   titulo={`${ROTULO_ATIVIDADE[t.atividade] ?? t.atividade} · ${t.frente?.nome}`}
+                />
+                <DialogoPartes
+                  titulo={`${ROTULO_ATIVIDADE[t.atividade] ?? t.atividade} · ${t.frente?.nome}`}
+                  partes={t.partes} time={time ?? []} euId={pessoa!.id}
+                  criar={criarSubtarefa.bind(null, t.id)}
+                  iniciar={iniciarSubtarefa} concluir={concluirSubtarefa} reabrir={reabrirSubtarefa} apagar={apagarSubtarefa}
                 />
               </div>
             </Linha>

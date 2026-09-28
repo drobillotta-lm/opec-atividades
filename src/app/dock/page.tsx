@@ -54,15 +54,22 @@ export default async function Dock() {
   // Retomar) tem que ser A MINHA sessao, senao o dock mostra rodando so porque outra
   // pessoa esta cronometrando a mesma tarefa em conjunto.
   const { data: minhasAbertas } = ids.length
-    ? await supabase.from("sessoes").select("tarefa_id, inicio").eq("pessoa_id", pessoa!.id).in("tarefa_id", ids).is("fim", null)
-    : { data: [] as { tarefa_id: string; inicio: string }[] };
+    ? await supabase.from("sessoes").select("tarefa_id, inicio, subtarefa_id").eq("pessoa_id", pessoa!.id).in("tarefa_id", ids).is("fim", null)
+    : { data: [] as { tarefa_id: string; inicio: string; subtarefa_id: string | null }[] };
   const inicioPorTarefa = new Map((minhasAbertas ?? []).map((s) => [s.tarefa_id, s.inicio]));
+
+  // Se o trecho aberto e de uma parte (030), o dock diz qual.
+  const idParte = (minhasAbertas ?? []).find((s) => s.subtarefa_id)?.subtarefa_id ?? null;
+  const { data: parte } = idParte
+    ? await supabase.from("subtarefas").select("tarefa_id, titulo").eq("id", idParte).maybeSingle()
+    : { data: null };
 
   const porId = new Map((tempos ?? []).map((t) => [t.tarefa_id, t]));
   const com = lista.map((t) => ({
     ...t,
     segundos: Number(porId.get(t.id)?.segundos_total ?? 0),
     correndo: inicioPorTarefa.get(t.id) ?? null,
+    parte: parte && parte.tarefa_id === t.id ? parte.titulo : null,
   }));
 
   // Rodando vale sempre. Sem nada rodando, sugere pelo mesmo criterio de
@@ -100,7 +107,9 @@ export default async function Dock() {
                 <span className="text-[13.5px] font-semibold tracking-[-0.01em] truncate">
                   {ROTULO_ATIVIDADE[atual.atividade] ?? atual.atividade} · {atual.frente?.nome}
                 </span>
-                <span className="text-[11px] text-tinta-4 truncate">{atual.evento?.competicao}</span>
+                <span className="text-[11px] text-tinta-4 truncate">
+                  {atual.parte ? `parte: ${atual.parte} · ` : ""}{atual.evento?.competicao}
+                </span>
               </div>
               <BotaoTema compacto />
             </div>
