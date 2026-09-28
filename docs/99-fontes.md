@@ -16,8 +16,8 @@
 | `config/mapa_aprovado.csv` | tabela `mapa`: quem faz o quê em cada mês |
 | `config/taxas.yaml` | `estimativa_min` de cada tarefa |
 | `dados/matriz_eventos.csv` | tabela `eventos` |
-| `acompanhamento/registro/*.csv` | o formato que o app substitui, e o CSV que ele exporta |
-| `acompanhamento/fechar_semana.py` | os números que `v_semana_frente` precisa reproduzir |
+| `acompanhamento/registro/*.csv` | ~~o formato que o app substitui~~ — ignorado desde 28/09, o app é quem registra |
+| `acompanhamento/fechar_semana.py` | ~~os números a reproduzir~~ — ignorado desde 28/09 |
 
 ### Taxas vigentes, medidas em julho de 2026
 

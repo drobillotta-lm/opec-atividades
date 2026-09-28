@@ -77,8 +77,8 @@ competição escrita `BUNDESLIGA`, que não casa com `Bundesliga 2026`. É de l�
 
 ## O que falta, em ordem
 
-1. **Relatório de período + CSV** no formato de `acompanhamento/registro/` (item 20 do
-   plano). `v_semana_frente` já tem os números; falta a tela e o arquivo.
+1. **Piloto.** E-mails certos, outubro gerado, `/como-funciona` no ar (28/09). Falta
+   chamar as 7 pessoas e acompanhar duas semanas de uso.
 2. **Painel: corte por frente.** A navegação por mês entrou em 28/09.
 3. **Dock e sub-tarefas**: atalhos, posição lembrada, e sub-tarefas (escopo e cronômetro
    próprios, podem ser de outra pessoa, somam na tarefa-mãe — desenho no `01-decisoes.md`).
@@ -89,8 +89,6 @@ competição escrita `BUNDESLIGA`, que não casa com `Bundesliga 2026`. É de l�
 6. ~~Ligar a Vercel ao Git~~ — feito em 28/09. Precisou de dois passos manuais na conta do
    Daniel: Login Connection com o GitHub na Vercel, e instalar o app da Vercel no GitHub
    (`github.com/apps/vercel`) com acesso ao repositório. A Escala continua manual.
-7. **Piloto.** Agora dá: e-mails certos, outubro gerado. Falta a página "o que o líder vê e
-   o que ninguém vê" (item 24) e chamar as pessoas.
 
 ## Armadilhas que já custaram tempo
 

@@ -45,6 +45,7 @@ export default async function LayoutApp({ children }: { children: React.ReactNod
           {lider && <Item href="/kanban">Quadro</Item>}
           {lider && <Item href="/painel">Painel</Item>}
           {gestor && <Item href="/admin">Admin</Item>}
+          <Item href="/como-funciona">Como funciona</Item>
         </nav>
 
         <div className="mt-auto flex flex-col gap-2">

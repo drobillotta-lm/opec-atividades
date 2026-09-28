@@ -61,8 +61,9 @@ perder nada.
     evento, nada abre nem fecha). Vira o item 20
 19. [~] Painel do mês: `v_mes_pessoa` e `v_taxa_real` na tela, por mês com navegação
     (28/09). Falta o corte por frente
-20. [ ] Relatório de período, sob demanda, com os mesmos números do `fechar_semana.py`, e
-    exportar CSV no formato de `acompanhamento/registro/` — sem travar nada
+20. ~~Relatório de período e CSV no formato de `acompanhamento/registro/`~~ — **cai**
+    (28/09): o fluxo de CSV do dimensionamento fica ignorado, este app é quem registra se
+    a ação foi feita. Se um dia alguém precisar exportar, é outro item
 20b. [x] Ler a Escala direto (eventos, entrega, plantão, líderes, competição × frente) de
     hora em hora pelo n8n, mais "Sincronizar agora" no Admin (28/09; como ficou em
     `05-onde-paramos.md`)
@@ -73,8 +74,8 @@ perder nada.
 22. [x] Quadro (`/kanban`): pendente / fazendo / feita, por frente que o líder lidera ou
     todas pro gestor — visão que nem `/frente` (tabela) nem `/painel` (números do mês) dão
 
-**Pronta quando** a Bárbara puxa o relatório de uma semana de Programas no app, e o CSV
-bate com o que o script geraria.
+**Pronta quando** um líder de frente resolve a semana inteira da frente dele no app —
+quem fez, o que não era necessário, o que atrasou — sem planilha do lado.
 
 ## Fase 4 — piloto
 
@@ -82,10 +83,10 @@ bate com o que o script geraria.
     ninguém além do Daniel conseguiria
 24. Página explicando o que o líder vê e o que ninguém vê
 25. Duas semanas de uso real
-26. Comparar o fechamento do app com o do script, semana a semana
+26. ~~Comparar o fechamento do app com o do script~~ — não há mais script para comparar
 
 **Pronta quando** pelo menos 5 das 7 pessoas continuam registrando na segunda semana sem
-ninguém cobrar, e o fechamento do app bate com o do script.
+ninguém cobrar.
 
 ## Depois
 

@@ -197,3 +197,12 @@ sessão: sessão é a mesma tarefa em vários trechos, sem escopo novo. Desenho:
 `subtarefas` (tarefa, título, pessoa, status) e `sessoes.subtarefa_id` opcional — o total
 da tarefa continua saindo de `v_tempo_tarefa`, porque a sessão segue apontando para a
 tarefa. `gerar_tarefas` e a chave `(evento, atividade)` não mudam.
+
+## 28/09/2026 — o fluxo de CSV do dimensionamento fica ignorado
+
+`acompanhamento/registro/*.csv` (o líder preenche `responsavel_real` à mão e manda pro
+Yuri) e `fechar_semana.py` deixam de ser referência. Este app é quem registra se a ação foi
+feita, por quem e em quanto tempo; nada precisa "bater com o script". Some do plano o
+relatório de período e a exportação em CSV — se alguém um dia precisar exportar, é um
+pedido novo. Do repositório do Yuri, o que continua valendo é só o que entra como dado:
+`pessoas.csv`, `decisoes.yaml`, `mapa_aprovado.csv`, `taxas.yaml`.
