@@ -14,15 +14,14 @@ export const runtime = "nodejs";
 const ESCALA_API_URL = "https://escala-opec.vercel.app";
 const PISO = "2026-09-21"; // o app não conta carga antes disso (supabase/README.md)
 
-// Os 6 fixos existem nos dois apps com e-mails diferentes (breis@ na Escala,
-// barbara@ nas Atividades) — o de-para é por nome, então fica explícito aqui.
+// A Escala exporta o plantão pelo nome de exibição; aqui a chave é o e-mail (027).
 const PESSOA_POR_NOME: Record<string, string> = {
-  "Bárbara Reis": "barbara@livemode.com",
-  "Gabriel Duarte": "gabriel@livemode.com",
-  "Julia Bruno": "julia@livemode.com",
-  "Juliana Becker": "juliana@livemode.com",
-  "Lucas Matias": "lucas@livemode.com",
-  "Pedro Lopes": "pedro@livemode.com",
+  "Bárbara Reis": "breis@livemode.com",
+  "Gabriel Duarte": "gduarte@livemode.com",
+  "Julia Bruno": "jbruno@livemode.com",
+  "Juliana Becker": "jbecker@livemode.com",
+  "Lucas Matias": "lmatias@livemode.com",
+  "Pedro Lopes": "plopes@livemode.com",
 };
 
 type EventoEscala = {
@@ -200,6 +199,9 @@ export async function POST(req: NextRequest) {
     p_fim: fim.toISOString().slice(0, 10),
   });
   if (erroGerar) return json({ erro: `gerar_tarefas: ${erroGerar.message}` }, 500);
+
+  const { error: erroCancelados } = await admin.rpc("desfazer_tarefas_de_evento_cancelado");
+  if (erroCancelados) return json({ erro: `desfazer cancelados: ${erroCancelados.message}` }, 500);
 
   return json({
     ok: true,

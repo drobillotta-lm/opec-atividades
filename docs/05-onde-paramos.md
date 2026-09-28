@@ -1,117 +1,115 @@
-# Onde paramos — 23/09/2026
+# Onde paramos — 28/09/2026
 
-Uma madrugada de trabalho, da fundação ao app no ar (21/09). Em 23/09, uma sessão inteira
-de uso real: import da Escala ligado e testado ponta a ponta, bugs achados testando (login,
-dock, tema, relógio compartilhado) corrigidos, Admin escreve de verdade (competição, frente
-nova, evento avulso), busca/ajudar tarefa de outra pessoa, quadro kanban, e "atividade
-desnecessária". Este arquivo é o ponto de retomada.
+Revisão geral do projeto, uma semana depois de subir. O fato que reorganizou tudo: **o app
+estava no ar e ninguém do time tinha entrado** — nem conseguiria, porque os e-mails dos seis
+fixos eram um palpite. Este arquivo é o ponto de retomada; `01-decisoes.md` tem o porquê de
+cada mudança de 28/09.
 
 ## O que está no ar
 
 | Coisa | Onde | Estado |
 |---|---|---|
-| App | https://opec-atividades.vercel.app | no ar, login funcionando |
-| Banco | Supabase `igzrrsqmweuritiqrmrh`, sa-east-1 | 25 migrations aplicadas |
-| Login | Google restrito a `@livemode.com` | funcionando (Site URL da Supabase corrigida em 23/09) |
-| Importação da Escala | `/api/importar-escala`, 2x/dia via GitHub Actions | ligada e testada — rodou de verdade |
-| Decisão de entrega | Escala (`entrega.html`, fila do líder) | Atividades só lê, com link pra lá (23/09) |
-| Mockup | https://claude.ai/artifact/8xPnpgKwETbJKPFzdzfCFR | desatualizado — não tem busca, quadro, nem criar frente |
+| App | https://opec-atividades.vercel.app | no ar, deploy **manual** (`npx vercel deploy --prod --yes --scope drobillotta-2740`) |
+| Banco | Supabase `igzrrsqmweuritiqrmrh`, sa-east-1 | 28 migrations, banco = repo |
+| Login | Google restrito a `@livemode.com` | e-mails reais desde a `027` — só o Daniel entrou até hoje |
+| Eventos, entrega, plantão | importados da Escala 2x/dia (`/api/importar-escala`, GitHub Actions) | funciona; **vai ser trocado por leitura direta** (abaixo) |
+| Mapa | `config/mapa_aprovado.csv` do Yuri, commit `a7a7f864` | setembro a dezembro importados (`005`, `026`) |
+| Mockup | — | abandonado; `04-telas.md` descreve o código |
 
 Rotas: `/entrar`, `/fora-do-time`, `/semana`, `/frente`, `/kanban`, `/painel`, `/admin`,
 `/admin/eventos`, `/dock`.
 
-## O que o banco tem hoje
+## O que o banco tem hoje (28/09, depois das migrations 026–028)
 
 | Tabela | Linhas |
 |---|---|
-| pessoas | 9 (7 fixas mais gestores) |
-| frentes | 6, sendo 5 ativas |
-| mapa | 18 (setembro/2026) |
-| competições | 52, sendo **6 ainda sem frente** — classificar em `/admin` |
-| eventos | 365, sendo **98 sem frente** e **88 com entrega indefinida** (essa decisão é da Escala agora) |
-| tarefas | 57, todas com `status` útil (nenhuma `na` ainda — a opção é nova) |
-| plantões | 1 (Lucas, 29/09) — cresce conforme a Escala aprovar rodadas |
+| pessoas | 9 (7 fixas ativas, Vitor com saída em 01/09, Yuri) |
+| frentes | 6, sendo 5 ativas — Nacional agora tem líder (Juliana) |
+| mapa | 72 (18 por mês, setembro a dezembro) |
+| competições | 55, **9 sem frente** — a Escala já classifica 27 delas em `escala.competicoes.frente_codigo` |
+| eventos | 379, 109 sem frente, 92 com entrega indefinida |
+| tarefas | **416**: 53 de setembro (2 entregues) e 363 de outubro, todas pendentes. As 16 de eventos cancelados sumiram (`028`) |
+| sessões | 27, todas do Daniel, a última em 23/09 |
+| plantões | 1 |
+
+## O que decidimos em 28/09 (resumo; detalhe no `01-decisoes.md`)
+
+- **Tarefa nasce e morre com o evento.** Não existe "fechar a semana". Relatório e CSV são
+  leitura sob demanda de qualquer período.
+- **O app lê a Escala direto**, em vez da exportação HTTP 2x/dia.
+- Mapa entra até onde o Yuri aprovou. E-mails são os da Escala. Juliana lidera Nacional.
+  Vitor está fora. Kings fica inativa. Mockup abandonado. Dock continua, e ganha
+  "subdividir atividade".
 
 ## O que falta, em ordem
 
-1. **Fechar a semana** reproduzindo os números do `fechar_semana.py`, e exportar o CSV no
-   formato de `acompanhamento/registro/`. É o que tira a Bárbara do CSV.
-2. **Painel sem competência fixa.** Hoje setembro/2026 está escrito no código.
-3. **Admin: só pessoas continua só leitura** (frentes já ganhou criação em 23/09).
-4. **A competição duplicada por aspas escapadas.** `Programa "Quem Fez, Fez!" 2026`
-   (classificada) e `"Programa ""Quem Fez, Fez!"" 2026"` (a mesma, vinda da Escala com
-   aspas duplicadas, sem frente) são a mesma competição em duas linhas. Mesclar em
-   `/admin` e, se voltar a acontecer, olhar a origem no lado da Escala.
-5. **A tela do líder na Escala é muito nova.** `entrega.html` foi commitada e deployada
-   por outra sessão bem no meio do dia 23/09 — vale conferir com o Yuri se está fluindo
-   na prática antes de assumir que "linkar pra lá" resolve de verdade.
-
-**Feito em 24/09**: ajuste manual avulso — botão "ajustar tempo" em pausadas, pendentes e
-entregues, mesma tabela `ajustes_tempo` da entrega (motivo obrigatório, minutos negativos
-descontam). Não existia entrada na tela antes; só a entrega gravava ajuste.
+1. **Ler a Escala direto** (`lbcvhgqxnchszqaudzui`, schema `escala`). Proposta:
+   - O servidor do Atividades usa a service key da Escala (`ESCALA_SUPABASE_URL` +
+     `ESCALA_SERVICE_KEY` na Vercel) e lê `escala.eventos`, `escala.alocacoes` (plantão
+     confirmado dos fixos), `escala.frentes` (líderes) e `escala.competicoes`
+     (`frente_codigo`, `entrega_padrao`). Sem rota HTTP, sem `EXPORTAR_TOKEN`.
+   - `tarefas` continua apontando para o `eventos` local (chave `airtable_record_id`), então
+     a leitura sincroniza a tabela local — mas de hora em hora, disparada pelo n8n logo
+     depois do Ingestor da Escala (`:05`), mais um botão "Sincronizar agora" em `/admin`.
+   - A classificação competição × frente passa a vir da Escala; o `/admin` daqui só cobre o
+     que a Escala ainda não classificou.
+   - Alternativa considerada: foreign table (`postgres_fdw`) — mais elegante, mas exige
+     senha do banco da Escala no Vault e não elimina a tabela local por causa das chaves.
+2. **Relatório de período + CSV** no formato de `acompanhamento/registro/` (item 20 do
+   plano). `v_semana_frente` já tem os números; falta a tela e o arquivo.
+3. **Painel: corte por frente.** A navegação por mês entrou em 28/09.
+4. **Dock**: atalhos, posição lembrada, e a forma de "subdividir atividade" (a detalhar com
+   o Daniel: sub-tarefa com cronômetro próprio, ou só uma lista de partes?).
+5. **Admin: pessoas** continua só leitura.
+6. **Competição duplicada por aspas** (`Programa "Quem Fez, Fez!" 2026` × versão com aspas
+   dobradas). **A origem é a Escala**: `escala.competicoes` tem a linha com as aspas
+   dobradas. Corrigir lá; aqui, mesclar.
+7. **Ligar a Vercel ao Git.** `vercel git connect` falhou: a conta da Vercel precisa ter o
+   GitHub como Login Connection (vercel.com → Settings → Login Connections). Passo manual
+   do Daniel; depois, rodar `npx vercel git connect --yes --scope drobillotta-2740`.
+8. **Piloto.** Agora dá: e-mails certos, outubro gerado. Falta a página "o que o líder vê e
+   o que ninguém vê" (item 24) e chamar as pessoas.
 
 ## Armadilhas que já custaram tempo
 
-- **O `?code` do OAuth cai em qualquer caminho.** Quando a `redirectTo` não está na lista de
-  Redirect URLs, o Supabase joga a pessoa no Site URL com o `code` na query. O middleware
-  desvia para `/auth/callback` antes de qualquer checagem de sessão, senão o code se perde.
-  Mordeu de verdade em 23/09: o Site URL da Supabase ainda apontava pra `localhost:3000`.
+- **E-mail é a chave da conta.** `private.liga_conta()` casa a conta Google pelo e-mail no
+  primeiro login. E-mail errado em `pessoas` = "fora do time" para sempre. Os reais são os
+  de `escala.pessoas`; nunca inventar.
+- **`gerar_tarefas` sem mapa do mês devolve `sem_escalado`, em silêncio.** Foi assim que
+  outubro ficou vazio até 28/09. Comparar `mapa` com os meses do CSV do Yuri ao voltar.
+- **Função chamada numa CTE não muda a foto da mesma query.** `with g as (select * from
+  gerar_tarefas(...)) select count(*) from tarefas` conta o antes. Verificar em query nova.
+- **O `?code` do OAuth cai em qualquer caminho.** Sem a `redirectTo` na lista, o Supabase
+  joga a pessoa no Site URL com o `code` na query; o middleware desvia para
+  `/auth/callback` antes de qualquer checagem.
 - **O middleware de sessão engole rota que se autentica sozinha.** `/api/importar-escala`
-  não tem cookie nenhum (é o GitHub Actions chamando direto); sem exceção no middleware,
-  toda chamada virava 307 pra `/entrar` antes do handler ver o `CRON_SECRET`.
-- **`v_tempo_tarefa.sessao_aberta_desde` é da tarefa, não da pessoa.** Bateu na prática:
-  o botão Pausar de uma pessoa mostrava "Em andamento" só porque outra cronometrava a
-  mesma tarefa. `/semana` e `/dock` buscam `sessoes` direto pra "minha sessão aberta";
-  `/kanban` é o único lugar que quer o agregado (visão de gestor), e mostra o nome de quem.
-- **Cor de tema presa em hex cru vira caixa preta no tema claro.** Regra: cor que depende
-  de tema é variável CSS (`--verde-fundo`, `--ambar-fundo`), nunca hex direto no className.
-- **Document Picture-in-Picture fecha junto com a aba que abriu — é regra da API, sem
-  contorno.** Trocado por `window.open` comum em 23/09: fica aberto o dia todo, perde o
-  "sempre por cima" automático.
-- **Evento novo não herdava a frente da competição já classificada** (`013` só propaga em
-  `update` de `competicoes`, nunca no insert de um evento). 233 dos 365 eventos do import
-  da Escala ficaram assim. Fechado na `024` com gatilho `before insert`.
-- **`frentes.sigla` era lista fechada** (FI/OL/PR/CP/NA/KG) — bloqueava criar frente pela
-  tela. Virou formato (`025`).
-- **`sessoes` nunca checou dono da tarefa** — `minhas_sessoes` (RLS) só exige
-  `pessoa_id = eu` desde a `003`. Ajudar tarefa de outra pessoa (`022`) só precisou abrir
-  a leitura de `tarefas`.
-- **"Atividade desnecessária" já era um status pronto.** `na` + `excecao` + `excecao_desc`
-  existiam desde a fundação, `v_semana_frente` já contava `nao_aplicaveis`; só faltava o
-  botão (23/09).
-- **Frente pode ser exceção por evento** (`classificarEvento`), mas reclassificar a
-  competição inteira depois sobrescreve isso sem avisar — `013` não tem guarda. Caso raro,
-  não veio guarda por enquanto.
-- **`opec-escala` está mudando rápido, e não é só eu quem mexe.** No meio da sessão de
-  23/09, o repo tinha ~10 commits novos que eu não tinha puxado (fila de entrega do líder,
-  SOFIA 2.0 check-in/out, trava de segurança, ajustes de La Liga e do Ingestor) — de
-  alguém trabalhando em paralelo. `git fetch` antes de confiar no que leu de lá.
-- **Os 6 fixos têm e-mail diferente em cada app.** `breis@` na Escala, `barbara@` aqui. O
-  de-para de `importar-escala/route.ts` é por nome, hardcoded.
-- **`plantoes` é um registro por pessoa e dia, não por evento.** `unique(pessoa_id, data)`
-  é proposital: duas alocações no mesmo dia são o mesmo turno, não somam horas.
-- **Vercel Hobby só deixa cron nativo rodar 1x/dia.** As duas rodadas (08h/20h) saem do
-  GitHub Actions, não do `vercel.json`.
-- **`vercel env pull` nunca devolve o valor de uma env tipo Secret.** Por isso a
-  exportação da Escala usa um token próprio (`EXPORTAR_TOKEN`, distinto do `AGENTE_TOKEN`
-  do n8n).
-- **`gerar_tarefas` foi reescrita quatro vezes** (`008`, `012`, `015`, `017`). A versão
-  viva é a v4: só evento `normal` com `entrega = true`, janela pela `cadeia`.
-- **Semana não é "os eventos da semana".** É a tarefa cuja janela cruza a semana. Usar
-  `tarefas_da_semana(inicio, fim)`.
-- **Os offsets da janela são um palpite.** Deliberadamente generoso.
-- **Não há carga de setembro até o dia 20.** O app conta a partir de 21/09.
+  precisa de exceção, senão vira 307 antes do handler ver o `CRON_SECRET`.
+- **`v_tempo_tarefa.sessao_aberta_desde` é da tarefa, não da pessoa.** `/semana` e `/dock`
+  buscam `sessoes` direto pra "minha sessão aberta"; `/kanban` é o único que quer o agregado.
+- **Cor de tema presa em hex cru vira caixa preta no tema claro.** Variável CSS, sempre.
+- **Document Picture-in-Picture fecha junto com a aba.** Por isso o dock é `window.open`.
+- **Evento novo não herdava a frente da competição** (`013` só propagava em update).
+  Fechado na `024` com gatilho `before insert`.
+- **`plantoes` é um registro por pessoa e dia**, não por evento (`unique(pessoa_id, data)`).
+- **Vercel Hobby só deixa cron nativo rodar 1x/dia.** Por isso GitHub Actions — e, no
+  próximo desenho, n8n.
+- **`vercel env pull` nunca devolve o valor de uma env tipo Secret.**
+- **`gerar_tarefas` está na v4** (`017`): só evento `normal`, não cancelado, com
+  `entrega = true`, janela pela `cadeia`. TBD gera tarefa, de propósito.
+- **Semana não é "os eventos da semana"**, é a tarefa cuja janela cruza a semana.
+- **Os offsets da janela são um palpite** deliberadamente generoso.
+- **`opec-escala` muda rápido e não é só o Daniel quem mexe.** `git fetch` antes de confiar.
+- **A Escala tem 8 tabelas sem RLS** (`frentes`, `competicoes`, `rodadas`,
+  `rodada_escolhas`, `pd_planilha`, `notas_fiscais`, `fila_sincronizacao`,
+  `alertas_enviados`), aviso do próprio Supabase em 28/09. É problema de lá, mas vai pesar
+  quando o Atividades ler direto.
 
 ## Combinado com o Daniel
 
-Prefere tarefa a mais e corrigir depois a tarefa que não aparece. Por isso a classificação
-das nove competições novas da `018` foi feita por palpite, com o raciocínio no comentário de
-cada linha, em vez de travar a geração esperando confirmação. **Rever essa classificação é
-um item aberto.**
+Prefere tarefa a mais e corrigir depois a tarefa que não aparece. A classificação das
+competições novas da `018` foi por palpite, com o raciocínio no comentário de cada linha.
+**Rever essa classificação continua aberto** — e pode simplesmente vir da Escala (item 1).
 
-Julia (setembro/2026): materiais de Fut Inter + roteiro de Olímpicos (mapa já correto,
-líder não entra no próprio mapa — é papel separado de execução) + líder de Copas FIFA (já
-no cadastro) + roteiro de tênis, que entra em Olímpicos quando a competição existir (ainda
-não tem evento nenhum de tênis no sistema — nada a fazer até lá). Kings League é frente
-nova de verdade (não é a `KG` que já existe, essa é outra coisa) — criar pela tela quando
-o primeiro evento aparecer.
+Julia (setembro/2026): materiais de Fut Inter + roteiro de Olímpicos + líder de Copas FIFA.
+Roteiro de tênis entra em Olímpicos quando a competição existir. Kings League é frente nova
+de verdade quando aparecer evento com entrega.

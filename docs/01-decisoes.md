@@ -62,8 +62,9 @@ horas, pela regra que já existe no motor.
 
 ## 21/09/2026 — o ciclo é semanal, o fechamento é mensal
 
-Espelha o que já existe: `acompanhamento/registro/*_sem_*.csv` por semana,
-`fechar_mes.py` por mês. A tela principal é a semana. O painel é o mês.
+**Revogada em 28/09/2026** (ver abaixo). Dizia: espelha o que já existe,
+`acompanhamento/registro/*_sem_*.csv` por semana, `fechar_mes.py` por mês; a tela principal
+é a semana, o painel é o mês.
 
 ## 21/09/2026 — cronômetro sim, ajuste manual também
 
@@ -131,3 +132,62 @@ banco e nunca só na tela. Tauri continua sendo o plano B, não o plano.
 O mockup é escuro, de sala de controle, e continua sendo o padrão. Mas o app fica aberto o
 dia inteiro ao lado de planilha e navegador claros, então existe um botão de tema, guardado
 por pessoa. A janela do dock é outro documento: o tema é espelhado nela por observador.
+
+---
+
+As decisões abaixo saíram da revisão geral de 28/09/2026, depois de uma semana com o app no
+ar sem ninguém do time ter entrado.
+
+## 28/09/2026 — a tarefa nasce e morre com o evento; "semana" é só uma lente
+
+Revoga "o ciclo é semanal, o fechamento é mensal". A unidade viva é o evento: ele nasce na
+Matriz, a Escala decide se tem entrega, e daí a tarefa existe — com janela própria, não
+com semana. Nada "abre" nem "fecha": um evento cancelado desfaz a tarefa (`028`), um
+evento novo cria a dele na próxima rodada. `/semana` e `/painel` são recortes de leitura
+sobre esse fluxo contínuo, nunca um estado.
+
+Consequência: **não existe "fechar a semana"**. O que a Bárbara precisa é puxar um
+relatório de qualquer período, a qualquer momento, e exportar no formato de
+`acompanhamento/registro/*.csv`. O CSV continua vivo como saída (ainda não se sabe quem vai
+consumir, nem como), não como fluxo de trabalho.
+
+## 28/09/2026 — o app lê a Escala direto
+
+Continua sendo um app separado (execução e tempo), mas lê o banco da Escala
+(`lbcvhgqxnchszqaudzui`, schema `escala`) em vez de depender da rota de exportação e da
+rodada 2x/dia. A Escala é a fonte de eventos, entrega, plantão, líderes e da própria
+classificação de competição por frente (`escala.competicoes.frente_codigo`). Como ler —
+conexão direta do servidor com a chave da Escala, ou foreign table — está em aberto em
+`05-onde-paramos.md`.
+
+## 28/09/2026 — o mapa entra até onde o Yuri aprovou
+
+`config/mapa_aprovado.csv` tinha outubro, novembro e dezembro desde 14/09; a `005` só
+trouxe setembro e por isso `gerar_tarefas` devolvia 363 "sem escalado" em 28/09. A `026`
+importa os três meses. Regra: se está aprovado lá, entra aqui.
+
+## 28/09/2026 — os e-mails são os da Escala
+
+Os seis fixos estavam com `nome@livemode.com`, um palpite da `004`. Os reais são os que
+eles usam na Escala (`breis@`, `gduarte@`, `jbruno@`, `jbecker@`, `lmatias@`, `plopes@`).
+Com o palpite, o primeiro login de cada um cairia em "fora do time" (`027`).
+
+## 28/09/2026 — cadastro: Juliana lidera Nacional, Vitor está fora, Kings fica inativa
+
+Nacional não tinha líder (no `decisoes.yaml` é dupla fixa Daniel + Juliana, sem líder).
+Juliana lidera e também executa — a regra "líder não executa a própria frente" nunca valeu
+para a dupla fixa. Vitor já tinha `saida = 01/09` e zero linhas de mapa; nada a apagar,
+só não aparece. Kings (KG) tem 3 competições e 3 eventos no banco, todos sem entrega;
+continua inativa até aparecer evento com entrega.
+
+## 28/09/2026 — o mockup foi abandonado
+
+`claude.ai/artifact/8xPnpgKwETbJKPFzdzfCFR` parou em 21/09 e não tem busca, quadro, criar
+frente nem atividade desnecessária. O código é a referência visual; `04-telas.md` descreve
+o que está no ar.
+
+## 28/09/2026 — dock continua no plano, e ganha "subdividir atividade"
+
+Atalhos de teclado e posição lembrada continuam antes do piloto. Pedido novo do Daniel: a
+pessoa poder quebrar uma atividade em partes menores, para se organizar — a detalhar
+(sub-tarefa com cronômetro próprio? só checklist?).

@@ -1,9 +1,8 @@
 # Telas
 
-Mockup navegável: https://claude.ai/artifact/8xPnpgKwETbJKPFzdzfCFR
-
-Sete artboards ligados entre si. Dados fictícios, mas as frentes, tarefas, taxas, pessoas e
-competições são as reais do dimensionamento.
+O mockup (`claude.ai/artifact/8xPnpgKwETbJKPFzdzfCFR`) foi **abandonado em 28/09/2026**: o
+código é a referência. A tabela abaixo é o que ele previa; a de "o que virou código" é o
+que está no ar.
 
 | Tela | Para quem | O que resolve |
 |---|---|---|
@@ -15,20 +14,20 @@ competições são as reais do dimensionamento.
 | **Painel** | gestor | Horas medidas contra previstas por pessoa, e as taxas que não batem mais |
 | **Admin** | gestor | Pessoas, frentes, e de onde vem o mapa |
 
-## O que virou código, em 21/09
+## O que está no ar (28/09)
 
-O mockup continua sendo a referência visual, e o app já saiu dele em alguns pontos. Onde
-diverge, vale o código.
-
-| Tela do mockup | Rota | Diferença |
+| Rota | Para quem | O que faz |
 |---|---|---|
-| Entrar | `/entrar` e `/fora-do-time` | igual |
-| Minha semana | `/semana` | tem navegação de semana (‹ hoje ›); **não tem a seção de plantão** |
-| Dock | `/dock` | virou janela Document Picture-in-Picture, aberta por botão, mais atalho de desktop pelo `instalar.ps1`. Um estado só: tarefa atual, barra contra a taxa, pausar/retomar e entregar |
-| Tarefa | — | **não existe como tela.** Entrega e tempo acontecem no diálogo dentro de `/semana` |
-| Frente | `/frente` | tem também "tem entrega?" para o líder resolver o evento |
-| Painel | `/painel` | competência fixa em setembro/2026; sem o corte por frente |
-| Admin | `/admin` | ganhou as duas filas que o mockup não previa: competição sem frente e evento com entrega indefinida |
+| `/entrar`, `/fora-do-time` | todos | Google restrito a `@livemode.com`; quem não está em `pessoas` cai em fora do time |
+| `/semana` | todos | Pendentes, pausadas, entregues e não aplicáveis, com navegação ‹ hoje ›. Iniciar/pausar/entregar, ajustar tempo (avulso), marcar não necessária, e buscar tarefa de outra pessoa para puxar ou ajudar. **Não tem a seção de plantão** |
+| `/dock` | todos | Janela `window.open` comum (a Picture-in-Picture fechava com a aba): tarefa atual, barra contra a taxa, pausar/retomar, entregar. Atalho de desktop pelo `instalar.ps1` |
+| `/frente` | líder, gestor | A semana da frente, escalado ao lado de quem fez; o líder resolve quem fez na linha |
+| `/kanban` | líder, gestor | Pendente / fazendo / feita por frente |
+| `/painel` | gestor | Horas medidas contra previstas por pessoa e "a taxa ainda vale?", por mês com ‹ hoje › |
+| `/admin` | gestor | Classificar competição sem frente (ou criar frente), pessoas em leitura |
+| `/admin/eventos` | gestor | Entrega, tarefas e responsáveis por evento — entrega é leitura, quem decide é o líder na Escala |
+
+Não existe tela de "tarefa": entrega e tempo acontecem em diálogos dentro de `/semana`.
 
 Fora do mockup: **tema claro e escuro**. O escuro continua sendo o padrão.
 

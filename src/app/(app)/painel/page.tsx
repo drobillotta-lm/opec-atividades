@@ -1,11 +1,22 @@
+import Link from "next/link";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { hhmm, ROTULO_ATIVIDADE } from "@/lib/semana";
 
 export const dynamic = "force-dynamic";
 
-const COMPETENCIA = "2026-09-01";
+/** Competência = primeiro dia do mês. Sem `?mes=`, o mês corrente. */
+function competenciaDe(mes?: string) {
+  const m = mes && /^\d{4}-\d{2}$/.test(mes) ? new Date(`${mes}-01T12:00:00-03:00`) : new Date();
+  return new Date(Date.UTC(m.getFullYear(), m.getMonth(), 1));
+}
+const chaveMes = (d: Date) => d.toISOString().slice(0, 7);
+const deslocarMes = (d: Date, n: number) => new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + n, 1));
+const rotuloMes = (d: Date) => d.toLocaleDateString("pt-BR", { month: "long", year: "numeric", timeZone: "UTC" });
 
-export default async function Painel() {
+export default async function Painel({ searchParams }: { searchParams: Promise<{ mes?: string }> }) {
+  const sp = await searchParams;
+  const competencia = competenciaDe(sp.mes);
+  const COMPETENCIA = competencia.toISOString().slice(0, 10);
   const supabase = await criarClienteServidor();
   const { data: pessoas } = await supabase
     .from("v_mes_pessoa").select("*").eq("competencia", COMPETENCIA).order("minutos_previstos", { ascending: false });
@@ -19,9 +30,16 @@ export default async function Painel() {
 
   return (
     <div className="p-6 px-8 flex flex-col gap-5 max-w-[1080px]">
-      <header className="flex flex-col gap-1.5">
-        <h1 className="text-[23px] font-semibold tracking-[-0.02em]">Painel · setembro 2026</h1>
-        <p className="text-[12.5px] text-tinta-3">O que o mapa previu e o que de fato aconteceu</p>
+      <header className="flex items-end justify-between gap-5">
+        <div className="flex flex-col gap-1.5">
+          <h1 className="text-[23px] font-semibold tracking-[-0.02em]">Painel · {rotuloMes(competencia)}</h1>
+          <p className="text-[12.5px] text-tinta-3">O que o mapa previu e o que de fato aconteceu</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Seta href={`/painel?mes=${chaveMes(deslocarMes(competencia, -1))}`} rotulo="Mês anterior">‹</Seta>
+          <Seta href="/painel" rotulo="Mês atual">hoje</Seta>
+          <Seta href={`/painel?mes=${chaveMes(deslocarMes(competencia, 1))}`} rotulo="Próximo mês">›</Seta>
+        </div>
       </header>
 
       <div className="grid grid-cols-3 gap-3">
@@ -92,6 +110,15 @@ export default async function Painel() {
         defasada, medida uma única vez em julho.
       </p>
     </div>
+  );
+}
+
+function Seta({ href, rotulo, children }: { href: string; rotulo: string; children: React.ReactNode }) {
+  return (
+    <Link href={href} aria-label={rotulo}
+      className="min-h-[36px] min-w-[36px] px-3 grid place-items-center rounded-lg border border-linha bg-superficie text-[12.5px] text-tinta-2 hover:bg-elevado transition">
+      {children}
+    </Link>
   );
 }
 
