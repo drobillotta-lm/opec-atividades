@@ -13,7 +13,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Chamar /api/importar-escala
+        # Sem -f: o corpo da resposta e o que diz o que deu errado (a rota devolve
+        # {"erro": ...}); com -f o log so mostrava "curl: (22)" e o relogio ficou
+        # parado dias sem ninguem ver. O passo falha pelo codigo HTTP, nao pelo curl.
         run: |
-          curl -sf -X POST "https://opec-atividades.vercel.app/api/importar-escala" \
+          codigo=$(curl -s -o resposta.json -w "%{http_code}" -X POST "https://opec-atividades.vercel.app/api/importar-escala" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            -H "content-type: application/json"
+            -H "content-type: application/json")
+          echo "HTTP $codigo"; cat resposta.json; echo
+          test "$codigo" = "200"
