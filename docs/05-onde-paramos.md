@@ -9,7 +9,7 @@ cada mudança de 28/09.
 
 | Coisa | Onde | Estado |
 |---|---|---|
-| App | https://opec-atividades.vercel.app | no ar, deploy **manual** (`npx vercel deploy --prod --yes --scope drobillotta-2740`) |
+| App | https://opec-atividades.vercel.app | no ar; **ligado ao Git desde 28/09** — `git push` na `main` publica sozinho |
 | Banco | Supabase `igzrrsqmweuritiqrmrh`, sa-east-1 | 28 migrations, banco = repo |
 | Login | Google restrito a `@livemode.com` | e-mails reais desde a `027` — só o Daniel entrou até hoje |
 | Eventos, entrega, plantão | importados da Escala 2x/dia (`/api/importar-escala`, GitHub Actions) | funciona; **vai ser trocado por leitura direta** (abaixo) |
@@ -64,9 +64,9 @@ Rotas: `/entrar`, `/fora-do-time`, `/semana`, `/frente`, `/kanban`, `/painel`, `
 6. **Competição duplicada por aspas** (`Programa "Quem Fez, Fez!" 2026` × versão com aspas
    dobradas). **A origem é a Escala**: `escala.competicoes` tem a linha com as aspas
    dobradas. Corrigir lá; aqui, mesclar.
-7. **Ligar a Vercel ao Git.** `vercel git connect` falhou: a conta da Vercel precisa ter o
-   GitHub como Login Connection (vercel.com → Settings → Login Connections). Passo manual
-   do Daniel; depois, rodar `npx vercel git connect --yes --scope drobillotta-2740`.
+7. ~~Ligar a Vercel ao Git~~ — feito em 28/09. Precisou de dois passos manuais na conta do
+   Daniel: Login Connection com o GitHub na Vercel, e instalar o app da Vercel no GitHub
+   (`github.com/apps/vercel`) com acesso ao repositório. A Escala continua manual.
 8. **Piloto.** Agora dá: e-mails certos, outubro gerado. Falta a página "o que o líder vê e
    o que ninguém vê" (item 24) e chamar as pessoas.
 
