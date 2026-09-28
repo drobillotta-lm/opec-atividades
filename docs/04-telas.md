@@ -19,8 +19,9 @@ que está no ar.
 | Rota | Para quem | O que faz |
 |---|---|---|
 | `/entrar`, `/fora-do-time` | todos | Google restrito a `@livemode.com`; quem não está em `pessoas` cai em fora do time |
-| `/semana` | todos | Pendentes, pausadas, entregues e não aplicáveis, com navegação ‹ hoje ›. Iniciar/pausar/entregar, ajustar tempo (avulso), marcar não necessária, e buscar tarefa de outra pessoa para puxar ou ajudar. **Não tem a seção de plantão** |
-| `/dock` | todos | Janela `window.open` comum (a Picture-in-Picture fechava com a aba): tarefa atual, barra contra a taxa, pausar/retomar, entregar. Atalho de desktop pelo `instalar.ps1` |
+| `/semana` | todos | Pendentes, pausadas, entregues e não aplicáveis, com navegação ‹ hoje ›. Iniciar/pausar/entregar, ajustar tempo (avulso), marcar não necessária, **dividir em partes** (sub-tarefas com dono e cronômetro próprios), e buscar tarefa de outra pessoa para puxar ou ajudar. **Não tem a seção de plantão** |
+| `/dock` | todos | Janela `window.open` comum (a Picture-in-Picture fechava com a aba): tarefa atual (e a parte, se o relógio estiver numa), barra contra a taxa, pausar/retomar, entregar. Atalho de desktop pelo `instalar.ps1` |
+| `/como-funciona` | todos | O que fica registrado, quem vê o quê, o que o app não faz — a página de confiança do piloto |
 | `/frente` | líder, gestor | A semana da frente, escalado ao lado de quem fez; o líder resolve quem fez na linha |
 | `/kanban` | líder, gestor | Pendente / fazendo / feita por frente |
 | `/painel` | gestor | Horas medidas contra previstas por pessoa e "a taxa ainda vale?", por mês com ‹ hoje › |

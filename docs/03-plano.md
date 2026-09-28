@@ -47,8 +47,9 @@ perder nada.
 14. [ ] Atalhos de teclado para mostrar e para pausar
 15. [ ] Posição lembrada entre sessões — agora dá pra passar `left`/`top` pro
     `window.open`, só falta guardar a posição de quando a pessoa arrasta a janela
-15b. [ ] Sub-tarefas: escopo e cronômetro próprios, podem ser de outra pessoa, somam na
-    tarefa-mãe (`subtarefas` + `sessoes.subtarefa_id`; decisão de 28/09)
+15b. [x] Sub-tarefas: escopo e cronômetro próprios, podem ser de outra pessoa, somam na
+    tarefa-mãe (`subtarefas` + `sessoes.subtarefa_id`, `030`; botão "dividir" em
+    `/semana`, dock mostra a parte). **Ainda sem teste de uso real** (28/09)
 
 **Pronta quando** dá para trabalhar um dia inteiro sem abrir o app inteiro.
 

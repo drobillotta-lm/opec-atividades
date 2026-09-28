@@ -38,6 +38,7 @@ no projeto, em ordem. O modelo e as regras de acesso estão explicados em
 | `027_emails_reais_e_lider_de_nacional.sql` | E-mails dos 6 fixos passam a ser os da Escala (`breis@` etc.; os antigos eram palpite e quebravam o primeiro login); Juliana lidera Nacional |
 | `028_desfazer_tarefa_de_evento_cancelado.sql` | `desfazer_tarefas_de_evento_cancelado()`: sem sessão nem ajuste a tarefa some, com tempo vira `na`/`cancelado`. Roda a cada sincronização |
 | `029_evento_herda_frente_na_sincronizacao.sql` | `herdar_frente_da_competicao()`: evento que já existia sem frente quando a competição foi classificada por outro caminho. Roda a cada sincronização |
+| `030_subtarefas.sql` | Sub-tarefas: `subtarefas` (título, dono, quem criou, status), `sessoes.subtarefa_id` opcional com gatilho de coerência, RLS, e `v_tempo_subtarefa`. `v_tempo_tarefa` não muda: o tempo da parte soma na tarefa-mãe |
 
 ## Regras
 

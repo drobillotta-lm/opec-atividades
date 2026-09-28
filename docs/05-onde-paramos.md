@@ -10,7 +10,7 @@ cada mudança de 28/09.
 | Coisa | Onde | Estado |
 |---|---|---|
 | App | https://opec-atividades.vercel.app | no ar; **ligado ao Git desde 28/09** — `git push` na `main` publica sozinho |
-| Banco | Supabase `igzrrsqmweuritiqrmrh`, sa-east-1 | 29 migrations, banco = repo |
+| Banco | Supabase `igzrrsqmweuritiqrmrh`, sa-east-1 | 30 migrations, banco = repo |
 | Login | Google restrito a `@livemode.com` | e-mails reais desde a `027` — só o Daniel entrou até hoje |
 | Eventos, entrega, plantão, líderes, competição × frente | **lidos direto do banco da Escala** (`src/lib/escala/sincronizar.ts`), de hora em hora aos :15 pelo n8n (`Atividades OPEC · Sincronizar Escala`, `WVmEyD6wboZR45dJ`) e pelo botão "Sincronizar agora" do `/admin` | no ar desde 28/09; a rota `/api/importar-escala` é só a casca que o n8n chama |
 | Mapa | `config/mapa_aprovado.csv` do Yuri, commit `a7a7f864` | setembro a dezembro importados (`005`, `026`) |
@@ -80,8 +80,9 @@ competição escrita `BUNDESLIGA`, que não casa com `Bundesliga 2026`. É de l�
 1. **Piloto.** E-mails certos, outubro gerado, `/como-funciona` no ar (28/09). Falta
    chamar as 7 pessoas e acompanhar duas semanas de uso.
 2. **Painel: corte por frente.** A navegação por mês entrou em 28/09.
-3. **Dock e sub-tarefas**: atalhos, posição lembrada, e sub-tarefas (escopo e cronômetro
-   próprios, podem ser de outra pessoa, somam na tarefa-mãe — desenho no `01-decisoes.md`).
+3. **Dock**: atalhos de teclado e posição lembrada. (Sub-tarefas entraram em 28/09 —
+   `030`, botão "dividir" em `/semana`, dock mostra a parte — mas **ninguém testou na
+   tela ainda**; o Daniel confere o fluxo criar → iniciar → concluir antes do piloto.)
 4. **Admin: pessoas** continua só leitura.
 5. **Competição duplicada por aspas** (`Programa "Quem Fez, Fez!" 2026` × versão com aspas
    dobradas). **A origem é a Escala**: `escala.competicoes` tem a linha com as aspas
