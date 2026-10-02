@@ -45,6 +45,9 @@ no projeto, em ordem. O modelo e as regras de acesso estão explicados em
 | `034_gerar_tarefas_v5_e_reaplicar_mapa.sql` | `gerar_tarefas` v5 (cadeia vigente + dupla), `desfazer_tarefas_fora_da_cadeia()`, `reaplicar_mapa()` |
 | `035_mapa_outubro_teste_do_yuri.sql` | OL vira "Olímpicos + Tênis"; mapa de FI/OL/PR/CP out–dez refeito (outubro e CP do Yuri, FI/OL/PR nov/dez provisórios). Rodado depois: 243 apagadas, 113 criadas, 158 reescaladas |
 | `035b_reaplicar_mapa_sem_ambiguidade.sql` | Corrige a `reaplicar_mapa` da 034 (coluna da CTE com o nome do parâmetro de saída) |
+| `036_entrega_da_escala.sql` | `eventos.entrega_escala` (valor cru da Escala), `aplicar_entrega_da_escala()` (sim/não valem; indefinido desfaz decisão da Escala, nunca a do líder) e previsão v3, que reavalia o que ela mesma previu |
+| `037_desfazer_tarefas_sem_entrega.sql` | `desfazer_tarefas_sem_entrega()`: espelho da 028 para evento que perdeu a entrega, e reabre quando ela volta; só do mês corrente em diante. Endurece a 036 (só `'indefinido'` explícito desfaz). Primeira rodada: 8 apagadas |
+| `038_sincronizacoes.sql` | Log de cada sincronização (`relogio`/`botao`, resumo ou erro); só gestor lê, 30 dias |
 
 ## Regras
 

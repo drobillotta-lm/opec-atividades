@@ -192,7 +192,7 @@ export async function reverterDesnecessaria(tarefaId: string) {
 export async function sincronizarAgora() {
   const { pessoa } = await eu();
   if (pessoa.papel !== "gestor") throw new Error("só gestor sincroniza");
-  await sincronizarEscala();
+  await sincronizarEscala("botao");
   for (const rota of ["/admin", "/admin/eventos", "/semana", "/frente", "/kanban", "/painel"]) revalidatePath(rota);
 }
 

@@ -102,6 +102,7 @@ tipo                text not null default 'normal'
                     -- 'normal'|'reprise'|'gravacao'|'externa'|'sem_narracao'|'pre_jogo'
 entrega             boolean              -- tem entrega comercial? null = indefinido
 entrega_origem      text                 -- 'previsto'|'escala'|'lider'
+entrega_escala      text                 -- valor cru do tem_entrega da Escala: 'sim'|'nao'|'indefinido' (036)
 status_origem       text
 detentor            text
 last_modified       timestamptz          -- do Airtable, para varredura incremental
@@ -190,6 +191,8 @@ conta **meio a meio** (previsto e medido) pros dois, a menos que um terceiro ten
 | `gerar_tarefas(inicio, fim)` | Cria as tarefas dos eventos do período: só evento com `entrega = true` e `tipo = 'normal'`, uma tarefa por elo da `cadeia`, estimativa pela taxa vigente, janela pelos offsets, dupla do mapa. Está na v5 (`034`): cadeia pela `cadeia_vigente` |
 | `desfazer_tarefas_fora_da_cadeia()` | Pendente do mês corrente em diante cuja atividade saiu da cadeia vigente: sem tempo some, com tempo vira `na`/`fora_da_cadeia` (`034`) |
 | `reaplicar_mapa(competencia)` | Alinha escalado e dupla das pendentes sem tempo ao mapa do mês, só em elo `escalado_regra = 'mapa'`. Devolve reescaladas, sem mapa e divergentes com tempo (`034`/`035b`) |
+| `aplicar_entrega_da_escala()` | Aplica `entrega_escala`: sim/não com origem `escala`; `indefinido` volta a null só se a decisão era da Escala; `lider` nunca muda (`036`/`037`) |
+| `desfazer_tarefas_sem_entrega()` | Pendente do mês corrente em diante em evento sem entrega: sem tempo some, com tempo vira `na`/`sem_entrega`; reabre se a entrega volta (`037`) |
 | `private.cadeia_vigente(frente, competicao, data)` | A cadeia em vigor na data; competição vence frente (`032`) |
 | `tarefas_da_semana(inicio, fim)` | A semana de uma pessoa: tarefa cuja janela cruza a semana pedida, não os eventos da semana (`016`) |
 | `private.taxa_min(atividade, data)` | A taxa vigente naquela data |

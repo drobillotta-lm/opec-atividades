@@ -3,6 +3,7 @@ import { criarClienteServidor } from "@/lib/supabase/server";
 import { classificarCompeticao, criarFrenteEClassificar, sincronizarAgora } from "../acoes";
 import { ClassificarFrente } from "@/componentes/ClassificarFrente";
 import { Submit } from "../semana/Cronometro";
+import type { ResumoSincronizacao } from "@/lib/escala/sincronizar";
 
 export const dynamic = "force-dynamic";
 
@@ -18,15 +19,17 @@ export default async function Admin() {
     .from("eventos").select("id", { count: "exact", head: true }).is("entrega", null)
     .gte("data", "2026-09-21");
 
-  const { data: ultimo } = await supabase
-    .from("eventos").select("sincronizado_em").not("sincronizado_em", "is", null)
-    .order("sincronizado_em", { ascending: false }).limit(1).maybeSingle();
+  // Log de cada rodada (038): relógio do n8n ou botão daqui.
+  const { data: sincs } = await supabase
+    .from("sincronizacoes").select("id, iniciada_em, terminada_em, disparo, ok, resumo, erro")
+    .order("iniciada_em", { ascending: false }).limit(3);
+  const ultimaOk = (sincs ?? []).find((s) => s.ok);
 
   const nomePor = new Map((pessoas ?? []).map((p) => [p.id, p.nome]));
   const frentesAtivas = (frentes ?? []).filter((f) => f.ativa);
-  const ultimaSinc = ultimo?.sincronizado_em
-    ? new Date(ultimo.sincronizado_em).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })
-    : "nunca";
+  const quando = (iso: string) =>
+    new Date(iso).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+  const ultimaSinc = ultimaOk?.terminada_em ? quando(ultimaOk.terminada_em) : "nunca";
 
   return (
     <div className="p-6 px-8 flex flex-col gap-5 max-w-[1080px]">
@@ -80,6 +83,34 @@ export default async function Admin() {
         </div>
         <span className="text-tinta-4">→</span>
       </Link>
+
+      <Cartao titulo="Última sincronização" nota="as 3 últimas rodadas com a Escala">
+        {(sincs ?? []).length === 0 && <p className="py-2 text-[12.5px] text-tinta-4">Nenhuma rodada registrada ainda.</p>}
+        {(sincs ?? []).map((s) => {
+          const r = s.resumo as ResumoSincronizacao | null;
+          return (
+            <div key={s.id} className="flex flex-col gap-0.5 py-2 border-t border-linha-2 text-[12.5px]">
+              <span className={s.ok === false ? "text-rosa" : "text-tinta-2"}>
+                {quando(s.iniciada_em)} · {s.disparo === "botao" ? "botão" : "relógio"} ·{" "}
+                {s.ok === null ? "rodando ou interrompida" : s.ok ? `ok em ${((r?.duracao_ms ?? 0) / 1000).toFixed(1)} s` : "falhou"}
+              </span>
+              <span className="text-[11.5px] text-tinta-4">
+                {s.erro ? s.erro : r ? [
+                  `${r.lidos.eventos} eventos lidos`,
+                  `entrega ${r.entrega.sim} sim / ${r.entrega.nao} não / ${r.entrega.indefinido} indefinido`,
+                  `${r.tarefas?.criadas ?? 0} tarefas criadas`,
+                  `${(r.sem_entrega?.apagadas ?? 0) + (r.sem_entrega?.marcadas_na ?? 0)} sem entrega`,
+                  `${(r.fora_da_cadeia?.apagadas ?? 0) + (r.fora_da_cadeia?.marcadas_na ?? 0)} fora da cadeia`,
+                  `${r.reaplicadas.reduce((n, x) => n + x.reescaladas, 0)} reescaladas`,
+                ].join(" · ") : ""}
+              </span>
+            </div>
+          );
+        })}
+        <p className="pt-2 border-t border-linha-2 text-[11.5px] text-tinta-4">
+          Desde 21/09 o plantão é dos freelas; fixo em plantão é exceção.
+        </p>
+      </Cartao>
 
       <Cartao titulo="Pessoas" nota={`${(pessoas ?? []).filter((p) => !p.saida).length} ativas`}>
         <div className="grid grid-cols-[1.2fr_1.1fr_0.5fr_1.4fr] gap-3 pb-2">

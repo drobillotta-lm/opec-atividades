@@ -6,6 +6,8 @@ import { sincronizarEscala } from "@/lib/escala/sincronizar";
 // A rota se autentica sozinha pelo CRON_SECRET, por isso o middleware de sessão a ignora.
 
 export const runtime = "nodejs";
+// Escala inteira + upserts em lote + 5 RPCs: o padrao de 10-15 s da Vercel nao basta.
+export const maxDuration = 120;
 
 export async function POST(req: NextRequest) {
   const segredo = process.env.CRON_SECRET;
@@ -14,7 +16,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ erro: "não autorizado" }, { status: 401 });
   }
   try {
-    const resumo = await sincronizarEscala();
+    const resumo = await sincronizarEscala("relogio");
     return NextResponse.json({ ok: true, ...resumo });
   } catch (e) {
     return NextResponse.json({ erro: e instanceof Error ? e.message : String(e) }, { status: 500 });

@@ -24,13 +24,23 @@ type EventoEscala = {
   status_airtable: string | null;
   excluido_em: string | null;
 };
-type CompeticaoEscala = { competicao: string; frente_codigo: string | null };
+type CompeticaoEscala = {
+  competicao: string;
+  frente_codigo: string | null;
+  entrega_padrao: "sim" | "nao" | null;
+  entrega_termos_sim: unknown;
+};
 type FrenteEscala = { codigo: string; lider_pessoa_id: string | null };
 type PessoaEscala = { id: string; email: string | null; tipo: string | null; nome_exibicao: string | null };
 type AlocacaoEscala = { pessoa_id: string; eventos: { data: string; competicao: string | null } | null };
 
 export type ResumoSincronizacao = {
+  lidos: { eventos: number; competicoes: number; frentes: number; pessoas: number; alocacoes: number };
   eventos: number;
+  eventos_sem_competicao: number;
+  padroes_entrega_atualizados: number;
+  entrega: { sim: number; nao: number; indefinido: number };
+  entrega_aplicada: { marcadas_sim: number; marcadas_nao: number; voltaram_indefinido: number } | null;
   competicoes_novas: number;
   competicoes_classificadas: number;
   lideres_atualizados: number;
@@ -40,6 +50,8 @@ export type ResumoSincronizacao = {
   canceladas: { apagadas: number; marcadas_na: number } | null;
   fora_da_cadeia: { apagadas: number; marcadas_na: number } | null;
   reaplicadas: { competencia: string; reescaladas: number; sem_mapa: number; divergentes_com_tempo: number }[];
+  sem_entrega: { apagadas: number; marcadas_na: number; reabertas: number } | null;
+  duracao_ms: number;
 };
 
 // Mesma classificação das migrations 011/019: a Matriz não tem campo próprio, o tipo
@@ -67,34 +79,64 @@ function falha(passo: string, error: { message: string } | null) {
   if (error) throw new Error(`${passo}: ${error.message}`);
 }
 
-export async function sincronizarEscala(): Promise<ResumoSincronizacao> {
+// O PostgREST corta em 1000 linhas sem avisar; a Escala ganha ~100 eventos por semana e
+// passa disso em novembro. Varre em paginas, com ordem estavel (a ultima coluna e unica).
+// ESCALA_PAGINA so existe pra testar a paginacao com pagina pequena.
+const PAGINA = Number(process.env.ESCALA_PAGINA) || 1000;
+type Pagina = PromiseLike<{ data: unknown[] | null; error: { message: string } | null }>;
+async function tudo<T>(passo: string, montar: (de: number, ate: number) => Pagina): Promise<T[]> {
+  const linhas: T[] = [];
+  for (let de = 0; ; de += PAGINA) {
+    const { data, error } = await montar(de, de + PAGINA - 1);
+    falha(passo, error);
+    linhas.push(...((data ?? []) as T[]));
+    if (!data || data.length < PAGINA) return linhas;
+  }
+}
+
+const LOTE_UPSERT = 500;
+
+/** Roda a sincronizacao e grava o resultado (ou o erro) em `sincronizacoes` (038). */
+export async function sincronizarEscala(disparo: "relogio" | "botao"): Promise<ResumoSincronizacao> {
+  const admin = criarClienteAdmin();
+  const inicio = Date.now();
+  const { data: registro } = await admin.from("sincronizacoes").insert({ disparo }).select("id").single();
+  const fechar = async (campos: { ok: boolean; resumo?: ResumoSincronizacao; erro?: string }) => {
+    if (registro) await admin.from("sincronizacoes").update({ terminada_em: new Date().toISOString(), ...campos }).eq("id", registro.id);
+    const limite = new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString();
+    await admin.from("sincronizacoes").delete().lt("iniciada_em", limite);
+  };
+  try {
+    const resumo = { ...(await executar()), duracao_ms: Date.now() - inicio };
+    await fechar({ ok: true, resumo });
+    return resumo;
+  } catch (e) {
+    await fechar({ ok: false, erro: e instanceof Error ? e.message : String(e) });
+    throw e;
+  }
+}
+
+async function executar(): Promise<Omit<ResumoSincronizacao, "duracao_ms">> {
   const escala = criarClienteEscala();
   const admin = criarClienteAdmin();
 
-  // --- leitura da Escala, tudo de uma vez ---------------------------------------------
-  const [rEventos, rCompeticoes, rFrentes, rPessoas, rAlocacoes] = await Promise.all([
-    escala.from("eventos")
+  // --- leitura da Escala, tudo de uma vez, paginada ----------------------------------
+  const [eventos, competicoesEscala, frentesEscala, listaPessoas, alocacoes] = await Promise.all([
+    tudo<EventoEscala>("ler eventos da Escala", (de, ate) => escala.from("eventos")
       .select("id, airtable_id, data, hora_inicio, competicao, jogo, frente, tem_entrega, status_airtable, excluido_em")
-      .gte("data", PISO).order("data"),
-    escala.from("competicoes").select("competicao, frente_codigo"),
-    escala.from("frentes").select("codigo, lider_pessoa_id"),
-    escala.from("pessoas").select("id, email, tipo, nome_exibicao"),
-    escala.from("alocacoes")
+      .gte("data", PISO).order("data").order("id").range(de, ate)),
+    tudo<CompeticaoEscala>("ler competições da Escala", (de, ate) => escala.from("competicoes")
+      .select("competicao, frente_codigo, entrega_padrao, entrega_termos_sim").order("id").range(de, ate)),
+    tudo<FrenteEscala>("ler frentes da Escala", (de, ate) => escala.from("frentes")
+      .select("codigo, lider_pessoa_id").order("codigo").range(de, ate)),
+    tudo<PessoaEscala>("ler pessoas da Escala", (de, ate) => escala.from("pessoas")
+      .select("id, email, tipo, nome_exibicao").order("id").range(de, ate)),
+    tudo<AlocacaoEscala>("ler alocações da Escala", (de, ate) => escala.from("alocacoes")
       .select("pessoa_id, eventos!inner(data, competicao)")
       .eq("funcao", "plantao").in("status", ["confirmada", "realizada"])
-      .gte("eventos.data", PISO),
+      .gte("eventos.data", PISO).order("id").range(de, ate)),
   ]);
-  falha("ler eventos da Escala", rEventos.error);
-  falha("ler competições da Escala", rCompeticoes.error);
-  falha("ler frentes da Escala", rFrentes.error);
-  falha("ler pessoas da Escala", rPessoas.error);
-  falha("ler alocações da Escala", rAlocacoes.error);
-
-  const eventos = (rEventos.data ?? []) as EventoEscala[];
-  const competicoesEscala = (rCompeticoes.data ?? []) as CompeticaoEscala[];
-  const frentesEscala = (rFrentes.data ?? []) as FrenteEscala[];
-  const pessoasEscala = new Map(((rPessoas.data ?? []) as PessoaEscala[]).map((p) => [p.id, p]));
-  const alocacoes = (rAlocacoes.data ?? []) as unknown as AlocacaoEscala[];
+  const pessoasEscala = new Map(listaPessoas.map((p) => [p.id, p]));
 
   // --- cadastros locais -------------------------------------------------------------------
   const [rFrentesLocais, rPessoasLocais] = await Promise.all([
@@ -115,7 +157,7 @@ export async function sincronizarEscala(): Promise<ResumoSincronizacao> {
       .upsert(nomesCompeticao.map((nome) => ({ nome, origem: "airtable" })), { onConflict: "nome", ignoreDuplicates: true });
     falha("upsert competições", error);
   }
-  const rLocais = await admin.from("competicoes").select("id, nome, frente_id");
+  const rLocais = await admin.from("competicoes").select("id, nome, frente_id, entrega_padrao");
   falha("ler competições", rLocais.error);
   const competicoesLocais = rLocais.data ?? [];
   const competicoesNovas = competicoesLocais.length - (antes ?? 0);
@@ -132,6 +174,22 @@ export async function sincronizarEscala(): Promise<ResumoSincronizacao> {
     competicoesClassificadas++;
   }
   const idCompeticaoPorNome = new Map(competicoesLocais.map((c) => [c.nome, c.id]));
+
+  //    O padrao de entrega e o oficial da Escala (escala.competicoes.entrega_padrao).
+  //    Competicao com termos de 'sim' (a Escala decide pelo texto do jogo) fica
+  //    'lider_decide' aqui: a decisao vem por evento, no passo 4.
+  const padraoEscalaPorNome = new Map(competicoesEscala.map((c) => {
+    const temTermos = Array.isArray(c.entrega_termos_sim) && c.entrega_termos_sim.length > 0;
+    return [c.competicao, temTermos || !c.entrega_padrao ? "lider_decide" : c.entrega_padrao];
+  }));
+  let padroesAtualizados = 0;
+  for (const c of competicoesLocais) {
+    const padrao = padraoEscalaPorNome.get(c.nome);
+    if (!padrao || padrao === c.entrega_padrao) continue;
+    const { error } = await admin.from("competicoes").update({ entrega_padrao: padrao }).eq("id", c.id);
+    falha(`padrão de entrega de ${c.nome}`, error);
+    padroesAtualizados++;
+  }
 
   // 2) líderes: só quando a Escala tem um; nunca apaga o que está aqui.
   let lideresAtualizados = 0;
@@ -157,25 +215,21 @@ export async function sincronizarEscala(): Promise<ResumoSincronizacao> {
     tipo: classificarTipo(e.jogo),
     status_origem: e.excluido_em ? "Cancelado" : e.status_airtable ?? "Manual",
     detentor: e.frente,
+    entrega_escala: e.tem_entrega ?? "indefinido",
     sincronizado_em: new Date().toISOString(),
   }));
-  if (linhasEvento.length) {
-    const { error } = await admin.from("eventos").upsert(linhasEvento, { onConflict: "airtable_record_id" });
+  for (let i = 0; i < linhasEvento.length; i += LOTE_UPSERT) {
+    const { error } = await admin.from("eventos")
+      .upsert(linhasEvento.slice(i, i + LOTE_UPSERT), { onConflict: "airtable_record_id" });
     falha("upsert eventos", error);
   }
   // Evento que ja existia sem frente quando a competicao foi classificada (029).
   falha("herdar_frente_da_competicao", (await admin.rpc("herdar_frente_da_competicao")).error);
 
-  // 4) a decisão "tem entrega?" da Escala, guardada contra o que o líder já resolveu aqui
-  for (const valor of ["sim", "nao"] as const) {
-    const chaves = eventos.filter((e) => e.tem_entrega === valor).map(chaveDoEvento);
-    if (!chaves.length) continue;
-    const { error } = await admin.from("eventos")
-      .update({ entrega: valor === "sim", entrega_origem: "escala" })
-      .in("airtable_record_id", chaves)
-      .or("entrega_origem.is.null,entrega_origem.neq.lider");
-    falha(`marcar entrega (${valor})`, error);
-  }
+  // 4) a decisão "tem entrega?" da Escala (gravada crua no passo 3): sim/não valem,
+  //    indefinido desfaz o que a Escala tinha decidido; o que o líder resolveu aqui fica (036).
+  const rEntrega = await admin.rpc("aplicar_entrega_da_escala");
+  falha("aplicar_entrega_da_escala", rEntrega.error);
 
   // 5) o que ninguém decidiu ainda cai no padrão da competição (mesma regra da 014)
   falha("aplicar_previsao_entrega", (await admin.rpc("aplicar_previsao_entrega")).error);
@@ -217,6 +271,8 @@ export async function sincronizarEscala(): Promise<ResumoSincronizacao> {
   falha("gerar_tarefas", rGerar.error);
   const rCancel = await admin.rpc("desfazer_tarefas_de_evento_cancelado");
   falha("desfazer cancelados", rCancel.error);
+  const rSemEntrega = await admin.rpc("desfazer_tarefas_sem_entrega");
+  falha("desfazer sem entrega", rSemEntrega.error);
   const rFora = await admin.rpc("desfazer_tarefas_fora_da_cadeia");
   falha("desfazer fora da cadeia", rFora.error);
   const hoje = new Date();
@@ -230,8 +286,15 @@ export async function sincronizarEscala(): Promise<ResumoSincronizacao> {
     if (linha) reaplicadas.push({ competencia, ...linha });
   }
 
+  const contar = (v: string) => eventos.filter((e) => (e.tem_entrega ?? "indefinido") === v).length;
   return {
+    lidos: { eventos: eventos.length, competicoes: competicoesEscala.length, frentes: frentesEscala.length,
+             pessoas: listaPessoas.length, alocacoes: alocacoes.length },
     eventos: linhasEvento.length,
+    eventos_sem_competicao: eventos.filter((e) => !e.competicao).length,
+    padroes_entrega_atualizados: padroesAtualizados,
+    entrega: { sim: contar("sim"), nao: contar("nao"), indefinido: contar("indefinido") },
+    entrega_aplicada: (rEntrega.data as ResumoSincronizacao["entrega_aplicada"][])?.[0] ?? null,
     competicoes_novas: competicoesNovas,
     competicoes_classificadas: competicoesClassificadas,
     lideres_atualizados: lideresAtualizados,
@@ -241,5 +304,6 @@ export async function sincronizarEscala(): Promise<ResumoSincronizacao> {
     canceladas: (rCancel.data as ResumoSincronizacao["canceladas"][])?.[0] ?? null,
     fora_da_cadeia: (rFora.data as ResumoSincronizacao["fora_da_cadeia"][])?.[0] ?? null,
     reaplicadas,
+    sem_entrega: (rSemEntrega.data as ResumoSincronizacao["sem_entrega"][])?.[0] ?? null,
   };
 }
