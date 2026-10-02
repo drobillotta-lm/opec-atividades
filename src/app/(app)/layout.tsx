@@ -96,7 +96,7 @@ export default async function LayoutApp({ children }: { children: React.ReactNod
         </div>
       </aside>
 
-      <main className="flex-1 min-w-0 pb-24">{children}</main>
+      <main className="flex-1 min-w-0 pb-16">{children}</main>
       <SeloValeu />
       <Notch tarefa={tarefaNotch} pausar={pausar} retomar={tarefaNotch ? iniciar.bind(null, tarefaNotch.id) : null} />
     </div>

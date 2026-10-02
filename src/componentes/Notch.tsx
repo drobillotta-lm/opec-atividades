@@ -85,8 +85,8 @@ export function Notch({ tarefa, pausar, retomar }: {
   }[canto];
   const giroCabeca = canto === "dir-alto" ? "rotate(-90deg)" : canto === "esq-alto" ? "rotate(90deg)" : undefined;
   const caixa = {
-    "baixo-dir": "bottom-[86px] right-0 origin-bottom-right", "baixo-esq": "bottom-[86px] left-0 origin-bottom-left",
-    "dir-alto": "top-0 right-[86px] origin-top-right", "esq-alto": "top-0 left-[86px] origin-top-left",
+    "baixo-dir": "bottom-[62px] right-0 origin-bottom-right", "baixo-esq": "bottom-[62px] left-0 origin-bottom-left",
+    "dir-alto": "top-0 right-[62px] origin-top-right", "esq-alto": "top-0 left-[62px] origin-top-left",
   }[canto];
 
   return (
@@ -94,9 +94,9 @@ export function Notch({ tarefa, pausar, retomar }: {
       <button type="button" onClick={() => setAberto((a) => !a)}
         aria-label={`Sr. Minutos: ${rotulo}${tarefa ? `, ${hms(seg)} de ${hms(previsto)}` : ""}. Abrir resumo`}
         aria-expanded={aberto}
-        className={`relative block ${lateral ? "w-[76px] h-[140px]" : "w-[140px] h-[76px]"}`}>
-        <svg viewBox="0 0 140 76" width="140" height="76" aria-hidden
-          className={`absolute drop-shadow-[0_-4px_14px_rgb(0_0_0/0.35)] transition-transform duration-200 ${lateral ? "left-[-32px] top-[32px]" : "left-0 top-0 group-hover:-translate-y-[3px]"}`}
+        className={`relative block ${lateral ? "w-[53px] h-[98px]" : "w-[98px] h-[53px]"}`}>
+        <svg viewBox="0 0 140 76" width="98" height="53" aria-hidden
+          className={`absolute drop-shadow-[0_-4px_14px_rgb(0_0_0/0.35)] transition-transform duration-200 ${lateral ? "left-[-22.5px] top-[22.5px]" : "left-0 top-0 group-hover:-translate-y-[2px]"}`}
           style={giroCabeca ? { transform: giroCabeca } : undefined}>
           <circle cx="70" cy="70" r="66" fill="var(--notch-preto)" />
           <path d="M14,70 A56,56 0 0 1 126,70" fill="none" stroke="var(--notch-trilho)" strokeWidth="9" strokeLinecap="round" pathLength={100} />
