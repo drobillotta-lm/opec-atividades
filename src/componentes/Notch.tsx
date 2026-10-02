@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 
 /**
@@ -43,7 +43,7 @@ export type ProximaNotch = { id: string; titulo: string; sub: string; prazoEm: s
  * modo "janela": dentro do app Tauri (rota /notch-app). A janela nativa já está grudada na borda
  * do monitor, então o notch fica rente ao canto da própria janela; ações chegam por callback.
  */
-export function Notch({ tarefa, pausar, retomar, modo = "web", abrirSemana, aoMudarCanto, aoAbrirFechar, proximas, iniciarTarefa }: {
+export function Notch({ tarefa, pausar, retomar, modo = "web", abrirSemana, aoMudarCanto, aoAbrirFechar, proximas, iniciarTarefa, rodapePainel }: {
   tarefa: TarefaNotch | null;
   pausar: () => Promise<void>;
   retomar: (() => Promise<void>) | null;
@@ -53,6 +53,7 @@ export function Notch({ tarefa, pausar, retomar, modo = "web", abrirSemana, aoMu
   aoAbrirFechar?: (aberto: boolean) => void;
   proximas?: ProximaNotch[];
   iniciarTarefa?: (id: string) => Promise<void>;
+  rodapePainel?: ReactNode;
 }) {
   const [agora, setAgora] = useState(() => Date.now());
   const [aberto, setAberto] = useState(false);
@@ -182,8 +183,9 @@ export function Notch({ tarefa, pausar, retomar, modo = "web", abrirSemana, aoMu
           <div className="mt-3 pt-3 border-t border-[var(--notch-linha-2)] flex flex-col gap-2">
             {proximas && proximas.length > 0 && (
               <div className="flex flex-col gap-1.5">
-                <span className="text-[10.5px] uppercase tracking-[0.08em] text-[var(--notch-tinta-3)]">Próximas</span>
-                {proximas.slice(0, 3).map((p) => (
+                <span className="text-[10.5px] uppercase tracking-[0.08em] text-[var(--notch-tinta-3)]">Começar outra</span>
+                <div className="flex flex-col gap-1.5 max-h-[168px] overflow-y-auto pr-0.5">
+                {proximas.filter((p) => p.id !== tarefa?.id).slice(0, 8).map((p) => (
                   <div key={p.id} className="flex items-center gap-2 rounded-[10px] border border-[var(--notch-linha-2)] bg-[var(--notch-botao)] px-2.5 py-2">
                     <div className="flex-1 min-w-0 flex flex-col">
                       <b className="text-[12px] font-semibold truncate">{p.titulo}</b>
@@ -195,8 +197,10 @@ export function Notch({ tarefa, pausar, retomar, modo = "web", abrirSemana, aoMu
                     )}
                   </div>
                 ))}
+                </div>
               </div>
             )}
+            {rodapePainel}
             {linkSemana("text-left text-[var(--notch-verde)] text-[12px] font-semibold", "Abrir Minha semana")}
             <span className="text-[10.5px] uppercase tracking-[0.08em] text-[var(--notch-tinta-3)]">Onde ele fica</span>
             <div className="grid grid-cols-2 gap-1.5">

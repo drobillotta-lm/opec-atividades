@@ -1,6 +1,7 @@
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { semanaDe, rotuloSemana, diaCurto, ROTULO_ATIVIDADE, escaladosDe } from "@/lib/semana";
 import { Rosto } from "@/componentes/SrMinutos";
+import { nomeTarefa, SEM_EVENTO } from "@/componentes/nome-tarefa";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +24,7 @@ export default async function Kanban() {
   const { data: brutas } = frentes.length
     ? await supabase
         .from("tarefas")
-        .select(`id, atividade, status, estimativa_min, prazo_em, escalado_id, dupla_id, responsavel_real_id,
+        .select(`id, atividade, titulo, status, estimativa_min, prazo_em, escalado_id, dupla_id, responsavel_real_id,
                  frentes ( sigla ), eventos ( competicao, data )`)
         .in("frente_id", frentes.map((f) => f.id))
         .lte("abre_em", fim)
@@ -94,6 +95,7 @@ export default async function Kanban() {
 
 type Tarefa = {
   id: string;
+  titulo?: string | null;
   atividade: string;
   status: string;
   escalado_id: string;
@@ -126,12 +128,12 @@ function Coluna({ titulo, cor, tarefas, nomePor }: { titulo: string; cor: string
             <div key={t.id} className={`rounded-[10px] bg-superficie border border-linha p-3 flex flex-col gap-1.5 ${naoNecessaria ? "opacity-60" : ""}`}>
               <div className="flex items-center justify-between gap-2">
                 <span className={`text-[12.5px] font-medium ${naoNecessaria ? "line-through decoration-tinta-4" : ""}`}>
-                  {ROTULO_ATIVIDADE[t.atividade] ?? t.atividade}
+                  {t.titulo ?? ROTULO_ATIVIDADE[t.atividade] ?? t.atividade}
                 </span>
                 <span className="text-[10.5px] text-tinta-4 shrink-0">{t.frente?.sigla}</span>
               </div>
               <span className="text-[11px] text-tinta-4 truncate">
-                {t.evento?.competicao} · {t.evento && diaCurto(t.evento.data)}
+                {t.evento ? <>{t.evento.competicao} · {diaCurto(t.evento.data)}</> : SEM_EVENTO}
               </span>
               <div className="flex items-center justify-between gap-2 pt-0.5">
                 <span className="text-[11.5px] text-tinta-3">

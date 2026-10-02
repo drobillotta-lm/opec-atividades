@@ -11,10 +11,11 @@ import { AbrirDock } from "@/componentes/AbrirDock";
 import { AutoAtualiza } from "@/componentes/AutoAtualiza";
 import { Rosto } from "@/componentes/SrMinutos";
 import { Corpo, Animado } from "@/componentes/SrMinutos";
+import { nomeTarefa, SEM_EVENTO } from "@/componentes/nome-tarefa";
 
 export const dynamic = "force-dynamic";
 
-const CAMPOS_TAREFA = `id, atividade, status, estimativa_min, abre_em, prazo_em, concluida_em,
+const CAMPOS_TAREFA = `id, atividade, titulo, status, estimativa_min, abre_em, prazo_em, concluida_em,
              escalado_id, dupla_id, responsavel_real_id, excecao_desc,
              frentes ( sigla, nome ),
              eventos ( competicao, data, evento_id_origem )`;
@@ -33,7 +34,7 @@ async function buscarTarefas(supabase: Awaited<ReturnType<typeof criarClienteSer
 
   return supabase
     .from("tarefas")
-    .select(`id, atividade, status, estimativa_min, prazo_em, escalado_id, dupla_id,
+    .select(`id, atividade, titulo, status, estimativa_min, prazo_em, escalado_id, dupla_id,
              frentes ( sigla ), eventos!inner ( competicao, data, evento_id_origem )`)
     .in("status", ["pendente", "fora_do_prazo"])
     .or(condicoes)
@@ -171,7 +172,7 @@ export default async function MinhaSemana({
   // Fala do Sr. Minutos no cartão de andamento: regra fixa (docs/06), sobre a próxima de hoje.
   const hojeBRT = new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
   const venceHoje = pendentes.find((t) => t.prazo_em.slice(0, 10) === hojeBRT);
-  const falaSrMinutos = venceHoje ? `${ROTULO_ATIVIDADE[venceHoje.atividade] ?? venceHoje.atividade} vence hoje.` : undefined;
+  const falaSrMinutos = venceHoje ? `${venceHoje.titulo ?? ROTULO_ATIVIDADE[venceHoje.atividade] ?? venceHoje.atividade} vence hoje.` : undefined;
   const idsExistentes = new Set(ids);
   const resultados = (resultadosBusca ?? [])
     .map((r) => ({
@@ -207,10 +208,10 @@ export default async function MinhaSemana({
               <Rosto estado="verde" tamanho={16} />Em andamento
             </span>
             <span className="text-[16px] font-semibold tracking-[-0.01em]">
-              {ROTULO_ATIVIDADE[emCurso.atividade] ?? emCurso.atividade} · {emCurso.frente?.nome}
+              {nomeTarefa(emCurso, "nome")}
             </span>
             <span className="text-[12px] text-tinta-3 truncate">
-              {emCurso.evento?.competicao} · evento {emCurso.evento && diaCurto(emCurso.evento.data)}
+              {emCurso.evento ? <>{emCurso.evento.competicao} · evento {diaCurto(emCurso.evento.data)}</> : SEM_EVENTO}
             </span>
             {emCurso.minhaParte && (
               <span className="text-[12px] text-verde-claro truncate">parte: {emCurso.minhaParte}</span>
@@ -233,8 +234,8 @@ export default async function MinhaSemana({
             </form>
             <DialogoEntrega
               acao={entregar.bind(null, emCurso.id)}
-              titulo={`${ROTULO_ATIVIDADE[emCurso.atividade] ?? emCurso.atividade} · ${emCurso.frente?.nome}`}
-              subtitulo={emCurso.evento?.competicao ?? ""}
+              titulo={`${nomeTarefa(emCurso)}`}
+              subtitulo={emCurso.evento?.competicao ?? SEM_EVENTO}
               segundosMedidos={emCurso.segundos}
               estimativaMin={emCurso.estimativa_min}
               escaladoId={emCurso.escalado_id}
@@ -247,7 +248,7 @@ export default async function MinhaSemana({
               classeBotao="flex items-center gap-2 min-h-[42px] px-3.5 rounded-[9px] bg-verde text-verde-ink text-[12.5px] font-semibold hover:brightness-110 transition"
             />
             <DialogoPartes
-              titulo={`${ROTULO_ATIVIDADE[emCurso.atividade] ?? emCurso.atividade} · ${emCurso.frente?.nome}`}
+              titulo={`${nomeTarefa(emCurso)}`}
               partes={emCurso.partes} time={time ?? []} euId={pessoa!.id}
               criar={criarSubtarefa.bind(null, emCurso.id)}
               iniciar={iniciarSubtarefa} concluir={concluirSubtarefa} reabrir={reabrirSubtarefa} apagar={apagarSubtarefa}
@@ -266,10 +267,10 @@ export default async function MinhaSemana({
               </span>
               <div className="flex-1 min-w-0 flex flex-col gap-1">
                 <span className="text-[13.5px] font-medium">
-                  {ROTULO_ATIVIDADE[t.atividade] ?? t.atividade} · {t.frente?.nome}
+                  {nomeTarefa(t, "nome")}
                 </span>
                 <span className="text-[11.5px] text-tinta-3 truncate">
-                  {t.evento?.competicao} · entrega até {diaCurto(t.prazo_em.slice(0, 10))}
+                  {t.evento?.competicao ?? SEM_EVENTO} · entrega até {diaCurto(t.prazo_em.slice(0, 10))}
                 </span>
                 {t.outrosRodando.length > 0 && (
                   <span className="text-[11px] text-verde-claro truncate">
@@ -286,8 +287,8 @@ export default async function MinhaSemana({
                 </form>
                 <DialogoEntrega
                   acao={entregar.bind(null, t.id)}
-                  titulo={`${ROTULO_ATIVIDADE[t.atividade] ?? t.atividade} · ${t.frente?.nome}`}
-                  subtitulo={t.evento?.competicao ?? ""}
+                  titulo={`${nomeTarefa(t)}`}
+                  subtitulo={t.evento?.competicao ?? SEM_EVENTO}
                   segundosMedidos={t.segundos}
                   estimativaMin={t.estimativa_min}
                   escaladoId={t.escalado_id}
@@ -301,14 +302,14 @@ export default async function MinhaSemana({
                 />
                 <DialogoDesnecessaria
                   acao={marcarDesnecessaria.bind(null, t.id)}
-                  titulo={`${ROTULO_ATIVIDADE[t.atividade] ?? t.atividade} · ${t.frente?.nome}`}
+                  titulo={`${nomeTarefa(t)}`}
                 />
                 <DialogoAjuste
                   acao={ajustarTempo.bind(null, t.id)}
-                  titulo={`${ROTULO_ATIVIDADE[t.atividade] ?? t.atividade} · ${t.frente?.nome}`}
+                  titulo={`${nomeTarefa(t)}`}
                 />
                 <DialogoPartes
-                  titulo={`${ROTULO_ATIVIDADE[t.atividade] ?? t.atividade} · ${t.frente?.nome}`}
+                  titulo={`${nomeTarefa(t)}`}
                   partes={t.partes} time={time ?? []} euId={pessoa!.id}
                   criar={criarSubtarefa.bind(null, t.id)}
                   iniciar={iniciarSubtarefa} concluir={concluirSubtarefa} reabrir={reabrirSubtarefa} apagar={apagarSubtarefa}
@@ -333,10 +334,10 @@ export default async function MinhaSemana({
               <Etiqueta atrasada={atrasada} />
               <div className="flex-1 min-w-0 flex flex-col gap-1">
                 <span className="text-[13.5px] font-medium">
-                  {ROTULO_ATIVIDADE[t.atividade] ?? t.atividade} · {t.frente?.nome}
+                  {nomeTarefa(t, "nome")}
                 </span>
                 <span className="text-[11.5px] text-tinta-3 truncate">
-                  {t.evento?.competicao} · evento {t.evento && diaCurto(t.evento.data)} ·{" "}
+                  {t.evento ? <>{t.evento.competicao} · evento {diaCurto(t.evento.data)}</> : SEM_EVENTO} ·{" "}
                   {atrasada ? "prazo venceu" : "entrega até"} {diaCurto(t.prazo_em.slice(0, 10))}
                 </span>
                 {t.outrosRodando.length > 0 && (
@@ -354,8 +355,8 @@ export default async function MinhaSemana({
                 </form>
                 <DialogoEntrega
                   acao={entregar.bind(null, t.id)}
-                  titulo={`${ROTULO_ATIVIDADE[t.atividade] ?? t.atividade} · ${t.frente?.nome}`}
-                  subtitulo={t.evento?.competicao ?? ""}
+                  titulo={`${nomeTarefa(t)}`}
+                  subtitulo={t.evento?.competicao ?? SEM_EVENTO}
                   segundosMedidos={t.segundos}
                   estimativaMin={t.estimativa_min}
                   escaladoId={t.escalado_id}
@@ -369,14 +370,14 @@ export default async function MinhaSemana({
                 />
                 <DialogoDesnecessaria
                   acao={marcarDesnecessaria.bind(null, t.id)}
-                  titulo={`${ROTULO_ATIVIDADE[t.atividade] ?? t.atividade} · ${t.frente?.nome}`}
+                  titulo={`${nomeTarefa(t)}`}
                 />
                 <DialogoAjuste
                   acao={ajustarTempo.bind(null, t.id)}
-                  titulo={`${ROTULO_ATIVIDADE[t.atividade] ?? t.atividade} · ${t.frente?.nome}`}
+                  titulo={`${nomeTarefa(t)}`}
                 />
                 <DialogoPartes
-                  titulo={`${ROTULO_ATIVIDADE[t.atividade] ?? t.atividade} · ${t.frente?.nome}`}
+                  titulo={`${nomeTarefa(t)}`}
                   partes={t.partes} time={time ?? []} euId={pessoa!.id}
                   criar={criarSubtarefa.bind(null, t.id)}
                   iniciar={iniciarSubtarefa} concluir={concluirSubtarefa} reabrir={reabrirSubtarefa} apagar={apagarSubtarefa}
@@ -398,14 +399,14 @@ export default async function MinhaSemana({
               </span>
               <div className="flex-1 min-w-0 flex flex-col gap-1">
                 <span className="text-[13.5px] text-tinta-2">
-                  {ROTULO_ATIVIDADE[t.atividade] ?? t.atividade} · {t.frente?.nome}
+                  {nomeTarefa(t, "nome")}
                 </span>
-                <span className="text-[11.5px] text-tinta-4 truncate">{t.evento?.competicao}</span>
+                <span className="text-[11.5px] text-tinta-4 truncate">{t.evento?.competicao ?? SEM_EVENTO}</span>
               </div>
               <TempoParado segundos={t.segundos} estimativaMin={t.estimativa_min} />
               <DialogoAjuste
                 acao={ajustarTempo.bind(null, t.id)}
-                titulo={`${ROTULO_ATIVIDADE[t.atividade] ?? t.atividade} · ${t.frente?.nome}`}
+                titulo={`${nomeTarefa(t)}`}
               />
             </Linha>
           ))}
@@ -422,10 +423,10 @@ export default async function MinhaSemana({
               </span>
               <div className="flex-1 min-w-0 flex flex-col gap-1">
                 <span className="text-[13.5px] text-tinta-3 line-through decoration-tinta-4">
-                  {ROTULO_ATIVIDADE[t.atividade] ?? t.atividade} · {t.frente?.nome}
+                  {nomeTarefa(t, "nome")}
                 </span>
                 <span className="text-[11.5px] text-tinta-4 truncate">
-                  {t.evento?.competicao}{t.excecao_desc ? ` · ${t.excecao_desc}` : ""}
+                  {t.evento?.competicao ?? SEM_EVENTO}{t.excecao_desc ? ` · ${t.excecao_desc}` : ""}
                 </span>
               </div>
               <form action={reverterDesnecessaria.bind(null, t.id)}>
@@ -459,10 +460,10 @@ export default async function MinhaSemana({
           <Linha key={t.id}>
             <div className="flex-1 min-w-0 flex flex-col gap-1">
               <span className="text-[13.5px] font-medium">
-                {ROTULO_ATIVIDADE[t.atividade] ?? t.atividade} · {t.frente?.sigla}
+                {nomeTarefa(t, "sigla")}
               </span>
               <span className="text-[11.5px] text-tinta-3 truncate">
-                {t.evento?.competicao} · evento {t.evento && diaCurto(t.evento.data)} · escalado: {escaladosDe(nomePor, t.escalado_id, t.dupla_id)}
+                {t.evento ? <>{t.evento.competicao} · evento {diaCurto(t.evento.data)}</> : SEM_EVENTO} · escalado: {escaladosDe(nomePor, t.escalado_id, t.dupla_id)}
               </span>
             </div>
             <form action={iniciar.bind(null, t.id)} className="shrink-0">

@@ -3,6 +3,7 @@ import { semanaDe, rotuloSemana, diaCurto, hhmm, ROTULO_ATIVIDADE, escaladosDe }
 import { definirQuemFez, marcarDesnecessaria, reverterDesnecessaria } from "../acoes";
 import { Submit, DialogoDesnecessaria } from "../semana/Cronometro";
 import { Corpo } from "@/componentes/SrMinutos";
+import { nomeTarefa, SEM_EVENTO } from "@/componentes/nome-tarefa";
 
 export const dynamic = "force-dynamic";
 
@@ -24,7 +25,7 @@ export default async function MinhaFrente() {
   const { data: linhas } = frentes.length
     ? await supabase
         .from("tarefas")
-        .select(`id, atividade, status, estimativa_min, prazo_em, escalado_id, dupla_id, responsavel_real_id, excecao_desc,
+        .select(`id, atividade, titulo, status, estimativa_min, prazo_em, escalado_id, dupla_id, responsavel_real_id, excecao_desc,
                  frentes ( sigla, nome ), eventos ( competicao, data )`)
         .in("frente_id", frentes.map((f) => f.id))
         .lte("abre_em", fim)
@@ -85,10 +86,10 @@ export default async function MinhaFrente() {
               <div key={t.id} className={`grid grid-cols-[1.9fr_0.8fr_1.5fr_0.9fr] gap-3 items-center px-4 py-2.5 border-t border-linha-2 ${desvio ? "bg-ambar-fundo" : ""}`}>
                 <div className="flex flex-col gap-0.5 min-w-0">
                   <span className="text-[13px] font-medium">
-                    {ROTULO_ATIVIDADE[t.atividade] ?? t.atividade} · {t.frente?.sigla}
+                    {nomeTarefa(t, "sigla")}
                   </span>
                   <span className="text-[11px] text-tinta-4 truncate">
-                    {t.evento?.competicao} · {t.evento && diaCurto(t.evento.data)}
+                    {t.evento ? <>{t.evento.competicao} · {diaCurto(t.evento.data)}</> : SEM_EVENTO}
                   </span>
                 </div>
                 <span className="text-[12.5px] text-tinta-3">{escaladosDe(nomePor, t.escalado_id, t.dupla_id)}</span>
@@ -116,7 +117,7 @@ export default async function MinhaFrente() {
                     </form>
                     <DialogoDesnecessaria
                       acao={marcarDesnecessaria.bind(null, t.id)}
-                      titulo={`${ROTULO_ATIVIDADE[t.atividade] ?? t.atividade} · ${t.frente?.nome}`}
+                      titulo={`${nomeTarefa(t)}`}
                     />
                   </div>
                 )}
