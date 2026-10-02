@@ -6,7 +6,8 @@ import { NextResponse, type NextRequest } from "next/server";
 // antes do handler ver o header.
 // O notch nativo (desktop/) tambem: /api/notch se autentica pelo token do aparelho, e
 // /notch-app e a casca visual que a janela dele abre, sem dado nenhum sem o token.
-const PUBLICAS = ["/entrar", "/auth", "/fora-do-time", "/api/importar-escala", "/api/notch/", "/notch-app"];
+// /download/ e so o instalador do notch (public/download), sem dado nenhum.
+const PUBLICAS = ["/entrar", "/auth", "/fora-do-time", "/api/importar-escala", "/api/notch/", "/notch-app", "/download/"];
 
 export async function middleware(req: NextRequest) {
   let res = NextResponse.next({ request: req });

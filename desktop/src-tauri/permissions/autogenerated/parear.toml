@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-parear"
+description = "Enables the parear command without any pre-configured scope."
+commands.allow = ["parear"]
+
+[[permission]]
+identifier = "deny-parear"
+description = "Denies the parear command without any pre-configured scope."
+commands.deny = ["parear"]

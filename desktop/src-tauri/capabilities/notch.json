@@ -1,0 +1,10 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "notch",
+  "description": "A janela do notch abre /notch-app do site. So essa origem chama os comandos do app; o token nunca chega na pagina.",
+  "windows": ["notch"],
+  "remote": {
+    "urls": ["https://opec-atividades.vercel.app/*", "http://localhost:3000/*"]
+  },
+  "permissions": ["core:default", "allow-estado", "allow-parear", "allow-iniciar", "allow-pausar", "allow-abrir", "allow-tamanho"]
+}

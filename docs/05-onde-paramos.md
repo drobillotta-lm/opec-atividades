@@ -1,5 +1,7 @@
 # Onde paramos — 28/09/2026
 
+02/10 — APP: notch nativo do Windows no ar (desktop/, Tauri 2, modelo Codenotch). Instalador em /download/AtividadesOPEC-Setup.exe, pareamento em /notch, API /api/notch, migration 042. Testado nesta máquina: pareia, recolhe na borda, abre no hover. Ver desktop/README.md
+
 02/10 — TELAS: D3 na main (notch, selo Valeu cara, corpo inteiro nas telas, Entrar com heroi)
 02/10 — TELAS: D2 na main, commit 31eb44c (rosto nas etiquetas, azul fora das paginas, icones/PWA, menu Organizar)
 02/10 — TELAS: mockup do Sr. Minutos v5.1 APROVADO; assets em public/sr-minutos (poses novas, anim/, icones/), docs/06 atualizado (regra nova de cores + notch); branch telas/sr-minutos

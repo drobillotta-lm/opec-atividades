@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-tamanho"
+description = "Enables the tamanho command without any pre-configured scope."
+commands.allow = ["tamanho"]
+
+[[permission]]
+identifier = "deny-tamanho"
+description = "Denies the tamanho command without any pre-configured scope."
+commands.deny = ["tamanho"]

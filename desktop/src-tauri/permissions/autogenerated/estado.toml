@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-estado"
+description = "Enables the estado command without any pre-configured scope."
+commands.allow = ["estado"]
+
+[[permission]]
+identifier = "deny-estado"
+description = "Denies the estado command without any pre-configured scope."
+commands.deny = ["estado"]

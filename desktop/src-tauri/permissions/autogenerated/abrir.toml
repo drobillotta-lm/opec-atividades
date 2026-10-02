@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-abrir"
+description = "Enables the abrir command without any pre-configured scope."
+commands.allow = ["abrir"]
+
+[[permission]]
+identifier = "deny-abrir"
+description = "Denies the abrir command without any pre-configured scope."
+commands.deny = ["abrir"]
