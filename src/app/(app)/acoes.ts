@@ -48,7 +48,7 @@ export async function entregar(tarefaId: string, formData: FormData) {
   await fecharAberta(supabase, pessoa.id, "entrega");
 
   const { data: tarefa } = await supabase
-    .from("tarefas").select("prazo_em, escalado_id").eq("id", tarefaId).single();
+    .from("tarefas").select("prazo_em, escalado_id, dupla_id").eq("id", tarefaId).single();
   const { data: tempo } = await supabase
     .from("v_tempo_tarefa").select("segundos_total").eq("tarefa_id", tarefaId).maybeSingle();
 
@@ -63,7 +63,8 @@ export async function entregar(tarefaId: string, formData: FormData) {
     });
   }
 
-  const quemFez = String(formData.get("quem") || "") || tarefa?.escalado_id || pessoa.id;
+  const souDaTarefa = tarefa && (pessoa.id === tarefa.escalado_id || pessoa.id === tarefa.dupla_id);
+  const quemFez = String(formData.get("quem") || "") || (souDaTarefa ? pessoa.id : tarefa?.escalado_id) || pessoa.id;
   const comentario = String(formData.get("comentario") || "").trim();
   const agora = new Date();
   const noPrazo = tarefa ? agora <= new Date(tarefa.prazo_em) : true;

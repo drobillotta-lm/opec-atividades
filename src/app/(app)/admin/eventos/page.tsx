@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { criarClienteServidor } from "@/lib/supabase/server";
-import { diaCurto, ROTULO_ATIVIDADE, ROTULO_STATUS } from "@/lib/semana";
+import { diaCurto, ROTULO_ATIVIDADE, ROTULO_STATUS, escaladosDe } from "@/lib/semana";
 import { classificarCompeticao, classificarEvento, criarFrenteEClassificar } from "../../acoes";
 import { ClassificarEvento } from "./ClassificarEvento";
 
@@ -35,7 +35,7 @@ export default async function GestaoEventos() {
   const { data: tarefasBrutas } = ids.length
     ? await supabase
         .from("tarefas")
-        .select("id, evento_id, atividade, status, escalado_id, responsavel_real_id")
+        .select("id, evento_id, atividade, status, escalado_id, dupla_id, responsavel_real_id")
         .in("evento_id", ids)
     : { data: [] };
 
@@ -93,7 +93,7 @@ export default async function GestaoEventos() {
               {tarefas.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 pt-1.5 border-t border-linha-2">
                   {tarefas.map((t) => {
-                    const desvio = t.responsavel_real_id && t.responsavel_real_id !== t.escalado_id;
+                    const desvio = t.responsavel_real_id && t.responsavel_real_id !== t.escalado_id && t.responsavel_real_id !== t.dupla_id;
                     const cor = t.status === "entregue" ? "text-verde-claro border-verde-borda bg-verde-fundo"
                       : t.status === "fora_do_prazo" ? "text-rosa border-linha bg-superficie-2"
                       : t.status === "na" ? "text-tinta-4 border-linha-2 bg-superficie-2 line-through decoration-tinta-4"
@@ -104,7 +104,7 @@ export default async function GestaoEventos() {
                         {t.status !== "na" && (
                           <>
                             <span className="text-tinta-4">·</span>
-                            {nomePor.get(desvio ? t.responsavel_real_id! : t.escalado_id) ?? "—"}
+                            {desvio ? nomePor.get(t.responsavel_real_id!) ?? "—" : escaladosDe(nomePor, t.escalado_id, t.dupla_id)}
                             {desvio && <span className="text-ambar-claro">(desvio)</span>}
                           </>
                         )}

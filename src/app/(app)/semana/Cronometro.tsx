@@ -46,6 +46,8 @@ export function DialogoEntrega({
   segundosMedidos,
   estimativaMin,
   escaladoId,
+  duplaId,
+  euId,
   time,
   contribuintes,
   classeBotao,
@@ -57,12 +59,17 @@ export function DialogoEntrega({
   segundosMedidos: number;
   estimativaMin: number;
   escaladoId: string;
+  duplaId?: string | null;
+  euId?: string;
   time: Pessoa[];
   contribuintes?: Contribuinte[];
   classeBotao: string;
   rotuloBotao: string;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  // Em dupla, quem entrega costuma ser quem fez: o padrao e a propria pessoa se ela e
+  // escalada ou dupla; senao, o escalado.
+  const quemPadrao = euId && (euId === escaladoId || euId === duplaId) ? euId : escaladoId;
   const [minutos, setMinutos] = useState(Math.max(0, Math.round(segundosMedidos / 60)));
 
   return (
@@ -110,10 +117,10 @@ export function DialogoEntrega({
 
           <div className="flex flex-col gap-2">
             <label htmlFor="quem" className="text-[12.5px] font-medium text-tinta-2">Quem fez</label>
-            <select id="quem" name="quem" defaultValue={escaladoId}
+            <select id="quem" name="quem" defaultValue={quemPadrao}
               className="min-h-10 px-3 rounded-lg border border-linha bg-superficie-2 text-[13px]">
               {time.map((p) => (
-                <option key={p.id} value={p.id}>{p.id === escaladoId ? `${p.nome} (escalado)` : p.nome}</option>
+                <option key={p.id} value={p.id}>{p.id === escaladoId ? `${p.nome} (escalado)` : p.id === duplaId ? `${p.nome} (dupla)` : p.nome}</option>
               ))}
             </select>
             <p className="text-[11.5px] text-tinta-4">Se for outra pessoa, vira um desvio de escala no fechamento.</p>

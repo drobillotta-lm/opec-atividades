@@ -74,7 +74,14 @@ export const ROTULO_ATIVIDADE: Record<string, string> = {
   materiais_sinc: "Materiais e sincronização",
   roteiro_auditoria: "Roteiro e auditoria",
   compacto: "Compacto",
+  sinc_auditoria: "Sincronização e auditoria",
 };
+
+/** Quem está escalado, com a dupla quando houver: "Julia + Pedro". */
+export function escaladosDe(nomePor: Map<string, string>, escaladoId: string, duplaId?: string | null) {
+  const escalado = nomePor.get(escaladoId) ?? "—";
+  return duplaId ? `${escalado} + ${nomePor.get(duplaId) ?? "—"}` : escalado;
+}
 
 export const ROTULO_STATUS: Record<string, string> = {
   pendente: "Pendente",

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { criarClienteServidor } from "@/lib/supabase/server";
-import { semanaDe, deslocarSemana, rotuloSemana, diaCurto, hhmm, tempoLegivel, ROTULO_ATIVIDADE } from "@/lib/semana";
+import { semanaDe, deslocarSemana, rotuloSemana, diaCurto, hhmm, tempoLegivel, ROTULO_ATIVIDADE, escaladosDe } from "@/lib/semana";
 import { Relogio, Submit, TempoParado, DialogoEntrega, DialogoDesnecessaria, DialogoAjuste } from "./Cronometro";
 import { DialogoPartes, type Parte } from "./Partes";
 import {
@@ -13,7 +13,7 @@ import { AutoAtualiza } from "@/componentes/AutoAtualiza";
 export const dynamic = "force-dynamic";
 
 const CAMPOS_TAREFA = `id, atividade, status, estimativa_min, abre_em, prazo_em, concluida_em,
-             escalado_id, responsavel_real_id, excecao_desc,
+             escalado_id, dupla_id, responsavel_real_id, excecao_desc,
              frentes ( sigla, nome ),
              eventos ( competicao, data, evento_id_origem )`;
 
@@ -24,13 +24,14 @@ async function buscarTarefas(supabase: Awaited<ReturnType<typeof criarClienteSer
   const idsPessoas = (pessoasAchadas ?? []).map((p) => p.id);
   const condicoes = [
     idsPessoas.length ? `escalado_id.in.(${idsPessoas.join(",")})` : null,
+    idsPessoas.length ? `dupla_id.in.(${idsPessoas.join(",")})` : null,
     `eventos.evento_id_origem.ilike.%${termo}%`,
     `eventos.competicao.ilike.%${termo}%`,
   ].filter(Boolean).join(",");
 
   return supabase
     .from("tarefas")
-    .select(`id, atividade, status, estimativa_min, prazo_em, escalado_id,
+    .select(`id, atividade, status, estimativa_min, prazo_em, escalado_id, dupla_id,
              frentes ( sigla ), eventos!inner ( competicao, data, evento_id_origem )`)
     .in("status", ["pendente", "fora_do_prazo"])
     .or(condicoes)
@@ -58,7 +59,7 @@ export default async function MinhaSemana({
     .select(CAMPOS_TAREFA)
     .lte("abre_em", fim)
     .gte("prazo_em", `${inicio}T00:00:00Z`)
-    .or(`escalado_id.eq.${pessoa!.id},responsavel_real_id.eq.${pessoa!.id}`)
+    .or(`escalado_id.eq.${pessoa!.id},dupla_id.eq.${pessoa!.id},responsavel_real_id.eq.${pessoa!.id}`)
     .order("prazo_em");
 
   // Quem ajuda a tarefa de outra pessoa (puxou pela busca) tem sessao mas nao e
@@ -230,6 +231,8 @@ export default async function MinhaSemana({
               segundosMedidos={emCurso.segundos}
               estimativaMin={emCurso.estimativa_min}
               escaladoId={emCurso.escalado_id}
+              duplaId={emCurso.dupla_id}
+              euId={pessoa!.id}
               time={time ?? []}
               contribuintes={emCurso.contribuintes}
               rotuloBotao="Entregar"
@@ -282,6 +285,8 @@ export default async function MinhaSemana({
                   segundosMedidos={t.segundos}
                   estimativaMin={t.estimativa_min}
                   escaladoId={t.escalado_id}
+                  duplaId={t.dupla_id}
+                  euId={pessoa!.id}
                   time={time ?? []}
                   contribuintes={t.contribuintes}
                   rotuloBotao="Entregar"
@@ -342,6 +347,8 @@ export default async function MinhaSemana({
                   segundosMedidos={t.segundos}
                   estimativaMin={t.estimativa_min}
                   escaladoId={t.escalado_id}
+                  duplaId={t.dupla_id}
+                  euId={pessoa!.id}
                   time={time ?? []}
                   contribuintes={t.contribuintes}
                   rotuloBotao="Entregar"
@@ -442,7 +449,7 @@ export default async function MinhaSemana({
                 {ROTULO_ATIVIDADE[t.atividade] ?? t.atividade} · {t.frente?.sigla}
               </span>
               <span className="text-[11.5px] text-tinta-3 truncate">
-                {t.evento?.competicao} · evento {t.evento && diaCurto(t.evento.data)} · escalado: {nomePor.get(t.escalado_id) ?? "—"}
+                {t.evento?.competicao} · evento {t.evento && diaCurto(t.evento.data)} · escalado: {escaladosDe(nomePor, t.escalado_id, t.dupla_id)}
               </span>
             </div>
             <form action={iniciar.bind(null, t.id)} className="shrink-0">

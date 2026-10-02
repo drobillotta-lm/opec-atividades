@@ -1,5 +1,5 @@
 import { criarClienteServidor } from "@/lib/supabase/server";
-import { semanaDe, rotuloSemana, diaCurto, ROTULO_ATIVIDADE } from "@/lib/semana";
+import { semanaDe, rotuloSemana, diaCurto, ROTULO_ATIVIDADE, escaladosDe } from "@/lib/semana";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +22,7 @@ export default async function Kanban() {
   const { data: brutas } = frentes.length
     ? await supabase
         .from("tarefas")
-        .select(`id, atividade, status, estimativa_min, prazo_em, escalado_id, responsavel_real_id,
+        .select(`id, atividade, status, estimativa_min, prazo_em, escalado_id, dupla_id, responsavel_real_id,
                  frentes ( sigla ), eventos ( competicao, data )`)
         .in("frente_id", frentes.map((f) => f.id))
         .lte("abre_em", fim)
@@ -96,6 +96,7 @@ type Tarefa = {
   atividade: string;
   status: string;
   escalado_id: string;
+  dupla_id: string | null;
   responsavel_real_id: string | null;
   frente: { sigla: string } | null;
   evento: { competicao: string; data: string } | null;
@@ -115,8 +116,10 @@ function Coluna({ titulo, cor, tarefas, nomePor }: { titulo: string; cor: string
           <p className="rounded-[10px] border border-dashed border-linha px-3 py-4 text-[12px] text-tinta-4">Nada aqui.</p>
         )}
         {tarefas.map((t) => {
-          const desvio = t.responsavel_real_id && t.responsavel_real_id !== t.escalado_id;
-          const quem = t.responsavel_real_id ?? t.escalado_id;
+          const desvio = t.responsavel_real_id && t.responsavel_real_id !== t.escalado_id && t.responsavel_real_id !== t.dupla_id;
+          const quem = t.responsavel_real_id
+            ? nomePor.get(t.responsavel_real_id) ?? "—"
+            : escaladosDe(nomePor, t.escalado_id, t.dupla_id);
           const naoNecessaria = t.status === "na";
           return (
             <div key={t.id} className={`rounded-[10px] bg-superficie border border-linha p-3 flex flex-col gap-1.5 ${naoNecessaria ? "opacity-60" : ""}`}>
@@ -131,7 +134,7 @@ function Coluna({ titulo, cor, tarefas, nomePor }: { titulo: string; cor: string
               </span>
               <div className="flex items-center justify-between gap-2 pt-0.5">
                 <span className="text-[11.5px] text-tinta-3">
-                  {naoNecessaria ? "não necessária" : `${nomePor.get(quem) ?? "—"}${desvio ? " · desvio" : ""}`}
+                  {naoNecessaria ? "não necessária" : `${quem}${desvio ? " · desvio" : ""}`}
                 </span>
                 {t.rodando.length > 0 && (
                   <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-verde-claro truncate">

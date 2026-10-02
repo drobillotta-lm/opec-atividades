@@ -15,7 +15,7 @@ export default async function Dock() {
     .from("pessoas").select("id, nome").eq("auth_user_id", user!.id).single();
 
   const CAMPOS = `id, atividade, estimativa_min, prazo_em, abre_em,
-             escalado_id, responsavel_real_id,
+             escalado_id, dupla_id, responsavel_real_id,
              frentes ( nome ), eventos ( competicao )`;
 
   // Sem filtro por abre_em: /semana deixa iniciar uma tarefa antes da janela abrir
@@ -24,7 +24,7 @@ export default async function Dock() {
   const { data: minhas } = await supabase
     .from("tarefas")
     .select(CAMPOS)
-    .or(`escalado_id.eq.${pessoa!.id},responsavel_real_id.eq.${pessoa!.id}`)
+    .or(`escalado_id.eq.${pessoa!.id},dupla_id.eq.${pessoa!.id},responsavel_real_id.eq.${pessoa!.id}`)
     .eq("status", "pendente")
     .order("prazo_em");
 

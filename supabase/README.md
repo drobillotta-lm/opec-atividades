@@ -39,6 +39,12 @@ no projeto, em ordem. O modelo e as regras de acesso estão explicados em
 | `028_desfazer_tarefa_de_evento_cancelado.sql` | `desfazer_tarefas_de_evento_cancelado()`: sem sessão nem ajuste a tarefa some, com tempo vira `na`/`cancelado`. Roda a cada sincronização |
 | `029_evento_herda_frente_na_sincronizacao.sql` | `herdar_frente_da_competicao()`: evento que já existia sem frente quando a competição foi classificada por outro caminho. Roda a cada sincronização |
 | `030_subtarefas.sql` | Sub-tarefas: `subtarefas` (título, dono, quem criou, status), `sessoes.subtarefa_id` opcional com gatilho de coerência, RLS, e `v_tempo_subtarefa`. `v_tempo_tarefa` não muda: o tempo da parte soma na tarefa-mãe |
+| `031_atividade_sinc_auditoria.sql` | Atividade `sinc_auditoria` nos 4 checks, taxa 168 min desde 01/10 (teste do Yuri: 20% a menos que sinc + auditoria) |
+| `032_cadeia_com_vigencia.sql` | `cadeia.vigente_de/vigente_ate` e `private.cadeia_vigente()`; FI/OL/PR/CP fecham sinc e auditoria em 30/09 e ganham `sinc_auditoria` em 01/10 |
+| `033_dupla.sql` | `mapa.dupla_id` e `tarefas.dupla_id`; dupla escreve na tarefa e lê sessões/ajustes; desvio exclui a dupla; `v_mes_pessoa` meio a meio |
+| `034_gerar_tarefas_v5_e_reaplicar_mapa.sql` | `gerar_tarefas` v5 (cadeia vigente + dupla), `desfazer_tarefas_fora_da_cadeia()`, `reaplicar_mapa()` |
+| `035_mapa_outubro_teste_do_yuri.sql` | OL vira "Olímpicos + Tênis"; mapa de FI/OL/PR/CP out–dez refeito (outubro e CP do Yuri, FI/OL/PR nov/dez provisórios). Rodado depois: 243 apagadas, 113 criadas, 158 reescaladas |
+| `035b_reaplicar_mapa_sem_ambiguidade.sql` | Corrige a `reaplicar_mapa` da 034 (coluna da CTE com o nome do parâmetro de saída) |
 
 ## Regras
 
@@ -51,6 +57,8 @@ no projeto, em ordem. O modelo e as regras de acesso estão explicados em
 - Competição sem frente em `competicoes` não gera tarefa e aparece no Admin pedindo
   classificação. Nunca some em silêncio, que é o que o `gerar_semana.py` faz hoje.
 - `gerar_tarefas(inicio, fim)` é idempotente e roda só com a service role.
+- Função com temp table (`gerar_tarefas`, `_cand`) só uma vez por statement. A sincronização
+  chama cada RPC numa chamada própria: gerar → cancelados → fora da cadeia → reaplicar mapa.
 - **Só evento com entrega comercial vira atividade.** Desde 23/09, quem decide é o líder
   de frente **na Escala** (`entrega.html` de lá, fila própria por líder) — este app só lê
   `entrega`/`entrega_origem` depois que o import (`021`) sincroniza. Enquanto ninguém

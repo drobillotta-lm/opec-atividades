@@ -18,6 +18,7 @@ export type TarefaDaSemana = {
   prazo_em: string;
   concluida_em: string | null;
   escalado_id: string;
+  dupla_id: string | null;
   responsavel_real_id: string | null;
   frente: { sigla: string; nome: string } | null;
   evento: { competicao: string; data: string; evento_id_origem: string } | null;

@@ -33,13 +33,15 @@ ativa     boolean not null default true
 ```
 
 ### `mapa`
-Importado de `config/mapa_aprovado.csv`. **Somente escrita pela importação.**
+Importado de `config/mapa_aprovado.csv` (setembro) e, desde a `035`, do teste de outubro do
+Yuri (`96838ab`, `entregaveis/`), com nov/dez de FI/OL/PR provisórios. **Somente escrita pela importação.**
 ```
 frente_id      uuid references frentes not null
 atividade      text not null      -- 'materiais'|'sincronizacao'|'roteiro'|'auditoria'
-                                  -- |'materiais_sinc'|'roteiro_auditoria'
+                                  -- |'materiais_sinc'|'roteiro_auditoria'|'compacto'|'sinc_auditoria'
 competencia    date not null      -- primeiro dia do mês
 pessoa_id      uuid references pessoas not null
+dupla_id       uuid references pessoas           -- segunda pessoa do elo (033); null = sozinho
 origem_commit  text               -- sha do dimensionamento de onde veio
 importado_em   timestamptz not null default now()
 unique (frente_id, atividade, competencia)
@@ -78,8 +80,13 @@ ordem              integer not null
 escalado_regra     text not null default 'mapa'
 abre_offset_dias   integer not null default 0      -- dias relativos ao evento, negativo = antes
 prazo_offset_dias  integer not null default 2
+vigente_de         date not null default '2026-08-01'   -- (032)
+vigente_ate        date                                 -- null = em vigor dali pra frente
 ```
-A linha com `competicao_id` vence a linha genérica da frente.
+A linha com `competicao_id` vence a linha genérica da frente. A cadeia de um evento é a que
+está em vigor **na data do evento**: `private.cadeia_vigente(frente, competicao, data)`. Desde
+01/10, FI, OL, PR e CP trocam `sincronizacao` + `auditoria` por `sinc_auditoria` (168 min,
+janela −1 a +2); setembro segue com a cadeia antiga.
 
 ### `eventos`
 Vem da varredura do Airtable. Um evento é competição mais data, não jogo individual.
@@ -111,6 +118,7 @@ frente_id            uuid references frentes not null
 atividade            text not null
 competencia          date not null
 escalado_id          uuid references pessoas not null    -- do mapa
+dupla_id             uuid references pessoas             -- do mapa; dupla divide a tarefa (033)
 responsavel_real_id  uuid references pessoas             -- quem fez; null enquanto pendente
 estimativa_min       integer not null                    -- da taxa, não digitada
 abre_em              date not null                       -- evento + abre_offset_dias (016)
@@ -125,7 +133,8 @@ obs                  text
 unique (evento_id, atividade)
 ```
 
-Um desvio de escala não é um campo: é `responsavel_real_id <> escalado_id`.
+Um desvio de escala não é um campo: é `responsavel_real_id` diferente do escalado **e** da dupla.
+A dupla lê as sessões e ajustes da tarefa e escreve nela como o escalado.
 
 ### `sessoes`
 ```
@@ -168,7 +177,8 @@ importado_em  timestamptz not null default now()
 tarefas, entregues, pendentes, fora do prazo, desvios de escala, exceções.
 
 **`v_mes_pessoa`** — por pessoa e competência: horas medidas, horas previstas (soma das
-estimativas), desvio percentual, entregues, fora do prazo, desvios de escala.
+estimativas), desvio percentual, entregues, fora do prazo, desvios de escala. Tarefa em dupla
+conta **meio a meio** (previsto e medido) pros dois, a menos que um terceiro tenha feito (`033`).
 
 **`v_taxa_real`** — por atividade e competência: média do tempo medido contra a taxa vigente.
 É a view que diz se `config/taxas.yaml` ainda vale.
@@ -177,7 +187,10 @@ estimativas), desvio percentual, entregues, fora do prazo, desvios de escala.
 
 | Função | O que faz |
 |---|---|
-| `gerar_tarefas(inicio, fim)` | Cria as tarefas dos eventos do período: só evento com `entrega = true` e `tipo = 'normal'`, uma tarefa por elo da `cadeia`, estimativa pela taxa vigente, janela pelos offsets. Está na v4 (`017`) |
+| `gerar_tarefas(inicio, fim)` | Cria as tarefas dos eventos do período: só evento com `entrega = true` e `tipo = 'normal'`, uma tarefa por elo da `cadeia`, estimativa pela taxa vigente, janela pelos offsets, dupla do mapa. Está na v5 (`034`): cadeia pela `cadeia_vigente` |
+| `desfazer_tarefas_fora_da_cadeia()` | Pendente do mês corrente em diante cuja atividade saiu da cadeia vigente: sem tempo some, com tempo vira `na`/`fora_da_cadeia` (`034`) |
+| `reaplicar_mapa(competencia)` | Alinha escalado e dupla das pendentes sem tempo ao mapa do mês, só em elo `escalado_regra = 'mapa'`. Devolve reescaladas, sem mapa e divergentes com tempo (`034`/`035b`) |
+| `private.cadeia_vigente(frente, competicao, data)` | A cadeia em vigor na data; competição vence frente (`032`) |
 | `tarefas_da_semana(inicio, fim)` | A semana de uma pessoa: tarefa cuja janela cruza a semana pedida, não os eventos da semana (`016`) |
 | `private.taxa_min(atividade, data)` | A taxa vigente naquela data |
 | `private.eu()`, `private.meu_papel()`, `private.sou_gestor()`, `private.lidero(frente)` | Quem está pedindo, usadas nas policies |

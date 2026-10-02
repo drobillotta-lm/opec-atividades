@@ -206,3 +206,28 @@ feita, por quem e em quanto tempo; nada precisa "bater com o script". Some do pl
 relatório de período e a exportação em CSV — se alguém um dia precisar exportar, é um
 pedido novo. Do repositório do Yuri, o que continua valendo é só o que entra como dado:
 `pessoas.csv`, `decisoes.yaml`, `mapa_aprovado.csv`, `taxas.yaml`.
+
+## 30/09–02/10/2026 — teste de outubro do Yuri: sinc_auditoria, dupla e mapa novo
+
+Fonte: mensagem do Yuri de 30/09, a tabela "Quem faz o quê em outubro" e o commit `96838ab` de
+`ymuanes/opec-dimensionamento` (02/10). O commit **não altera `config/`**: o modelo novo está
+em `entregaveis/` e `decisoes/log.md`, e oficializar em `mapa_aprovado.csv` é pendência dele.
+
+- Em FI, OL, PR e CP, `sincronizacao` + `auditoria` viram **uma tarefa**, `sinc_auditoria`,
+  com 20% menos horas que a soma: **168 min** (0,8 × 210), provisório. Janela = união (−1 a +2).
+  Nacional, Kings e compacto não mudam. Setembro fica com a cadeia antiga: a cadeia ganhou
+  vigência (`032`).
+- Em **Fut Inter** a tarefa unida é de uma **dupla**, Julia + Pedro, metade das horas cada.
+  Eles dividem entre si; o app não decide. No painel, conta meio a meio pros dois.
+- Mapa de outubro: FI materiais Lucas / roteiro Bárbara / sinc_auditoria Julia + Pedro ·
+  OL materiais Bárbara / roteiro Pedro / sinc_auditoria Juliana · PR materiais Julia / roteiro
+  Lucas / sinc_auditoria Gabriel · CP materiais Gabriel / roteiro Juliana / sinc_auditoria
+  Bárbara. CP com o mesmo trio até dezembro. Nacional igual.
+- Nov/dez de FI/OL/PR: **cópia de outubro, provisória** (decisão do Daniel, 02/10), marcada em
+  `origem_commit`. A saída do `entregaveis/cenario_sinc_auditoria.py` do Yuri troca isso.
+- Olímpicos passa a se chamar **Olímpicos + Tênis**.
+- O app conta materiais e sincronização **por evento**; o modelo do Yuri conta por
+  rodada/série/bloco. A taxa medida aqui não é comparável 1:1 até alinhar isso.
+- As 566 tarefas de outubro geradas com o mapa e a cadeia antigos foram refeitas: 243
+  (sincronização/auditoria sem tempo) apagadas, 113 `sinc_auditoria` criadas, 158 reescaladas
+  para o mapa novo. Nenhuma tinha tempo registrado.

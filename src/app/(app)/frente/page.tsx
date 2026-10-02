@@ -1,5 +1,5 @@
 import { criarClienteServidor } from "@/lib/supabase/server";
-import { semanaDe, rotuloSemana, diaCurto, hhmm, ROTULO_ATIVIDADE } from "@/lib/semana";
+import { semanaDe, rotuloSemana, diaCurto, hhmm, ROTULO_ATIVIDADE, escaladosDe } from "@/lib/semana";
 import { definirQuemFez, marcarDesnecessaria, reverterDesnecessaria } from "../acoes";
 import { Submit, DialogoDesnecessaria } from "../semana/Cronometro";
 
@@ -23,7 +23,7 @@ export default async function MinhaFrente() {
   const { data: linhas } = frentes.length
     ? await supabase
         .from("tarefas")
-        .select(`id, atividade, status, estimativa_min, prazo_em, escalado_id, responsavel_real_id, excecao_desc,
+        .select(`id, atividade, status, estimativa_min, prazo_em, escalado_id, dupla_id, responsavel_real_id, excecao_desc,
                  frentes ( sigla, nome ), eventos ( competicao, data )`)
         .in("frente_id", frentes.map((f) => f.id))
         .lte("abre_em", fim)
@@ -37,7 +37,10 @@ export default async function MinhaFrente() {
     evento: Array.isArray(t.eventos) ? t.eventos[0] : t.eventos,
   }));
   const nomePor = new Map((time ?? []).map((p) => [p.id, p.nome]));
-  const desvios = tarefas.filter((t) => t.responsavel_real_id && t.responsavel_real_id !== t.escalado_id).length;
+  // Quem fez sendo o escalado ou a dupla nao e desvio.
+  const ehDesvio = (t: { responsavel_real_id: string | null; escalado_id: string; dupla_id: string | null }) =>
+    !!t.responsavel_real_id && t.responsavel_real_id !== t.escalado_id && t.responsavel_real_id !== t.dupla_id;
+  const desvios = tarefas.filter(ehDesvio).length;
   const aResolver = tarefas.filter((t) => !t.responsavel_real_id).length;
 
   return (
@@ -71,7 +74,7 @@ export default async function MinhaFrente() {
             ))}
           </div>
           {tarefas.map((t) => {
-            const desvio = t.responsavel_real_id && t.responsavel_real_id !== t.escalado_id;
+            const desvio = ehDesvio(t);
             return (
               <div key={t.id} className={`grid grid-cols-[1.9fr_0.8fr_1.5fr_0.9fr] gap-3 items-center px-4 py-2.5 border-t border-linha-2 ${desvio ? "bg-ambar-fundo" : ""}`}>
                 <div className="flex flex-col gap-0.5 min-w-0">
@@ -82,7 +85,7 @@ export default async function MinhaFrente() {
                     {t.evento?.competicao} · {t.evento && diaCurto(t.evento.data)}
                   </span>
                 </div>
-                <span className="text-[12.5px] text-tinta-3">{nomePor.get(t.escalado_id) ?? "—"}</span>
+                <span className="text-[12.5px] text-tinta-3">{escaladosDe(nomePor, t.escalado_id, t.dupla_id)}</span>
                 {t.status === "na" ? (
                   <div className="flex items-center gap-1.5 min-w-0">
                     <span className="text-[12px] text-tinta-4 truncate">não necessária{t.excecao_desc ? ` · ${t.excecao_desc}` : ""}</span>

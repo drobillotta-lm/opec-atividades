@@ -38,6 +38,8 @@ export type ResumoSincronizacao = {
   plantao_sem_pessoa: string[];
   tarefas: { criadas: number; ja_existiam: number; sem_escalado: number; aguardando_entrega: number; ignorados: number } | null;
   canceladas: { apagadas: number; marcadas_na: number } | null;
+  fora_da_cadeia: { apagadas: number; marcadas_na: number } | null;
+  reaplicadas: { competencia: string; reescaladas: number; sem_mapa: number; divergentes_com_tempo: number }[];
 };
 
 // Mesma classificação das migrations 011/019: a Matriz não tem campo próprio, o tipo
@@ -206,13 +208,27 @@ export async function sincronizarEscala(): Promise<ResumoSincronizacao> {
     falha("upsert plantões", error);
   }
 
-  // 7) tarefas da janela tocada, e as de evento cancelado
+  // 7) tarefas da janela tocada, as de evento cancelado, as que sairam da cadeia
+  //    vigente (032) e o dono das pendentes realinhado ao mapa (mes corrente e o seguinte).
+  //    Cada funcao numa chamada propria: gerar_tarefas usa temp table.
   const fim = new Date();
   fim.setDate(fim.getDate() + DIAS_A_FRENTE);
   const rGerar = await admin.rpc("gerar_tarefas", { p_inicio: PISO, p_fim: fim.toISOString().slice(0, 10) });
   falha("gerar_tarefas", rGerar.error);
   const rCancel = await admin.rpc("desfazer_tarefas_de_evento_cancelado");
   falha("desfazer cancelados", rCancel.error);
+  const rFora = await admin.rpc("desfazer_tarefas_fora_da_cadeia");
+  falha("desfazer fora da cadeia", rFora.error);
+  const hoje = new Date();
+  const competencias = [0, 1].map((n) =>
+    new Date(Date.UTC(hoje.getUTCFullYear(), hoje.getUTCMonth() + n, 1)).toISOString().slice(0, 10));
+  const reaplicadas: ResumoSincronizacao["reaplicadas"] = [];
+  for (const competencia of competencias) {
+    const r = await admin.rpc("reaplicar_mapa", { p_competencia: competencia });
+    falha(`reaplicar mapa ${competencia}`, r.error);
+    const linha = (r.data as Omit<ResumoSincronizacao["reaplicadas"][number], "competencia">[])?.[0];
+    if (linha) reaplicadas.push({ competencia, ...linha });
+  }
 
   return {
     eventos: linhasEvento.length,
@@ -223,5 +239,7 @@ export async function sincronizarEscala(): Promise<ResumoSincronizacao> {
     plantao_sem_pessoa: [...semPessoa],
     tarefas: (rGerar.data as ResumoSincronizacao["tarefas"][])?.[0] ?? null,
     canceladas: (rCancel.data as ResumoSincronizacao["canceladas"][])?.[0] ?? null,
+    fora_da_cadeia: (rFora.data as ResumoSincronizacao["fora_da_cadeia"][])?.[0] ?? null,
+    reaplicadas,
   };
 }
