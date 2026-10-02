@@ -28,8 +28,8 @@ export default async function LayoutApp({ children }: { children: React.ReactNod
     <div className="min-h-screen flex">
       <aside className="w-[232px] shrink-0 bg-fundo-nav border-r border-linha flex flex-col p-[22px_14px] gap-6">
         <div className="flex items-center gap-2.5 px-2">
-          <div className="w-[30px] h-[30px] rounded-lg bg-azul grid place-items-center">
-            <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="#0E1014" strokeWidth="2.1" strokeLinecap="round" aria-hidden>
+          <div className="w-[30px] h-[30px] rounded-lg bg-verde text-verde-ink grid place-items-center">
+            <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" aria-hidden>
               <path d="M3.5 9.2l3.2 3.2 7.8-7.8" />
             </svg>
           </div>
@@ -49,7 +49,7 @@ export default async function LayoutApp({ children }: { children: React.ReactNod
         </nav>
 
         <div className="mt-auto flex flex-col gap-2">
-          <div className="flex items-center gap-2.5 rounded-[10px] bg-[#13171d] border border-linha px-3 py-2.5">
+          <div className="flex items-center gap-2.5 rounded-[10px] bg-superficie border border-linha px-3 py-2.5">
             <div className="w-[30px] h-[30px] rounded-full bg-linha grid place-items-center shrink-0">
               <span className="text-xs font-semibold text-tinta-2">{iniciais}</span>
             </div>

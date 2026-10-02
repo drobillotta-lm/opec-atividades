@@ -8,11 +8,12 @@ type Tema = "claro" | "escuro";
 /**
  * Script que roda antes da primeira pintura. Sem ele a tela pisca no tema
  * errado antes do React assumir. Vai inline no <head>, de proposito.
+ * Sem escolha registrada vale Noite (decisao do Daniel, 01/10): nao segue o sistema.
+ * Os valores guardados continuam "escuro" (Noite) e "claro" (Mostrador).
  */
 export const scriptAntiPisca = `(function(){try{
 var t=localStorage.getItem('${CHAVE}');
-if(!t){t=window.matchMedia('(prefers-color-scheme: light)').matches?'claro':'escuro';}
-document.documentElement.setAttribute('data-tema',t);
+document.documentElement.setAttribute('data-tema',t==='claro'?'claro':'escuro');
 }catch(e){}})();`;
 
 export function BotaoTema({ compacto = false }: { compacto?: boolean }) {
@@ -31,23 +32,7 @@ export function BotaoTema({ compacto = false }: { compacto?: boolean }) {
       setTema(e.newValue as Tema);
     };
     window.addEventListener("storage", deOutraAba);
-
-    // Sem escolha registrada, seguir o sistema em tempo real.
-    const midia = window.matchMedia("(prefers-color-scheme: light)");
-    const doSistema = (e: MediaQueryListEvent) => {
-      let escolhido: string | null = null;
-      try { escolhido = localStorage.getItem(CHAVE); } catch {}
-      if (escolhido) return;
-      const novo: Tema = e.matches ? "claro" : "escuro";
-      document.documentElement.setAttribute("data-tema", novo);
-      setTema(novo);
-    };
-    midia.addEventListener("change", doSistema);
-
-    return () => {
-      window.removeEventListener("storage", deOutraAba);
-      midia.removeEventListener("change", doSistema);
-    };
+    return () => window.removeEventListener("storage", deOutraAba);
   }, []);
 
   function trocar() {
@@ -57,7 +42,7 @@ export function BotaoTema({ compacto = false }: { compacto?: boolean }) {
     setTema(novo);
   }
 
-  const rotulo = tema === "escuro" ? "Mudar para o tema claro" : "Mudar para o tema escuro";
+  const rotulo = tema === "escuro" ? "Mudar para o tema Mostrador" : "Mudar para o tema Noite";
 
   return (
     <button
@@ -73,7 +58,7 @@ export function BotaoTema({ compacto = false }: { compacto?: boolean }) {
     >
       {/* Sem tema definido ainda, nao desenhar icone nenhum evita o pisca invertido. */}
       {montado && (tema === "escuro" ? <IconeSol /> : <IconeLua />)}
-      {!compacto && montado && <span>{tema === "escuro" ? "Tema claro" : "Tema escuro"}</span>}
+      {!compacto && montado && <span>{tema === "escuro" ? "Tema Mostrador" : "Tema Noite"}</span>}
     </button>
   );
 }

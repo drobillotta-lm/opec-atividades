@@ -6,68 +6,85 @@
   build e escreve a cor literal em cada utilidade, entao trocar a variavel em tempo
   de execucao nao muda nada. Foi exatamente o que aconteceu na primeira versao:
   --color-fundo virava claro e o fundo continuava escuro.
+
+  Paleta do Sr. Minutos (docs/06): verde do corpo dele, creme do mostrador, preto
+  esverdeado que faz o verde vibrar. Noite e o padrao; Mostrador e o claro.
 */
 
+/* Noite: preto esverdeado, tinta creme. */
 :root {
-  --fundo: #0e1014;
-  --fundo-nav: #0b0d11;
-  --superficie: #161a20;
-  --superficie-2: #12151a;
-  --elevado: #1e232b;
-  --linha: #2a313b;
-  --linha-2: #22282f;
-  --tinta: #e6eaf0;
-  --tinta-2: #c3ccd8;
-  --tinta-3: #93a0b0;
-  --tinta-4: #7c8998;
-  --azul: #3794f4;
-  --azul-claro: #7fbbfa;
-  --azul-fundo: #16263a;
-  --azul-borda: #27486e;
-  --verde: #28ab72;
-  --verde-claro: #6fcca2;
-  --verde-fundo: #13211b;
-  --verde-borda: #235140;
-  --ambar: #b8892d;
-  --ambar-claro: #c9a45f;
-  --ambar-fundo: #1a1710;
-  --rosa: #e05a7a;
-  --vidro: rgb(18 22 28 / 0.72);
-  --vidro-borda: rgb(255 255 255 / 0.09);
-  --vidro-sombra: 0 18px 44px rgb(0 0 0 / .45), inset 0 1px 0 rgb(255 255 255 / .07);
+  --fundo: #0b0f0c;
+  --fundo-nav: #080b09;
+  --superficie: #121814;
+  --superficie-2: #0f1511;
+  --elevado: #1a221c;
+  --linha: #26302a;
+  --linha-2: #1e2722;
+  --trilho: #222b25;
+  --tinta: #f2e8d5;
+  --tinta-2: #c9c2b2;
+  --tinta-3: #8e9a90;
+  --tinta-4: #7d8a80;
+  --creme: #f2e8d5;
+  --verde: #3dd15a;
+  --verde-claro: #7be08f;
+  --verde-fundo: #10261a;
+  --verde-borda: #1e4a2c;
+  --verde-ink: #07120d;
+  --ambar: #e0a83a;
+  --ambar-claro: #ebc274;
+  --ambar-fundo: #2a2112;
+  --ambar-borda: #5c4520;
+  --rosa: #f06a7e;
+  --rosa-fundo: #2a1418;
+  --rosa-borda: #5a2a33;
+  --vidro: rgb(18 24 20 / 0.74);
+  --vidro-borda: rgb(242 232 213 / 0.09);
+  --vidro-sombra: 0 18px 44px rgb(0 0 0 / .45), inset 0 1px 0 rgb(242 232 213 / .06);
   color-scheme: dark;
 }
 
-/* Claro: papel levemente frio, tinta grafite. Contraste conferido, tinta sobre papel
-   passa de 12:1 e os acentos passam de 4.5:1. */
+/* Mostrador: o creme do relogio, tinta verde-escura. Dois valores sairam mais escuros
+   que os do docs/06 pra passar de 4.5:1 sobre o fundo: verde (1F8F3B dava 3.5) e tinta-4. */
 :root[data-tema="claro"] {
-  --fundo: #f6f8fa;
-  --fundo-nav: #eef1f5;
-  --superficie: #ffffff;
-  --superficie-2: #f3f5f8;
-  --elevado: #e9edf2;
-  --linha: #dbe2ea;
-  --linha-2: #e6ebf1;
-  --tinta: #141a21;
-  --tinta-2: #2f3a46;
-  --tinta-3: #56616e;
-  --tinta-4: #6b7683;
-  --azul: #1567c8;
-  --azul-claro: #0f57ac;
-  --azul-fundo: #e4effc;
-  --azul-borda: #b5d2f5;
-  --verde: #0f7a4d;
-  --verde-claro: #0a6440;
-  --verde-fundo: #e5f3ec;
-  --verde-borda: #b6dcc7;
+  --fundo: #f4ecda;
+  --fundo-nav: #eee4ce;
+  --superficie: #fbf6ea;
+  --superficie-2: #f7f0df;
+  --elevado: #ede4d0;
+  --linha: #ddd2bb;
+  --linha-2: #e6dcc7;
+  --trilho: #e3d8c0;
+  --tinta: #10261a;
+  --tinta-2: #2c3f33;
+  --tinta-3: #5e6b61;
+  --tinta-4: #5f6c63;
+  --creme: #10261a;
+  --verde: #18762f;
+  --verde-claro: #166b2c;
+  --verde-fundo: #dff2e3;
+  --verde-borda: #a9d8b5;
+  --verde-ink: #fbf6ea;
   --ambar: #8a6414;
   --ambar-claro: #75530e;
-  --ambar-fundo: #fbf1de;
+  --ambar-fundo: #f7ebd0;
+  --ambar-borda: #e2c98f;
   --rosa: #b62c4b;
-  --vidro: rgb(255 255 255 / 0.8);
-  --vidro-borda: rgb(16 20 26 / 0.1);
-  --vidro-sombra: 0 18px 44px rgb(16 20 26 / .16), inset 0 1px 0 rgb(255 255 255 / .7);
+  --rosa-fundo: #f8dde3;
+  --rosa-borda: #eab3c0;
+  --vidro: rgb(251 246 234 / 0.82);
+  --vidro-borda: rgb(16 38 26 / 0.1);
+  --vidro-sombra: 0 18px 44px rgb(16 38 26 / .14), inset 0 1px 0 rgb(255 255 255 / .6);
   color-scheme: light;
+}
+
+/* Azul saiu da identidade. Os apelidos seguram as paginas ate o D2 renomear as classes;
+   depois disso esta secao some. */
+:root, :root[data-tema="claro"] {
+  --azul: var(--verde);
+  --azul-claro: var(--verde-claro);
+  --azul-fundo: var(--verde-fundo);
+  --azul-borda: var(--verde-borda);
 }
 
 @theme inline {
@@ -78,10 +95,12 @@
   --color-elevado: var(--elevado);
   --color-linha: var(--linha);
   --color-linha-2: var(--linha-2);
+  --color-trilho: var(--trilho);
   --color-tinta: var(--tinta);
   --color-tinta-2: var(--tinta-2);
   --color-tinta-3: var(--tinta-3);
   --color-tinta-4: var(--tinta-4);
+  --color-creme: var(--creme);
   --color-azul: var(--azul);
   --color-azul-claro: var(--azul-claro);
   --color-azul-fundo: var(--azul-fundo);
@@ -90,12 +109,17 @@
   --color-verde-claro: var(--verde-claro);
   --color-verde-fundo: var(--verde-fundo);
   --color-verde-borda: var(--verde-borda);
+  --color-verde-ink: var(--verde-ink);
   --color-ambar: var(--ambar);
   --color-ambar-claro: var(--ambar-claro);
   --color-ambar-fundo: var(--ambar-fundo);
+  --color-ambar-borda: var(--ambar-borda);
   --color-rosa: var(--rosa);
-  --font-sans: Archivo, "Segoe UI", system-ui, sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --color-rosa-fundo: var(--rosa-fundo);
+  --color-rosa-borda: var(--rosa-borda);
+  --font-sans: var(--font-archivo), Archivo, "Segoe UI", system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), "IBM Plex Mono", ui-monospace, monospace;
+  --font-display: var(--font-barlow), "Barlow Condensed", "Arial Narrow", Impact, sans-serif;
 }
 
 html, body {
@@ -108,7 +132,20 @@ html, body, aside, section, dialog, .vidro {
   transition: background-color .18s ease, color .18s ease, border-color .18s ease;
 }
 
+/* Titulo de pagina em Barlow Condensed, o eco da tipografia esportiva. Regra global (fora
+   de layer, entao vence o font-semibold das paginas) pra nao editar as paginas no D1. */
+h1, .titulo-pagina {
+  font-family: var(--font-display);
+  font-weight: 800;
+  text-transform: uppercase;
+  font-size: 32px;
+  letter-spacing: -0.005em;
+  line-height: 1;
+}
+
 .num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+:focus-visible { outline: 2px solid var(--verde); outline-offset: 2px; }
 
 /* Vidro: o que flutua sobre outra coisa. */
 .vidro {
