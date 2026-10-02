@@ -91,6 +91,12 @@ async fn pausar(http: tauri::State<'_, Http>) -> Result<Value, String> {
     chamar(&http.0, "pausar", Some(json!({}))).await
 }
 
+/// Começa uma atividade que não estava planejada: vira tarefa registrada da pessoa e já roda.
+#[tauri::command]
+async fn comecar(http: tauri::State<'_, Http>, titulo: String, frente: Option<String>) -> Result<Value, String> {
+    chamar(&http.0, "comecar", Some(json!({ "titulo": titulo, "frente": frente.unwrap_or_default() }))).await
+}
+
 #[tauri::command]
 async fn parear(app: tauri::AppHandle, http: tauri::State<'_, Http>, codigo: String) -> Result<Value, String> {
     let aparelho = std::env::var("COMPUTERNAME").unwrap_or_else(|_| "Windows".into());
@@ -168,7 +174,7 @@ fn main() {
                 .build()
                 .expect("cliente http"),
         ))
-        .invoke_handler(tauri::generate_handler![estado, parear, iniciar, pausar, abrir, tamanho])
+        .invoke_handler(tauri::generate_handler![estado, parear, iniciar, pausar, comecar, abrir, tamanho])
         .setup(|app| {
             let url = format!("{}/notch-app", site()).parse().expect("url do notch");
             let janela = WebviewWindowBuilder::new(app, "notch", WebviewUrl::External(url))

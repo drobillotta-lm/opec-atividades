@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-comecar"
+description = "Enables the comecar command without any pre-configured scope."
+commands.allow = ["comecar"]
+
+[[permission]]
+identifier = "deny-comecar"
+description = "Denies the comecar command without any pre-configured scope."
+commands.deny = ["comecar"]
