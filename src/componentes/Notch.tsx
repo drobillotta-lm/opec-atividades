@@ -22,7 +22,7 @@ export type TarefaNotch = {
   correndoDesde: string | null;
 };
 
-type Canto = "baixo-dir" | "baixo-esq" | "dir-alto" | "esq-alto";
+export type Canto = "baixo-dir" | "baixo-esq" | "dir-alto" | "esq-alto";
 const CHAVE = "opec-notch-canto";
 const CANTOS: { v: Canto; r: string }[] = [
   { v: "baixo-dir", r: "Embaixo, direita" }, { v: "baixo-esq", r: "Embaixo, esquerda" },
@@ -36,10 +36,23 @@ function hms(s: number) {
 
 const BOTAO = "w-full min-h-[34px] rounded-[9px] border border-[var(--notch-linha)] bg-[var(--notch-botao)] text-[12px] font-medium hover:bg-[var(--notch-linha)]";
 
-export function Notch({ tarefa, pausar, retomar }: {
+export type ProximaNotch = { id: string; titulo: string; sub: string; prazoEm: string };
+
+/**
+ * modo "web": fixo na janela do navegador, ações são server actions, links do Next.
+ * modo "janela": dentro do app Tauri (rota /notch-app). A janela nativa já está grudada na borda
+ * do monitor, então o notch fica rente ao canto da própria janela; ações chegam por callback.
+ */
+export function Notch({ tarefa, pausar, retomar, modo = "web", abrirSemana, aoMudarCanto, aoAbrirFechar, proximas, iniciarTarefa }: {
   tarefa: TarefaNotch | null;
   pausar: () => Promise<void>;
   retomar: (() => Promise<void>) | null;
+  modo?: "web" | "janela";
+  abrirSemana?: () => void;
+  aoMudarCanto?: (c: Canto) => void;
+  aoAbrirFechar?: (aberto: boolean) => void;
+  proximas?: ProximaNotch[];
+  iniciarTarefa?: (id: string) => Promise<void>;
 }) {
   const [agora, setAgora] = useState(() => Date.now());
   const [aberto, setAberto] = useState(false);
@@ -47,8 +60,13 @@ export function Notch({ tarefa, pausar, retomar }: {
   const raiz = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    try { const c = localStorage.getItem(CHAVE) as Canto | null; if (c && CANTOS.some((x) => x.v === c)) setCanto(c); } catch {}
+    let c: Canto = "baixo-dir";
+    try { const g = localStorage.getItem(CHAVE) as Canto | null; if (g && CANTOS.some((x) => x.v === g)) c = g; } catch {}
+    setCanto(c);
+    aoMudarCanto?.(c);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- só na montagem
   }, []);
+  useEffect(() => { aoAbrirFechar?.(aberto); }, [aberto, aoAbrirFechar]);
   useEffect(() => {
     if (!tarefa?.correndoDesde) return;
     const t = setInterval(() => setAgora(Date.now()), 1000);
@@ -66,6 +84,7 @@ export function Notch({ tarefa, pausar, retomar }: {
   function escolher(c: Canto) {
     setCanto(c);
     try { localStorage.setItem(CHAVE, c); } catch {}
+    aoMudarCanto?.(c);
   }
 
   const seg = tarefa ? tarefa.segundos + (tarefa.correndoDesde ? (agora - new Date(tarefa.correndoDesde).getTime()) / 1000 : 0) : 0;
@@ -79,10 +98,16 @@ export function Notch({ tarefa, pausar, retomar }: {
   const ga = estado === "vencido" ? -16 : 0;
   const lateral = canto === "dir-alto" || canto === "esq-alto";
 
-  const posicao = {
+  const posicao = (modo === "janela" ? {
+    "baixo-dir": "bottom-0 right-0", "baixo-esq": "bottom-0 left-0",
+    "dir-alto": "right-0 top-0", "esq-alto": "left-0 top-0",
+  } : {
     "baixo-dir": "bottom-0 right-24", "baixo-esq": "bottom-0 left-[260px]",
     "dir-alto": "right-0 top-24", "esq-alto": "left-0 top-24",
-  }[canto];
+  })[canto];
+  const linkSemana = (classe: string, texto: string) => abrirSemana
+    ? <button type="button" onClick={abrirSemana} className={classe}>{texto}</button>
+    : <Link href="/semana" className={classe}>{texto}</Link>;
   const giroCabeca = canto === "dir-alto" ? "rotate(-90deg)" : canto === "esq-alto" ? "rotate(90deg)" : undefined;
   const caixa = {
     "baixo-dir": "bottom-[62px] right-0 origin-bottom-right", "baixo-esq": "bottom-[62px] left-0 origin-bottom-left",
@@ -147,7 +172,7 @@ export function Notch({ tarefa, pausar, retomar }: {
               ) : retomar ? (
                 <form action={retomar} className="flex-1"><button type="submit" className={BOTAO}>{estado === "vencido" ? "Iniciar" : "Retomar"}</button></form>
               ) : null}
-              <Link href="/semana" className="flex-1 grid place-items-center min-h-[34px] rounded-[9px] bg-[var(--notch-verde)] text-[var(--notch-ink)] text-[12px] font-bold">Entregar</Link>
+              {linkSemana("flex-1 grid place-items-center min-h-[34px] rounded-[9px] bg-[var(--notch-verde)] text-[var(--notch-ink)] text-[12px] font-bold", "Entregar")}
             </div>
           </div>
         ) : (
@@ -155,7 +180,24 @@ export function Notch({ tarefa, pausar, retomar }: {
         )}
         {aberto && (
           <div className="mt-3 pt-3 border-t border-[var(--notch-linha-2)] flex flex-col gap-2">
-            <Link href="/semana" className="text-[var(--notch-verde)] text-[12px] font-semibold">Abrir Minha semana</Link>
+            {proximas && proximas.length > 0 && (
+              <div className="flex flex-col gap-1.5">
+                <span className="text-[10.5px] uppercase tracking-[0.08em] text-[var(--notch-tinta-3)]">Próximas</span>
+                {proximas.slice(0, 3).map((p) => (
+                  <div key={p.id} className="flex items-center gap-2 rounded-[10px] border border-[var(--notch-linha-2)] bg-[var(--notch-botao)] px-2.5 py-2">
+                    <div className="flex-1 min-w-0 flex flex-col">
+                      <b className="text-[12px] font-semibold truncate">{p.titulo}</b>
+                      <span className="text-[10.5px] text-[var(--notch-tinta-3)] truncate">{p.sub}</span>
+                    </div>
+                    {iniciarTarefa && (
+                      <button type="button" onClick={() => iniciarTarefa(p.id)}
+                        className="shrink-0 min-h-[28px] px-2.5 rounded-[8px] border border-[var(--notch-linha)] text-[11px] hover:bg-[var(--notch-linha)]">Iniciar</button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+            {linkSemana("text-left text-[var(--notch-verde)] text-[12px] font-semibold", "Abrir Minha semana")}
             <span className="text-[10.5px] uppercase tracking-[0.08em] text-[var(--notch-tinta-3)]">Onde ele fica</span>
             <div className="grid grid-cols-2 gap-1.5">
               {CANTOS.map((c) => (
