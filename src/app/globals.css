@@ -94,14 +94,6 @@
   --notch-ink: #07120d;
 }
 
-/* Azul saiu da identidade. Os apelidos seguram as paginas ate o D2 renomear as classes;
-   depois disso esta secao some. */
-:root, :root[data-tema="claro"] {
-  --azul: var(--verde);
-  --azul-claro: var(--verde-claro);
-  --azul-fundo: var(--verde-fundo);
-  --azul-borda: var(--verde-borda);
-}
 
 @theme inline {
   --color-fundo: var(--fundo);
@@ -117,10 +109,6 @@
   --color-tinta-3: var(--tinta-3);
   --color-tinta-4: var(--tinta-4);
   --color-creme: var(--creme);
-  --color-azul: var(--azul);
-  --color-azul-claro: var(--azul-claro);
-  --color-azul-fundo: var(--azul-fundo);
-  --color-azul-borda: var(--azul-borda);
   --color-verde: var(--verde);
   --color-verde-claro: var(--verde-claro);
   --color-verde-fundo: var(--verde-fundo);
