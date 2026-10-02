@@ -54,3 +54,6 @@ next-env.d.ts
 .vercel
 .env*
 !.env.example
+
+# originais do Sr. Minutos (JPG/MP4, 6 MB) ficam fora do git; fonte em Claude/Projects/asssets gerenciamento
+public/sr-minutos/originais/

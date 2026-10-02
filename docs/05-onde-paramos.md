@@ -5,6 +5,30 @@ estava no ar e ninguém do time tinha entrado** — nem conseguiria, porque os e
 fixos eram um palpite. Este arquivo é o ponto de retomada; `01-decisoes.md` tem o porquê de
 cada mudança de 28/09.
 
+## Atualização de 02/10/2026: Sr. Minutos e nova identidade visual (em revisão, sem código)
+
+Nas noites de 01 e 02/10 o Daniel definiu uma renovação da casca do app: estética LiveMode/CazéTV
+(verde vivo sobre preto esverdeado, Barlow Condensed nos títulos, azul sai) com um personagem
+central, o **Sr. Minutos**, relógio verde que é "o cronômetro com cara". Tudo está em
+**`docs/06-sr-minutos.md`** (fonte da verdade do personagem: poses, cores do rosto, regra
+fora/dentro, onde entra em cada tela, 3 fases, 6 decisões dele) e no mockup
+https://claude.ai/artifact/64gePQg56GTD4BSVvgSBfo (v3). Assets em `public/sr-minutos/`.
+**Nenhuma linha de `src/` foi alterada e nada foi commitado** (06 e public/sr-minutos estão
+untracked).
+
+Regra que mais muda a interface (02/10): corpo inteiro só FORA das caixas, encostado nelas
+(em pé na borda de um cartão, do lado da tabela, saindo de trás do diálogo); DENTRO das caixas
+só o rosto, e a cor do aro é o estado (verde, âmbar fora do prazo, rosa bloqueado, cinza pausado,
+creme sem estado). Substitui todo pontinho colorido de status.
+
+Pendente antes de codar: (1) Daniel autenticar o Higgsfield (`/mcp`) ou dar chave da xAI pra
+gerar as 6 poses que faltam (lista no 06 e no artefato); (2) OK final dele no mockup. Depois, a
+ordem de implementação sugerida: tokens/tipografia em `src/app/globals.css` → `/semana` (corpo
+inteiro em cima do cartão de andamento, rosto nas etiquetas) → dock (rosto colorido) → selo de
+entrega → frente e painel. Vídeos precisam de fundo transparente (ffmpeg → WebM alpha) e sprite
+sheet pro dock. Sessão salva em `~/.claude/session-data/2026-10-02-sr-minutos-v3-session.tmp`
+(`/resume-session`).
+
 ## O que está no ar
 
 | Coisa | Onde | Estado |
