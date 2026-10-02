@@ -1,6 +1,27 @@
 # Onde paramos — 28/09/2026
 
+02/10 — Fase C na main (/admin/organizar, migrations 039–041)
+02/10 — Fase B na main, commit 186685b
 02/10 — Fase A na main, commit e79e70f
+
+## Atualização de 02/10/2026: Fases B e C (janela APP)
+
+**B — sincronização à prova da Escala nova** (`036`–`038`). Leituras da Escala paginadas,
+eventos em lotes de 500, entrega da Escala vale nos dois sentidos (`entrega_escala`;
+indefinido desfaz só decisão da Escala), padrão de entrega copiado de `escala.competicoes`,
+`desfazer_tarefas_sem_entrega()` (8 apagadas na primeira rodada) e log em `sincronizacoes`
+(cartão no `/admin`). Primeira rodada do n8n com o código novo (03:15): ok em 11 s, 550 eventos
+lidos, 12 padrões de entrega atualizados. Não testado local com `ESCALA_PAGINA=100`: o
+`.env.local` não tem `ESCALA_*` nem `CRON_SECRET`.
+
+**C — `/admin/organizar`** (`039`–`041`). Atividade virou tabela (FK nos 4 lugares); mapa,
+atividades e tarefas editáveis pela tela, só gestor, via funções sem execute pra
+`authenticated`. Tarefa redirecionada (`dono_manual`) e avulsa (`origem`) não são desfeitas
+pela sincronização. Verificado em transação desfeita: trocar uma célula de outubro reescalou 32,
+atividade com vigência amanhã não gerou nada até hoje, redirecionada sobreviveu ao reaplicar,
+apagar com tempo é recusado. **Falta**: o link no menu lateral (`(app)/layout.tsx` é da
+TELAS) e as páginas além do Organizar usarem `rotulosAtividade()` (hoje mostram o código de
+uma atividade criada pela tela).
 
 ## Atualização de 02/10/2026: Fase A do plano de outubro (janela APP)
 

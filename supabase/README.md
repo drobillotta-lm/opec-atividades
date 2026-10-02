@@ -48,6 +48,9 @@ no projeto, em ordem. O modelo e as regras de acesso estão explicados em
 | `036_entrega_da_escala.sql` | `eventos.entrega_escala` (valor cru da Escala), `aplicar_entrega_da_escala()` (sim/não valem; indefinido desfaz decisão da Escala, nunca a do líder) e previsão v3, que reavalia o que ela mesma previu |
 | `037_desfazer_tarefas_sem_entrega.sql` | `desfazer_tarefas_sem_entrega()`: espelho da 028 para evento que perdeu a entrega, e reabre quando ela volta; só do mês corrente em diante. Endurece a 036 (só `'indefinido'` explícito desfaz). Primeira rodada: 8 apagadas |
 | `038_sincronizacoes.sql` | Log de cada sincronização (`relogio`/`botao`, resumo ou erro); só gestor lê, 30 dias |
+| `039_atividades.sql` | Tabela `atividades` (código, rótulo, ativa) com as 8 atuais; os 4 checks de atividade viram FK. Atividade nova sai pela tela, sem migration |
+| `040_organizar_funcoes.sql` | Funções do `/admin/organizar` (atividade, taxa, janela, mapa, tarefa a tarefa), só service role. `tarefas.dono_manual` e `tarefas.origem` (`cadeia`/`avulsa`): redirecionada não volta pro mapa e avulsa não é desfeita pela sincronização |
+| `041_v_cadeia_atual.sql` | O que vale hoje por frente: cadeia em vigor, taxa, janela e o mapa do mês |
 
 ## Regras
 

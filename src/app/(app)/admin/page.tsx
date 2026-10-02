@@ -84,6 +84,15 @@ export default async function Admin() {
         <span className="text-tinta-4">→</span>
       </Link>
 
+      <Link href="/admin/organizar"
+        className="rounded-xl bg-superficie border border-linha p-5 flex items-center justify-between gap-3 hover:bg-elevado transition">
+        <div className="flex flex-col gap-1">
+          <h2 className="text-[11.5px] font-semibold uppercase tracking-[0.1em] text-tinta-3">Organizar</h2>
+          <span className="text-[12.5px] text-tinta-3">Mapa do mês, atividades da cadeia (taxa, janela, vigência) e ajuste de tarefas uma a uma</span>
+        </div>
+        <span className="text-tinta-4">→</span>
+      </Link>
+
       <Cartao titulo="Última sincronização" nota="as 3 últimas rodadas com a Escala">
         {(sincs ?? []).length === 0 && <p className="py-2 text-[12.5px] text-tinta-4">Nenhuma rodada registrada ainda.</p>}
         {(sincs ?? []).map((s) => {

@@ -120,6 +120,8 @@ atividade            text not null
 competencia          date not null
 escalado_id          uuid references pessoas not null    -- do mapa
 dupla_id             uuid references pessoas             -- do mapa; dupla divide a tarefa (033)
+origem               text not null default 'cadeia'      -- 'cadeia' | 'avulsa' (criada à mão, 040)
+dono_manual          boolean not null default false      -- redirecionada à mão: reaplicar_mapa não mexe (040)
 responsavel_real_id  uuid references pessoas             -- quem fez; null enquanto pendente
 estimativa_min       integer not null                    -- da taxa, não digitada
 abre_em              date not null                       -- evento + abre_offset_dias (016)

@@ -27,6 +27,7 @@ que está no ar.
 | `/painel` | gestor | Horas medidas contra previstas por pessoa e "a taxa ainda vale?", por mês com ‹ hoje › |
 | `/admin` | gestor | Classificar competição sem frente (ou criar frente), pessoas em leitura |
 | `/admin/eventos` | gestor | Entrega, tarefas e responsáveis por evento — entrega é leitura, quem decide é o líder na Escala |
+| `/admin/organizar` | gestor | Três abas. **Mapa**: grade frente × atividade do mês, pessoa + dupla, selo "provisório", aviso de líder na própria frente; salvar, copiar do mês anterior, reaplicar. **Atividades**: cadeia por frente com vigência, taxa, janela e o medido do mês; nova atividade, encerrar/reabrir a partir de uma data, alterar janela e taxa. **Tarefas**: filtro por semana/frente/pessoa/evento; redirecionar, ajustar prazo e estimativa, desnecessária, apagar (só sem tempo), criar tarefa no evento |
 
 Não existe tela de "tarefa": entrega e tempo acontecem em diálogos dentro de `/semana`.
 
