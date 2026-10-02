@@ -78,6 +78,22 @@
   color-scheme: light;
 }
 
+/* Notch do Sr. Minutos: peça de "hardware", igual nos dois temas (por isso só no :root). */
+:root {
+  --notch-preto: #050806;
+  --notch-trilho: #1c2420;
+  --notch-botao: #1a221c;
+  --notch-linha: #26302a;
+  --notch-linha-2: #1e2722;
+  --notch-mostrador: #f2e8d5;
+  --notch-branco: #ffffff;
+  --notch-tinta: #10261a;
+  --notch-tinta-2: #c9c2b2;
+  --notch-tinta-3: #8e9a90;
+  --notch-verde: #3dd15a;
+  --notch-ink: #07120d;
+}
+
 /* Azul saiu da identidade. Os apelidos seguram as paginas ate o D2 renomear as classes;
    depois disso esta secao some. */
 :root, :root[data-tema="claro"] {
@@ -138,7 +154,6 @@ h1, .titulo-pagina {
   font-family: var(--font-display);
   font-weight: 800;
   text-transform: uppercase;
-  font-size: 32px;
   letter-spacing: -0.005em;
   line-height: 1;
 }

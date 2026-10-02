@@ -10,6 +10,7 @@ import {
 import { AbrirDock } from "@/componentes/AbrirDock";
 import { AutoAtualiza } from "@/componentes/AutoAtualiza";
 import { Rosto } from "@/componentes/SrMinutos";
+import { Corpo, Animado } from "@/componentes/SrMinutos";
 
 export const dynamic = "force-dynamic";
 
@@ -167,6 +168,10 @@ export default async function MinhaSemana({
   const horasPrevistas = comTempo.reduce((s, t) => s + t.estimativa_min, 0);
   const segundosFeitos = comTempo.reduce((s, t) => s + t.segundos, 0);
   const agora = Date.now();
+  // Fala do Sr. Minutos no cartão de andamento: regra fixa (docs/06), sobre a próxima de hoje.
+  const hojeBRT = new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+  const venceHoje = pendentes.find((t) => t.prazo_em.slice(0, 10) === hojeBRT);
+  const falaSrMinutos = venceHoje ? `${ROTULO_ATIVIDADE[venceHoje.atividade] ?? venceHoje.atividade} vence hoje.` : undefined;
   const idsExistentes = new Set(ids);
   const resultados = (resultadosBusca ?? [])
     .map((r) => ({
@@ -181,7 +186,7 @@ export default async function MinhaSemana({
       <AutoAtualiza segundos={30} />
       <header className="flex items-end justify-between gap-5">
         <div className="flex flex-col gap-1.5">
-          <h1 className="text-[23px] font-semibold tracking-[-0.02em]">Minha semana</h1>
+          <h1 className="text-[34px]">Minha semana</h1>
           <p className="text-[12.5px] text-tinta-3">
             {rotuloSemana(inicio, fim)} · {comTempo.length} tarefas · {tempoLegivel(segundosFeitos)} de {hhmm(horasPrevistas)}
           </p>
@@ -195,7 +200,8 @@ export default async function MinhaSemana({
       </header>
 
       {emCurso && (
-        <div className="flex items-center gap-5 rounded-xl bg-verde-fundo border border-verde-borda px-5 py-4">
+        <div className="relative mt-[118px] flex items-center gap-5 rounded-xl bg-verde-fundo border border-verde-borda px-5 py-4">
+          <Corpo pose="apontando" altura={116} fala={falaSrMinutos} className="right-10 bottom-[calc(100%-6px)]" />
           <div className="flex flex-col gap-1.5 flex-1 min-w-0">
             <span className="inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.11em] text-verde-claro">
               <Rosto estado="verde" tamanho={16} />Em andamento
@@ -236,6 +242,7 @@ export default async function MinhaSemana({
               euId={pessoa!.id}
               time={time ?? []}
               contribuintes={emCurso.contribuintes}
+              atrasada={new Date(emCurso.prazo_em).getTime() < agora}
               rotuloBotao="Entregar"
               classeBotao="flex items-center gap-2 min-h-[42px] px-3.5 rounded-[9px] bg-verde text-verde-ink text-[12.5px] font-semibold hover:brightness-110 transition"
             />
@@ -288,6 +295,7 @@ export default async function MinhaSemana({
                   euId={pessoa!.id}
                   time={time ?? []}
                   contribuintes={t.contribuintes}
+                  atrasada={new Date(t.prazo_em).getTime() < agora}
                   rotuloBotao="Entregar"
                   classeBotao="min-h-[38px] px-3.5 rounded-[9px] bg-verde text-verde-ink text-[12.5px] font-semibold hover:brightness-110 transition"
                 />
@@ -311,8 +319,13 @@ export default async function MinhaSemana({
         </Secao>
       )}
 
+      {!emCurso && segundosFeitos === 0 && pendentes.length > 0 && (
+        <VazioComEle pose="triste" titulo="Ninguém ligou o cronômetro essa semana."
+          texto={`Sem número eu não sirvo pra nada. ${pendentes.length === 1 ? "Tem 1 tarefa aberta" : `Tem ${pendentes.length} tarefas abertas`} pra você. Esqueceu de marcar? Ajuste o tempo com o motivo, vale mais do que nada.`} />
+      )}
+
       <Secao titulo="Pendentes" contagem={`${pendentes.length}`}>
-        {pendentes.length === 0 && <Vazio>Nada pendente nesta semana.</Vazio>}
+        {pendentes.length === 0 && <VazioComEle pose="ferias" titulo="Hoje não tem nada aberto." texto="Nada pendente nesta semana. Vai viver." />}
         {pendentes.map((t) => {
           const atrasada = new Date(t.prazo_em).getTime() < agora;
           return (
@@ -350,6 +363,7 @@ export default async function MinhaSemana({
                   euId={pessoa!.id}
                   time={time ?? []}
                   contribuintes={t.contribuintes}
+                  atrasada={atrasada}
                   rotuloBotao="Entregar"
                   classeBotao="min-h-[38px] px-3 rounded-[9px] border border-linha bg-superficie-2 text-[12.5px] text-tinta-3 hover:text-tinta-2 transition"
                 />
@@ -506,4 +520,17 @@ function Etiqueta({ atrasada }: { atrasada: boolean }) {
 
 function Vazio({ children }: { children: React.ReactNode }) {
   return <p className="rounded-[10px] border border-dashed border-linha px-4 py-5 text-[12.5px] text-tinta-4">{children}</p>;
+}
+
+
+function VazioComEle({ pose, titulo, texto }: { pose: "ferias" | "triste"; titulo: string; texto: string }) {
+  return (
+    <div className="flex items-end">
+      <div className="hidden sm:block shrink-0 -mr-8 z-[2]"><Animado pose={pose} altura={170} /></div>
+      <div className="flex-1 min-w-0 rounded-[14px] bg-superficie border border-linha px-6 py-5 sm:pl-12 flex flex-col gap-1.5">
+        <b className="font-display text-[24px] font-extrabold uppercase leading-[0.95]">{titulo}</b>
+        <p className="text-[12.5px] text-tinta-3">{texto}</p>
+      </div>
+    </div>
+  );
 }

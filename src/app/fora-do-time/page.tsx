@@ -1,5 +1,6 @@
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { Animado } from "@/componentes/SrMinutos";
 
 export default async function ForaDoTime() {
   const supabase = await criarClienteServidor();
@@ -15,13 +16,9 @@ export default async function ForaDoTime() {
   return (
     <main className="min-h-screen flex items-center justify-center px-6">
       <div className="w-full max-w-[420px] flex flex-col gap-6">
-        <div className="w-12 h-12 rounded-xl bg-rosa-fundo border border-rosa-borda grid place-items-center">
-          <svg width="23" height="23" viewBox="0 0 22 22" fill="none" stroke="currentColor" className="text-rosa" strokeWidth="1.8" strokeLinecap="round" aria-hidden>
-            <circle cx="11" cy="11" r="8" /><path d="M5.3 5.3l11.4 11.4" />
-          </svg>
-        </div>
+        <Animado pose="triste" altura={170} className="self-start -mb-2" />
         <div className="flex flex-col gap-2.5">
-          <h1 className="text-[26px] font-semibold tracking-[-0.02em]">Você não está no time da OPEC</h1>
+          <h1 className="text-[34px]">Você não está no time da OPEC</h1>
           <p className="text-[14px] leading-relaxed text-tinta-3">
             A conta <span className="num text-[13px] text-tinta-2">{user?.email ?? "que você usou"}</span> entrou,
             mas não está na lista de pessoas da área.

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { hhmm, ROTULO_ATIVIDADE } from "@/lib/semana";
+import { Corpo } from "@/componentes/SrMinutos";
 
 export const dynamic = "force-dynamic";
 
@@ -32,7 +33,7 @@ export default async function Painel({ searchParams }: { searchParams: Promise<{
     <div className="p-6 px-8 flex flex-col gap-5 max-w-[1080px]">
       <header className="flex items-end justify-between gap-5">
         <div className="flex flex-col gap-1.5">
-          <h1 className="text-[23px] font-semibold tracking-[-0.02em]">Painel · {rotuloMes(competencia)}</h1>
+          <h1 className="text-[34px]">Painel · {rotuloMes(competencia)}</h1>
           <p className="text-[12.5px] text-tinta-3">O que o mapa previu e o que de fato aconteceu</p>
         </div>
         <div className="flex items-center gap-2">
@@ -78,6 +79,17 @@ export default async function Painel({ searchParams }: { searchParams: Promise<{
         ))}
       </section>
 
+      {(() => {
+        // Ele comenta a taxa, nunca a pessoa (docs/06). Só quando passa de 15%.
+        const d = [...(taxas ?? [])].filter((t) => Math.abs(t.desvio_pct) > 15)
+          .sort((a, b) => Math.abs(b.desvio_pct) - Math.abs(a.desvio_pct))[0];
+        return d ? (
+          <div className="relative h-[92px] -mb-3">
+            <Corpo pose="apontando" altura={104} className="right-10 bottom-[-6px]"
+              fala={`${ROTULO_ATIVIDADE[d.atividade] ?? d.atividade} tá ${Math.abs(d.desvio_pct)}% ${d.desvio_pct > 0 ? "acima" : "abaixo"} da taxa. Hora de rever.`} />
+          </div>
+        ) : null;
+      })()}
       <section className="rounded-xl bg-superficie border border-linha p-5 flex flex-col gap-3">
         <h2 className="text-sm font-semibold tracking-[-0.01em]">A taxa ainda vale?</h2>
         {(taxas ?? []).length === 0 ? (

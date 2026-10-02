@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { relogio, hhmm, tempoLegivel } from "@/lib/semana";
+import { avisarValeu } from "@/componentes/SeloValeu";
 
 export function Relogio({ desde, baseSeg }: { desde: string; baseSeg: number }) {
   const [seg, setSeg] = useState(() => calc(desde, baseSeg));
@@ -52,6 +53,7 @@ export function DialogoEntrega({
   contribuintes,
   classeBotao,
   rotuloBotao,
+  atrasada = false,
 }: {
   acao: (formData: FormData) => void | Promise<void>;
   titulo: string;
@@ -65,6 +67,7 @@ export function DialogoEntrega({
   contribuintes?: Contribuinte[];
   classeBotao: string;
   rotuloBotao: string;
+  atrasada?: boolean;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   // Em dupla, quem entrega costuma ser quem fez: o padrao e a propria pessoa se ela e
@@ -83,7 +86,7 @@ export function DialogoEntrega({
         onClick={(e) => { if (e.target === ref.current) ref.current?.close(); }}
         className="m-auto w-[min(440px,92vw)] rounded-xl bg-superficie text-tinta border border-linha p-0 backdrop:bg-black/60"
       >
-        <form action={acao} className="flex flex-col gap-4 p-5">
+        <form action={acao} onSubmit={() => avisarValeu(atrasada)} className="flex flex-col gap-4 p-5">
           <div className="flex flex-col gap-1">
             <h2 className="text-[17px] font-semibold tracking-[-0.01em]">Entregar tarefa</h2>
             <p className="text-[13px] text-tinta-2">{titulo}</p>

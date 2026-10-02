@@ -69,7 +69,7 @@ export default async function Kanban() {
   return (
     <div className="p-6 px-8 flex flex-col gap-5 max-w-[1280px]">
       <header className="flex flex-col gap-1.5">
-        <h1 className="text-[23px] font-semibold tracking-[-0.02em]">Quadro</h1>
+        <h1 className="text-[34px]">Quadro</h1>
         <p className="text-[12.5px] text-tinta-3">
           Semana de {rotuloSemana(inicio, fim)} · {gestor ? "todas as frentes" : "sua frente"} · {comTempo.length} tarefas
         </p>

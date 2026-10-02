@@ -1,10 +1,19 @@
+import { Animado } from "@/componentes/SrMinutos";
 // A página de confiança do piloto: o que fica registrado, quem vê, e o que o app não
 // faz. O texto segue as decisões D4–D6 e "O que ele não faz" (docs/00-visao.md).
 export default function ComoFunciona() {
   return (
-    <div className="p-6 px-8 flex flex-col gap-5 max-w-[760px]">
+    <div className="p-6 px-8 flex gap-10 items-start">
+      <aside className="hidden lg:flex sticky top-6 w-[220px] shrink-0 flex-col items-center gap-3 text-center">
+        <Animado pose="acena" altura={250} />
+        <p className="font-display text-[21px] font-bold uppercase leading-[1.05]">
+          &ldquo;Eu conto minutos. Não leio tela, não vejo aba, não sei se você levantou.&rdquo;
+        </p>
+        <span className="text-[11.5px] text-tinta-4">Sr. Minutos</span>
+      </aside>
+      <div className="flex flex-col gap-5 max-w-[760px] min-w-0 flex-1">
       <header className="flex flex-col gap-1.5">
-        <h1 className="text-[23px] font-semibold tracking-[-0.02em]">Como funciona</h1>
+        <h1 className="text-[34px]">Como funciona</h1>
         <p className="text-[12.5px] text-tinta-3">O que fica registrado, quem vê, e o que este app não faz</p>
       </header>
 
@@ -35,6 +44,7 @@ export default function ComoFunciona() {
         <li>Se uma tarefa aparecer e não fizer sentido, marque <strong>não necessária</strong>. Preferimos uma tarefa a mais do que uma faltando.</li>
         <li>Esqueceu o cronômetro? Ajuste o tempo, com o motivo. Um número em que você não confia é pior do que nenhum.</li>
       </Bloco>
+      </div>
     </div>
   );
 }

@@ -60,3 +60,19 @@ export function Corpo({ pose, altura = 150, fala, lado = "esquerda", className =
     </div>
   );
 }
+
+
+export type PoseAnimada = "ferias" | "triste" | "joinha" | "acena" | "bravo";
+const PARADA: Record<PoseAnimada, string> = { ferias: "ferias", triste: "triste", joinha: "joinha", acena: "apontando", bravo: "bravo" };
+
+/** Animação sem fundo (public/sr-minutos/anim). Quem pede menos movimento vê a pose parada. */
+export function Animado({ pose, altura = 170, className = "" }: { pose: PoseAnimada; altura?: number; className?: string }) {
+  return (
+    <picture className={`block ${className}`}>
+      <source srcSet={`/sr-minutos/${PARADA[pose]}.png`} media="(prefers-reduced-motion: reduce)" />
+      {/* eslint-disable-next-line @next/next/no-img-element -- WebP animado, o otimizador do Next congelaria */}
+      <img src={`/sr-minutos/anim/${pose}.webp`} alt="" aria-hidden height={altura} style={{ height: altura, width: "auto" }}
+        className="block select-none" draggable={false} />
+    </picture>
+  );
+}

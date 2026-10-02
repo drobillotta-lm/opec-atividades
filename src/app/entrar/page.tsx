@@ -2,6 +2,7 @@ import { criarClienteServidor } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { Rosto } from "@/componentes/SrMinutos";
+import { Animado } from "@/componentes/SrMinutos";
 
 export default async function Entrar() {
   const supabase = await criarClienteServidor();
@@ -29,8 +30,8 @@ export default async function Entrar() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center px-6">
-      <div className="w-full max-w-[420px] flex flex-col gap-11">
+    <main className="min-h-screen grid grid-cols-[minmax(0,1fr)] lg:grid-cols-2 items-center px-6 lg:px-16 gap-8">
+      <div className="w-full max-w-[420px] flex flex-col gap-11 justify-self-center lg:justify-self-end">
         <div className="flex items-center gap-3">
           <Rosto estado="verde" tamanho={38} />
           <div className="flex flex-col">
@@ -40,7 +41,7 @@ export default async function Entrar() {
         </div>
 
         <div className="flex flex-col gap-2.5">
-          <h1 className="text-[28px] font-semibold tracking-[-0.02em]">Entrar</h1>
+          <h1 className="text-[56px] leading-[0.9]">Planejado<br />contra<br /><span className="text-verde">executado.</span></h1>
           <p className="text-[14px] leading-relaxed text-tinta-3">
             Suas tarefas da semana, o tempo que cada uma levou e o que ficou pendente.
           </p>
@@ -64,6 +65,13 @@ export default async function Entrar() {
           Entrar com o Google da empresa já puxa as tarefas que o mapa do mês te deu. Não há senha
           para lembrar nem cadastro para preencher.
         </p>
+      </div>
+      <div className="relative hidden lg:grid place-items-center justify-self-start" aria-hidden>
+        <div className="absolute inset-0 rounded-full bg-verde-fundo blur-3xl opacity-70" />
+        <Animado pose="acena" altura={460} className="relative" />
+        <span className="absolute top-[8%] right-[-8%] rounded-[14px] rounded-bl-[2px] bg-creme px-4 py-2.5 font-display text-[24px] font-extrabold uppercase text-fundo shadow-lg -rotate-3">
+          Bora marcar hora?
+        </span>
       </div>
     </main>
   );

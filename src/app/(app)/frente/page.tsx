@@ -2,6 +2,7 @@ import { criarClienteServidor } from "@/lib/supabase/server";
 import { semanaDe, rotuloSemana, diaCurto, hhmm, ROTULO_ATIVIDADE, escaladosDe } from "@/lib/semana";
 import { definirQuemFez, marcarDesnecessaria, reverterDesnecessaria } from "../acoes";
 import { Submit, DialogoDesnecessaria } from "../semana/Cronometro";
+import { Corpo } from "@/componentes/SrMinutos";
 
 export const dynamic = "force-dynamic";
 
@@ -46,7 +47,7 @@ export default async function MinhaFrente() {
   return (
     <div className="p-6 px-8 flex flex-col gap-5 max-w-[1140px]">
       <header className="flex flex-col gap-1.5">
-        <h1 className="text-[23px] font-semibold tracking-[-0.02em]">
+        <h1 className="text-[34px]">
           {gestor ? "Frentes" : `Frente · ${frentes[0]?.nome ?? "—"}`}
         </h1>
         <p className="text-[12.5px] text-tinta-3">
@@ -66,6 +67,11 @@ export default async function MinhaFrente() {
         </p>
       )}
 
+      {tarefas.length > 0 && (
+        <div className="relative h-[64px] -mb-5" aria-hidden>
+          <Corpo pose="debrucado" altura={88} className="right-10 bottom-[-18px]" />
+        </div>
+      )}
       {tarefas.length > 0 && (
         <div className="rounded-xl bg-superficie border border-linha overflow-hidden">
           <div className="grid grid-cols-[1.9fr_0.8fr_1.5fr_0.9fr] gap-3 px-4 py-2.5 bg-superficie-2">
