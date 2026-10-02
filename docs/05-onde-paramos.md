@@ -1,5 +1,19 @@
 # Onde paramos — 28/09/2026
 
+02/10 — Fase A na main, commit e79e70f
+
+## Atualização de 02/10/2026: Fase A do plano de outubro (janela APP)
+
+Plano em `docs/07-plano-outubro-e-sr-minutos.md`; o porquê no `01-decisoes.md` (30/09–02/10).
+Migrations `031`–`035b` aplicadas (banco = repo, 36 arquivos). FI/OL/PR/CP trocam
+sincronização + auditoria por **`sinc_auditoria`** (168 min) desde 01/10; FI tem **dupla**
+Julia + Pedro (`dupla_id`); mapa out–dez refeito (nov/dez de FI/OL/PR provisórios); OL virou
+"Olímpicos + Tênis". Outubro: 243 tarefas apagadas, 113 criadas, 158 reescaladas, `sem_mapa` 0;
+setembro intacto (77 tarefas, 2 entregues). A sincronização agora também roda
+`desfazer_tarefas_fora_da_cadeia()` e `reaplicar_mapa()` do mês corrente e do seguinte.
+Falta conferir na tela, logado como Julia e como Pedro. Próximo: Fase B (sincronização à
+prova da Escala nova).
+
 Revisão geral do projeto, uma semana depois de subir. O fato que reorganizou tudo: **o app
 estava no ar e ninguém do time tinha entrado** — nem conseguiria, porque os e-mails dos seis
 fixos eram um palpite. Este arquivo é o ponto de retomada; `01-decisoes.md` tem o porquê de
