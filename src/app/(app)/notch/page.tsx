@@ -1,6 +1,7 @@
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { Submit } from "../semana/Cronometro";
 import { novoCodigo, desconectar } from "./acoes";
+import { Animado, Rosto } from "@/componentes/SrMinutos";
 
 export const dynamic = "force-dynamic";
 
@@ -24,16 +25,19 @@ export default async function ConectarNotch({ searchParams }: { searchParams: Pr
 
   return (
     <div className="p-6 px-8 flex flex-col gap-5 max-w-[760px]">
-      <header className="flex flex-col gap-1.5">
-        <h1 className="text-[23px] font-semibold tracking-[-0.02em]">Conectar o notch</h1>
+      <header className="flex items-end justify-between gap-6">
+        <div className="flex flex-col gap-1.5">
+        <h1 className="text-[34px]">Conectar o notch</h1>
         <p className="text-[12.5px] text-tinta-3">
           O Sr. Minutos fora do navegador: um app pequeno que fica preso na borda da tela, mostra o cronômetro
           da tarefa atual e deixa pausar ou começar a próxima sem abrir o site.
         </p>
+        </div>
+        <Animado pose="acena" altura={120} className="hidden sm:block shrink-0 -mb-5" />
       </header>
 
       <section className="rounded-xl bg-superficie border border-linha p-5 flex flex-col gap-3 text-[13px]">
-        <h2 className="text-sm font-semibold tracking-[-0.01em]">1. Instalar</h2>
+        <h2 className="font-display text-[20px] font-extrabold uppercase leading-none">1 · Instalar</h2>
         <p className="text-tinta-3">
           Baixe e rode o instalador. Ele instala só pro seu usuário, sem pedir administrador. Na primeira vez o
           Windows pode avisar <i>&quot;O Windows protegeu o computador&quot;</i>: clique em <b>Mais informações</b> e
@@ -43,14 +47,14 @@ export default async function ConectarNotch({ searchParams }: { searchParams: Pr
       </section>
 
       <section className="rounded-xl bg-superficie border border-linha p-5 flex flex-col gap-3 text-[13px]">
-        <h2 className="text-sm font-semibold tracking-[-0.01em]">2. Parear</h2>
+        <h2 className="font-display text-[20px] font-extrabold uppercase leading-none">2 · Parear</h2>
         <p className="text-tinta-3">
           Gere um código e digite no app. Ele vale uma vez só e por 5 minutos. O app nunca vê sua senha nem sua
           conta Google: recebe uma chave própria, que só mexe no seu cronômetro e que você desliga aqui embaixo.
         </p>
         {codigoValido ? (
           <div className="flex flex-col gap-1.5">
-            <span className="num text-[34px] font-semibold tracking-[0.12em]" aria-label={`Código ${sp.codigo!.split("").join(" ")}`}>{sp.codigo}</span>
+            <span className="num w-fit rounded-[14px] bg-[var(--notch-preto)] px-5 py-3 text-[34px] font-semibold tracking-[0.18em] text-[var(--notch-verde)]" aria-label={`Código ${sp.codigo!.split("").join(" ")}`}>{sp.codigo}</span>
             <span className="text-[11.5px] text-tinta-4">Vale até {quando(sp.ate!)}. Gerar outro invalida este.</span>
           </div>
         ) : null}
@@ -60,15 +64,18 @@ export default async function ConectarNotch({ searchParams }: { searchParams: Pr
       </section>
 
       <section className="rounded-xl bg-superficie border border-linha p-5 flex flex-col text-[13px]">
-        <h2 className="text-sm font-semibold tracking-[-0.01em] pb-2">Aparelhos conectados</h2>
+        <h2 className="font-display text-[20px] font-extrabold uppercase leading-none pb-3">Aparelhos conectados</h2>
         {(aparelhos ?? []).length === 0 && <p className="text-tinta-4 text-[12.5px]">Nenhum ainda.</p>}
         {(aparelhos ?? []).map((a) => (
           <div key={a.id} className="flex items-center justify-between gap-3 py-2 border-t border-linha-2">
-            <div className="flex flex-col">
+            <div className="flex items-center gap-2.5">
+              <Rosto estado={a.ultimo_uso_em ? "verde" : "creme"} tamanho={18} />
+              <div className="flex flex-col">
               <span className="font-medium">{a.nome}</span>
               <span className="text-[11.5px] text-tinta-4">
-                conectado em {quando(a.criado_em)}{a.ultimo_uso_em ? ` · visto ${quando(a.ultimo_uso_em)}` : ""}
+                conectado em {quando(a.criado_em)}{a.ultimo_uso_em ? ` · visto ${quando(a.ultimo_uso_em)}` : " · ainda não usado"}
               </span>
+              </div>
             </div>
             <form action={desconectar.bind(null, a.id)}>
               <Submit ocupado="..." className={DISCRETO + " text-rosa"}>Desconectar</Submit>

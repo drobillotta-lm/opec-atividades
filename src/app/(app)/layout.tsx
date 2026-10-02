@@ -72,6 +72,7 @@ export default async function LayoutApp({ children }: { children: React.ReactNod
           {lider && <Item href="/painel">Painel</Item>}
           {gestor && <Item href="/admin">Admin</Item>}
           {gestor && <Item href="/admin/organizar">Organizar</Item>}
+          <Item href="/notch">Notch</Item>
           <Item href="/como-funciona">Como funciona</Item>
         </nav>
 
