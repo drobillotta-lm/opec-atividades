@@ -83,13 +83,13 @@ export function DialogoPartes({
                       <>
                         {!p.minha && (
                           <form action={iniciar.bind(null, p.id)}>
-                            <Submit ocupado="..." className="min-h-8 px-2.5 rounded-md border border-azul-borda bg-azul-fundo text-azul-claro text-[11.5px] font-medium hover:brightness-125 transition">
+                            <Submit ocupado="..." className="min-h-8 px-2.5 rounded-md border border-verde-borda bg-verde-fundo text-verde-claro text-[11.5px] font-medium hover:brightness-125 transition">
                               {p.segundos > 0 ? "Retomar" : "Iniciar"}
                             </Submit>
                           </form>
                         )}
                         <form action={concluir.bind(null, p.id)}>
-                          <Submit ocupado="..." className="min-h-8 px-2.5 rounded-md bg-verde text-[#07120d] text-[11.5px] font-semibold hover:brightness-110 transition">
+                          <Submit ocupado="..." className="min-h-8 px-2.5 rounded-md bg-verde text-verde-ink text-[11.5px] font-semibold hover:brightness-110 transition">
                             Concluir
                           </Submit>
                         </form>

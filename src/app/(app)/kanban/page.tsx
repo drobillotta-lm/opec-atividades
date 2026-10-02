@@ -1,5 +1,6 @@
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { semanaDe, rotuloSemana, diaCurto, ROTULO_ATIVIDADE, escaladosDe } from "@/lib/semana";
+import { Rosto } from "@/componentes/SrMinutos";
 
 export const dynamic = "force-dynamic";
 
@@ -83,7 +84,7 @@ export default async function Kanban() {
       {frentes.length > 0 && (
         <div className="grid grid-cols-3 gap-4 items-start">
           <Coluna titulo="Pendente" cor="text-tinta-3" tarefas={pendente} nomePor={nomePor} />
-          <Coluna titulo="Fazendo" cor="text-azul-claro" tarefas={fazendo} nomePor={nomePor} />
+          <Coluna titulo="Fazendo" cor="text-verde-claro" tarefas={fazendo} nomePor={nomePor} />
           <Coluna titulo="Feita" cor="text-verde-claro" tarefas={feita} nomePor={nomePor} />
         </div>
       )}
@@ -138,7 +139,7 @@ function Coluna({ titulo, cor, tarefas, nomePor }: { titulo: string; cor: string
                 </span>
                 {t.rodando.length > 0 && (
                   <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-verde-claro truncate">
-                    <span className="w-1.5 h-1.5 rounded-full bg-verde shrink-0" />{t.rodando.join(", ")}
+                    <Rosto estado="verde" tamanho={12} />{t.rodando.join(", ")}
                   </span>
                 )}
               </div>

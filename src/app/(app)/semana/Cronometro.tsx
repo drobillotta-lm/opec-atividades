@@ -137,7 +137,7 @@ export function DialogoEntrega({
               className="min-h-10 px-4 rounded-lg border border-linha bg-superficie-2 text-[13px] text-tinta-3 hover:text-tinta-2">
               Cancelar
             </button>
-            <Submit ocupado="Entregando..." className="min-h-10 px-4 rounded-lg bg-verde text-[#07120d] text-[13px] font-semibold hover:brightness-110">
+            <Submit ocupado="Entregando..." className="min-h-10 px-4 rounded-lg bg-verde text-verde-ink text-[13px] font-semibold hover:brightness-110">
               Confirmar entrega
             </Submit>
           </div>

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { sair } from "./acoes";
 import { BotaoTema } from "@/componentes/Tema";
+import { Rosto } from "@/componentes/SrMinutos";
 
 export default async function LayoutApp({ children }: { children: React.ReactNode }) {
   const supabase = await criarClienteServidor();
@@ -28,13 +29,9 @@ export default async function LayoutApp({ children }: { children: React.ReactNod
     <div className="min-h-screen flex">
       <aside className="w-[232px] shrink-0 bg-fundo-nav border-r border-linha flex flex-col p-[22px_14px] gap-6">
         <div className="flex items-center gap-2.5 px-2">
-          <div className="w-[30px] h-[30px] rounded-lg bg-verde text-verde-ink grid place-items-center">
-            <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" aria-hidden>
-              <path d="M3.5 9.2l3.2 3.2 7.8-7.8" />
-            </svg>
-          </div>
+          <Rosto estado="verde" tamanho={32} />
           <div className="flex flex-col">
-            <span className="text-sm font-semibold tracking-[-0.015em]">Atividades</span>
+            <span className="font-display text-[19px] font-extrabold uppercase leading-none">Atividades</span>
             <span className="text-[10px] uppercase tracking-[0.08em] text-tinta-4">OPEC</span>
           </div>
         </div>
@@ -45,6 +42,7 @@ export default async function LayoutApp({ children }: { children: React.ReactNod
           {lider && <Item href="/kanban">Quadro</Item>}
           {lider && <Item href="/painel">Painel</Item>}
           {gestor && <Item href="/admin">Admin</Item>}
+          {gestor && <Item href="/admin/organizar">Organizar</Item>}
           <Item href="/como-funciona">Como funciona</Item>
         </nav>
 

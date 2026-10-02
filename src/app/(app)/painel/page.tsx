@@ -53,8 +53,8 @@ export default async function Painel({ searchParams }: { searchParams: Promise<{
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold tracking-[-0.01em]">Horas por pessoa</h2>
           <div className="flex items-center gap-4 text-[11.5px] text-tinta-3">
-            <span className="inline-flex items-center gap-2"><span className="w-4 h-2 rounded bg-azul" />Medido</span>
-            <span className="inline-flex items-center gap-2"><span className="w-0.5 h-3.5 bg-tinta-3" />Previsto</span>
+            <span className="inline-flex items-center gap-2"><span className="w-4 h-2 rounded bg-creme" />Medido</span>
+            <span className="inline-flex items-center gap-2"><span className="w-0.5 h-3.5 bg-verde" />Previsto</span>
           </div>
         </div>
         {linhas.length === 0 && <p className="text-[12.5px] text-tinta-4">Ninguém registrou tempo ainda neste mês.</p>}
@@ -62,11 +62,11 @@ export default async function Painel({ searchParams }: { searchParams: Promise<{
           <div key={l.pessoa_id} className="grid grid-cols-[130px_1fr_110px_60px] gap-4 items-center py-2 border-t border-linha-2">
             <span className="text-[13px] font-medium truncate">{l.nome}</span>
             <div className="relative h-2.5">
-              <div className="absolute inset-0 rounded-full bg-[#252b35]" />
-              <div className="absolute left-0 top-0 h-2.5 rounded-full bg-azul"
+              <div className="absolute inset-0 rounded-full bg-trilho" />
+              <div className={`absolute left-0 top-0 h-2.5 rounded-full ${(l.minutos_medidos ?? 0) > (l.minutos_previstos ?? 0) ? "bg-ambar" : "bg-creme"}`}
                    style={{ width: `${Math.min(100, (100 * (l.minutos_medidos ?? 0)) / escala)}%` }} />
-              <div className="absolute -top-1 w-0.5 h-4.5 bg-tinta-3"
-                   style={{ left: `${Math.min(100, (100 * (l.minutos_previstos ?? 0)) / escala)}%`, boxShadow: "0 0 0 2px #161a20" }} />
+              <div className="absolute -top-1 w-0.5 h-4.5 bg-verde"
+                   style={{ left: `${Math.min(100, (100 * (l.minutos_previstos ?? 0)) / escala)}%`, boxShadow: "0 0 0 2px var(--superficie)" }} />
             </div>
             <span className="num text-[12px] text-tinta-2 text-right">
               {hhmm(l.minutos_medidos ?? 0)} / {hhmm(l.minutos_previstos ?? 0)}

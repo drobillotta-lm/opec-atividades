@@ -5,6 +5,7 @@ import { Relogio, Submit } from "../(app)/semana/Cronometro";
 import { BotaoTema } from "@/componentes/Tema";
 import { AutoAtualiza } from "@/componentes/AutoAtualiza";
 import Link from "next/link";
+import { Rosto } from "@/componentes/SrMinutos";
 
 export const dynamic = "force-dynamic";
 
@@ -99,9 +100,8 @@ export default async function Dock() {
             <div className="flex items-start justify-between gap-3">
               <div className="flex flex-col gap-0.5 min-w-0">
                 <span className="inline-flex items-center gap-1.5 text-[9.5px] font-semibold uppercase tracking-[0.11em]"
-                      style={{ color: atual.correndo ? "var(--color-verde-claro)" : "var(--color-tinta-4)" }}>
-                  <span className="w-1.5 h-1.5 rounded-full"
-                        style={{ background: atual.correndo ? "var(--color-verde)" : "var(--color-tinta-4)" }} />
+                      style={{ color: atual.correndo ? "var(--color-verde-claro)" : "var(--color-ambar)" }}>
+                  <Rosto estado={atual.correndo ? "verde" : "ambar"} tamanho={14} />
                   {atual.correndo ? "Em andamento" : "Pausada"}
                 </span>
                 <span className="text-[13.5px] font-semibold tracking-[-0.01em] truncate">
@@ -125,7 +125,7 @@ export default async function Dock() {
 
             <div className="h-1.5 rounded-full bg-elevado overflow-hidden">
               <div className="h-1.5 rounded-full transition-[width] duration-500"
-                   style={{ width: `${pct}%`, background: pct >= 100 ? "var(--color-ambar)" : "var(--color-azul)" }} />
+                   style={{ width: `${pct}%`, background: pct >= 100 ? "var(--color-ambar)" : "var(--color-creme)" }} />
             </div>
 
             <div className="flex gap-2">
@@ -137,13 +137,13 @@ export default async function Dock() {
                 </form>
               ) : (
                 <form action={iniciar.bind(null, atual.id)} className="flex-1">
-                  <Submit ocupado="..." className="w-full min-h-9 rounded-[10px] border border-azul-borda bg-azul-fundo text-azul-claro text-[12px] font-medium hover:brightness-110 transition">
+                  <Submit ocupado="..." className="w-full min-h-9 rounded-[10px] border border-verde-borda bg-verde-fundo text-verde-claro text-[12px] font-medium hover:brightness-110 transition">
                     {atual.segundos > 0 ? "Retomar" : "Iniciar"}
                   </Submit>
                 </form>
               )}
               <Link href="/semana" target="_blank"
-                className="flex-1 min-h-9 grid place-items-center rounded-[10px] bg-verde text-[#07120d] text-[12px] font-semibold hover:brightness-110 transition">
+                className="flex-1 min-h-9 grid place-items-center rounded-[10px] bg-verde text-verde-ink text-[12px] font-semibold hover:brightness-110 transition">
                 Entregar
               </Link>
             </div>

@@ -1,6 +1,7 @@
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
+import { Rosto } from "@/componentes/SrMinutos";
 
 export default async function Entrar() {
   const supabase = await criarClienteServidor();
@@ -31,13 +32,9 @@ export default async function Entrar() {
     <main className="min-h-screen flex items-center justify-center px-6">
       <div className="w-full max-w-[420px] flex flex-col gap-11">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-[10px] bg-azul grid place-items-center">
-            <svg width="19" height="19" viewBox="0 0 18 18" fill="none" stroke="#0E1014" strokeWidth="2" strokeLinecap="round" aria-hidden>
-              <path d="M3.5 9.2l3.2 3.2 7.8-7.8" />
-            </svg>
-          </div>
+          <Rosto estado="verde" tamanho={38} />
           <div className="flex flex-col">
-            <span className="text-[16px] font-semibold tracking-[-0.015em]">Atividades</span>
+            <span className="font-display text-[22px] font-extrabold uppercase leading-none">Atividades</span>
             <span className="text-[11px] uppercase tracking-[0.08em] text-tinta-4">OPEC · LiveMode</span>
           </div>
         </div>
@@ -52,7 +49,7 @@ export default async function Entrar() {
         <form action={entrarComGoogle}>
           <button
             type="submit"
-            className="w-full min-h-12 rounded-[10px] bg-azul text-fundo text-[15px] font-semibold flex items-center justify-center gap-2.5 hover:brightness-110 transition"
+            className="w-full min-h-12 rounded-[10px] bg-verde text-verde-ink text-[15px] font-semibold flex items-center justify-center gap-2.5 hover:brightness-110 transition"
           >
             <svg width="17" height="17" viewBox="0 0 17 17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" aria-hidden>
               <circle cx="8.5" cy="8.5" r="6.6" />

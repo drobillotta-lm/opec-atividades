@@ -34,7 +34,7 @@ export function ClassificarFrente({
           <option value="rotacao_torneio">rotação por torneio</option>
           <option value="dupla_fixa">dupla fixa</option>
         </select>
-        <Submit ocupado="criando..." className="min-h-8 px-2.5 rounded-md border border-azul-borda bg-azul-fundo text-azul-claro text-[12px] font-medium">
+        <Submit ocupado="criando..." className="min-h-8 px-2.5 rounded-md border border-verde-borda bg-verde-fundo text-verde-claro text-[12px] font-medium">
           criar e classificar
         </Submit>
         <button type="button" onClick={() => setCriando(false)} className="text-[11px] text-tinta-4 hover:text-tinta-2">
@@ -52,7 +52,7 @@ export function ClassificarFrente({
         {frentes.map((f) => <option key={f.id} value={f.id}>{f.nome}</option>)}
       </select>
       <Submit ocupado="..." className="min-h-8 px-2.5 rounded-md border border-linha bg-elevado text-[12px] text-tinta-2">{rotuloOk}</Submit>
-      <button type="button" onClick={() => setCriando(true)} className="text-[11px] text-azul-claro hover:underline whitespace-nowrap">
+      <button type="button" onClick={() => setCriando(true)} className="text-[11px] text-verde-claro hover:underline whitespace-nowrap">
         + nova frente
       </button>
     </form>

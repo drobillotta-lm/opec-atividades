@@ -90,7 +90,7 @@ export default async function MinhaFrente() {
                   <div className="flex items-center gap-1.5 min-w-0">
                     <span className="text-[12px] text-tinta-4 truncate">não necessária{t.excecao_desc ? ` · ${t.excecao_desc}` : ""}</span>
                     <form action={reverterDesnecessaria.bind(null, t.id)}>
-                      <Submit ocupado="..." className="text-[11px] text-azul-claro hover:underline shrink-0">desfazer</Submit>
+                      <Submit ocupado="..." className="text-[11px] text-verde-claro hover:underline shrink-0">desfazer</Submit>
                     </form>
                   </div>
                 ) : t.responsavel_real_id ? (

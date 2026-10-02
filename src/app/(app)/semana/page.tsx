@@ -9,6 +9,7 @@ import {
 } from "../acoes";
 import { AbrirDock } from "@/componentes/AbrirDock";
 import { AutoAtualiza } from "@/componentes/AutoAtualiza";
+import { Rosto } from "@/componentes/SrMinutos";
 
 export const dynamic = "force-dynamic";
 
@@ -197,7 +198,7 @@ export default async function MinhaSemana({
         <div className="flex items-center gap-5 rounded-xl bg-verde-fundo border border-verde-borda px-5 py-4">
           <div className="flex flex-col gap-1.5 flex-1 min-w-0">
             <span className="inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.11em] text-verde-claro">
-              <span className="w-[7px] h-[7px] rounded-full bg-verde" />Em andamento
+              <Rosto estado="verde" tamanho={16} />Em andamento
             </span>
             <span className="text-[16px] font-semibold tracking-[-0.01em]">
               {ROTULO_ATIVIDADE[emCurso.atividade] ?? emCurso.atividade} · {emCurso.frente?.nome}
@@ -236,7 +237,7 @@ export default async function MinhaSemana({
               time={time ?? []}
               contribuintes={emCurso.contribuintes}
               rotuloBotao="Entregar"
-              classeBotao="flex items-center gap-2 min-h-[42px] px-3.5 rounded-[9px] bg-verde text-[#07120d] text-[12.5px] font-semibold hover:brightness-110 transition"
+              classeBotao="flex items-center gap-2 min-h-[42px] px-3.5 rounded-[9px] bg-verde text-verde-ink text-[12.5px] font-semibold hover:brightness-110 transition"
             />
             <DialogoPartes
               titulo={`${ROTULO_ATIVIDADE[emCurso.atividade] ?? emCurso.atividade} · ${emCurso.frente?.nome}`}
@@ -252,10 +253,8 @@ export default async function MinhaSemana({
         <Secao titulo="Pausadas" contagem={`${pausadas.length} · ${tempoLegivel(pausadas.reduce((s, t) => s + t.segundos, 0))} ja contados`}>
           {pausadas.map((t) => (
             <Linha key={t.id} pausada>
-              <span className="inline-flex items-center gap-1.5 rounded-md bg-elevado border border-linha px-2.5 py-1 text-[11px] font-medium text-tinta-2 shrink-0">
-                <svg width="10" height="10" viewBox="0 0 13 13" fill="none" stroke="#C9A45F" strokeWidth="2" strokeLinecap="round" aria-hidden>
-                  <path d="M4.6 3v7M8.4 3v7" />
-                </svg>
+              <span className="inline-flex items-center gap-1.5 rounded-md bg-ambar-fundo border border-ambar-borda px-2.5 py-1 text-[11px] font-medium text-ambar shrink-0">
+                <Rosto estado="ambar" />
                 Pausada
               </span>
               <div className="flex-1 min-w-0 flex flex-col gap-1">
@@ -274,7 +273,7 @@ export default async function MinhaSemana({
               <TempoParado segundos={t.segundos} estimativaMin={t.estimativa_min} />
               <div className="flex gap-2 shrink-0">
                 <form action={iniciar.bind(null, t.id)}>
-                  <Submit ocupado="..." className="flex items-center gap-2 min-h-[38px] px-3.5 rounded-[9px] border border-azul-borda bg-azul-fundo text-azul-claro text-[12.5px] font-medium hover:brightness-125 transition">
+                  <Submit ocupado="..." className="flex items-center gap-2 min-h-[38px] px-3.5 rounded-[9px] border border-verde-borda bg-verde-fundo text-verde-claro text-[12.5px] font-medium hover:brightness-125 transition">
                     Retomar
                   </Submit>
                 </form>
@@ -290,7 +289,7 @@ export default async function MinhaSemana({
                   time={time ?? []}
                   contribuintes={t.contribuintes}
                   rotuloBotao="Entregar"
-                  classeBotao="min-h-[38px] px-3.5 rounded-[9px] bg-verde text-[#07120d] text-[12.5px] font-semibold hover:brightness-110 transition"
+                  classeBotao="min-h-[38px] px-3.5 rounded-[9px] bg-verde text-verde-ink text-[12.5px] font-semibold hover:brightness-110 transition"
                 />
                 <DialogoDesnecessaria
                   acao={marcarDesnecessaria.bind(null, t.id)}
@@ -378,11 +377,10 @@ export default async function MinhaSemana({
         <Secao titulo="Entregues" contagem={`${entregues.length} · ${hhmm(entregues.reduce((s, t) => s + t.segundos, 0))}`}>
           {entregues.map((t) => (
             <Linha key={t.id} apagada>
-              <span className="inline-flex items-center gap-1.5 rounded-md bg-elevado border border-linha px-2.5 py-1 text-[11px] font-medium text-tinta-2 shrink-0">
-                <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="#28AB72" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                  <path d="M2.4 6.2l2.2 2.2 5-5.4" />
-                </svg>
-                {t.status === "fora_do_prazo" ? "Fora do prazo" : "Entregue"}
+              <span className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-[11px] font-medium shrink-0 ${
+                t.status === "fora_do_prazo" ? "bg-rosa-fundo border-rosa-borda text-rosa" : "bg-verde-fundo border-verde-borda text-verde-claro"}`}>
+                <Rosto estado={t.status === "fora_do_prazo" ? "rosa" : "verde"} />
+                {t.status === "fora_do_prazo" ? "Entregue fora do prazo" : "Entregue"}
               </span>
               <div className="flex-1 min-w-0 flex flex-col gap-1">
                 <span className="text-[13.5px] text-tinta-2">
@@ -405,6 +403,7 @@ export default async function MinhaSemana({
           {naoAplicaveis.map((t) => (
             <Linha key={t.id} apagada>
               <span className="inline-flex items-center gap-1.5 rounded-md bg-elevado border border-linha-2 px-2.5 py-1 text-[11px] font-medium text-tinta-4 shrink-0">
+                <Rosto estado="cinza" />
                 não necessária
               </span>
               <div className="flex-1 min-w-0 flex flex-col gap-1">
@@ -453,7 +452,7 @@ export default async function MinhaSemana({
               </span>
             </div>
             <form action={iniciar.bind(null, t.id)} className="shrink-0">
-              <Submit ocupado="..." className="flex items-center gap-2 min-h-[38px] px-3.5 rounded-[9px] border border-azul-borda bg-azul-fundo text-azul-claro text-[12.5px] font-medium hover:brightness-125 transition">
+              <Submit ocupado="..." className="flex items-center gap-2 min-h-[38px] px-3.5 rounded-[9px] border border-verde-borda bg-verde-fundo text-verde-claro text-[12.5px] font-medium hover:brightness-125 transition">
                 Puxar pra mim
               </Submit>
             </form>
@@ -488,7 +487,7 @@ function Secao({ titulo, contagem, children }: { titulo: string; contagem: strin
 function Linha({ children, destaque, apagada, pausada }: { children: React.ReactNode; destaque?: boolean; apagada?: boolean; pausada?: boolean }) {
   return (
     <div className={`flex items-center gap-3.5 rounded-[10px] px-4 py-3 border ${
-      pausada ? "bg-elevado border-linha" : destaque ? "bg-superficie border-ambar" : apagada ? "bg-superficie-2 border-linha-2" : "bg-superficie border-linha"
+      pausada ? "bg-elevado border-ambar-borda" : destaque ? "bg-superficie border-rosa-borda" : apagada ? "bg-superficie-2 border-linha-2" : "bg-superficie border-linha"
     }`}>
       {children}
     </div>
@@ -497,14 +496,9 @@ function Linha({ children, destaque, apagada, pausada }: { children: React.React
 
 function Etiqueta({ atrasada }: { atrasada: boolean }) {
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-md bg-elevado border border-linha px-2.5 py-1 text-[11px] font-medium text-tinta-2 shrink-0">
-      {atrasada ? (
-        <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="#B8892D" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-          <path d="M6 1.6l4.8 8.4H1.2z" /><path d="M6 5v2.2M6 8.7v.1" />
-        </svg>
-      ) : (
-        <span className="w-1.5 h-1.5 rounded-full bg-tinta-4" />
-      )}
+    <span className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-[11px] font-medium shrink-0 ${
+      atrasada ? "bg-rosa-fundo border-rosa-borda text-rosa" : "bg-elevado border-linha text-tinta-2"}`}>
+      <Rosto estado={atrasada ? "rosa" : "creme"} />
       {atrasada ? "Fora do prazo" : "Pendente"}
     </span>
   );
