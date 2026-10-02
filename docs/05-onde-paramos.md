@@ -1,5 +1,6 @@
 # Onde paramos — 28/09/2026
 
+02/10 — TELAS: D2 na main, commit 31eb44c (rosto nas etiquetas, azul fora das paginas, icones/PWA, menu Organizar)
 02/10 — TELAS: mockup do Sr. Minutos v5.1 APROVADO; assets em public/sr-minutos (poses novas, anim/, icones/), docs/06 atualizado (regra nova de cores + notch); branch telas/sr-minutos
 02/10 — Fase C na main (/admin/organizar, migrations 039–041)
 02/10 — Fase B na main, commit 186685b
