@@ -4,7 +4,9 @@ import { NextResponse, type NextRequest } from "next/server";
 // /api/importar-escala se autentica sozinho por CRON_SECRET (chamada do GitHub
 // Actions, sem sessao/cookie nenhum) -- sem isto o middleware manda pra /entrar
 // antes do handler ver o header.
-const PUBLICAS = ["/entrar", "/auth", "/fora-do-time", "/api/importar-escala"];
+// O notch nativo (desktop/) tambem: /api/notch se autentica pelo token do aparelho, e
+// /notch-app e a casca visual que a janela dele abre, sem dado nenhum sem o token.
+const PUBLICAS = ["/entrar", "/auth", "/fora-do-time", "/api/importar-escala", "/api/notch/", "/notch-app"];
 
 export async function middleware(req: NextRequest) {
   let res = NextResponse.next({ request: req });
