@@ -388,7 +388,7 @@ async function AbaTarefas({ sp, volta, frentes, time, nomePor, rotulos }: {
             </span>
             <span className="text-tinta-3">
               {escaladosDe(nomePor, t.escalado_id, t.dupla_id)} · prazo {dataBR(prazoISO(t.prazo_em))} · {hhmm(t.estimativa_min)} ·{" "}
-              <span className={t.status === "fora_do_prazo" ? "text-ambar-claro" : t.status === "na" ? "text-tinta-4" : ""}>{ROTULO_STATUS[t.status] ?? t.status}</span>
+              <span className={t.status === "fora_do_prazo" ? "text-rosa" : t.status === "na" ? "text-tinta-4" : ""}>{ROTULO_STATUS[t.status] ?? t.status}</span>
             </span>
           </div>
           <span className="text-[11.5px] text-tinta-4 truncate">{t.evento?.competicao} · {t.evento && diaCurto(t.evento.data)} · {t.evento?.evento_id_origem}</span>

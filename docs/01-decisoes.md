@@ -231,3 +231,19 @@ em `entregaveis/` e `decisoes/log.md`, e oficializar em `mapa_aprovado.csv` é p
 - As 566 tarefas de outubro geradas com o mapa e a cadeia antigos foram refeitas: 243
   (sincronização/auditoria sem tempo) apagadas, 113 `sinc_auditoria` criadas, 158 reescaladas
   para o mapa novo. Nenhuma tinha tempo registrado.
+
+## 02/10/2026 — Sr. Minutos aprovado, cores de estado novas e notch nativo
+
+- **Mockup do Sr. Minutos aprovado** (v5.1, "tá tudo aprovado"): libera D2 e D3 da janela TELAS,
+  que já entraram na main. Detalhes no `docs/06-sr-minutos.md`, seção "Atualização de 02/10".
+- **Cores de estado mudam**: verde = em andamento ou entregue; **âmbar = pausado**; **rosa = fora do
+  prazo**; cinza = não necessária ou bloqueado; creme = ainda não abriu. Antes âmbar era fora do
+  prazo e cinza era pausado. Aviso que não é estado de tarefa (célula "provisório", líder na
+  própria frente) continua âmbar.
+- **O dock vira um app nativo no Windows, no modelo do Codenotch** (`github.com/vinzdg/codenotch`,
+  MIT, Rust + Tauri 2): pílula discreta presa na borda da tela, instalador `.exe` por usuário sem
+  administrador, bandeja e início com o Windows. Reverte a decisão de 20/09 ("dock Tauri depois do
+  piloto"): o Daniel usa o Codenotch e quer a mesma leveza. **Login por pareamento com código**:
+  o site gera um código de uso único (5 min), o app troca por um token próprio, revogável, que só
+  mexe no cronômetro da própria pessoa. Nada de senha ou sessão Google dentro do app. O visual
+  segue as telas já aprovadas da TELAS.

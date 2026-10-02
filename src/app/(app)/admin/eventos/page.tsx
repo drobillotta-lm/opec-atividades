@@ -63,7 +63,7 @@ export default async function GestaoEventos() {
         </p>
         <p className="text-[11.5px] text-tinta-4">
           Quem decide &quot;tem entrega?&quot; é o líder de frente, na Escala — aqui é só a visão.{" "}
-          <a href={ESCALA_ENTREGA_URL} target="_blank" rel="noreferrer" className="text-azul-claro hover:underline">
+          <a href={ESCALA_ENTREGA_URL} target="_blank" rel="noreferrer" className="text-verde-claro hover:underline">
             abrir a fila de entrega na Escala ↗
           </a>
         </p>

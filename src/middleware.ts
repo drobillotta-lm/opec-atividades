@@ -49,5 +49,6 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\.(?:svg|png|jpg|webp)$).*)"],
+  // manifest.webmanifest e .ico passam direto: sem login o navegador não instala o app (PWA).
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|.*\.(?:svg|png|jpg|webp|ico)$).*)"],
 };
