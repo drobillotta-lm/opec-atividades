@@ -1,0 +1,1334 @@
+<title>Sr. Minutos</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: página longa de revisão; barra fixa com índice; cada tela num quadro com rolagem própria.
+   Paleta derivada do personagem: verde do corpo, creme do mostrador, preto esverdeado da CazéTV. */
+:root{
+  --fundo:#0B0F0C; --nav:#080B09; --sup:#121814; --sup2:#0F1511; --elev:#1A221C; --linha:#26302A; --linha2:#1E2722;
+  --tinta:#F2E8D5; --tinta2:#C9C2B2; --tinta3:#8E9A90; --tinta4:#7D8A80;
+  --verde:#3DD15A; --verde-escuro:#1F8F3B; --verde-fundo:#10261A; --verde-borda:#1E4A2C; --verde-ink:#07120d;
+  --creme:#F2E8D5; --ambar:#E0A83A; --ambar-fundo:#2A2112; --rosa:#F06A7E; --rosa-fundo:#2A1418;
+  --sombra:0 18px 44px rgb(0 0 0/.45);
+  --display:"Barlow Condensed","Archivo Narrow","Arial Narrow",Impact,sans-serif;
+  --ui:"Archivo",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --fundo:#F4ECDA; --nav:#EEE4CE; --sup:#FBF6EA; --sup2:#F7F0DF; --elev:#EDE4D0; --linha:#DDD2BB; --linha2:#E6DCC7;
+    --tinta:#10261A; --tinta2:#2C3F33; --tinta3:#5E6B61; --tinta4:#5F6C63;
+    --verde:#18762F; --verde-escuro:#166B2C; --verde-fundo:#DFF2E3; --verde-borda:#A9D8B5; --verde-ink:#FBF6EA;
+    --creme:#10261A; --ambar:#8A6414; --ambar-fundo:#F7EBD0; --rosa:#B62C4B; --rosa-fundo:#F8DDE3;
+    --sombra:0 18px 44px rgb(16 38 26/.14);
+    color-scheme:light;
+  }
+}
+:root[data-theme="light"]{
+  --fundo:#F4ECDA; --nav:#EEE4CE; --sup:#FBF6EA; --sup2:#F7F0DF; --elev:#EDE4D0; --linha:#DDD2BB; --linha2:#E6DCC7;
+  --tinta:#10261A; --tinta2:#2C3F33; --tinta3:#5E6B61; --tinta4:#5F6C63;
+  --verde:#18762F; --verde-escuro:#166B2C; --verde-fundo:#DFF2E3; --verde-borda:#A9D8B5; --verde-ink:#FBF6EA;
+  --creme:#10261A; --ambar:#8A6414; --ambar-fundo:#F7EBD0; --rosa:#B62C4B; --rosa-fundo:#F8DDE3;
+  --sombra:0 18px 44px rgb(16 38 26/.14);
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--fundo);color:var(--tinta);font-family:var(--ui);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+img{max-width:100%;display:block}
+a{color:var(--verde)}
+h1,h2,h3{margin:0;text-wrap:balance;font-family:var(--display);letter-spacing:-.01em;line-height:1}
+h2{font-size:clamp(34px,5vw,52px);font-weight:800;text-transform:uppercase}
+h3{font-size:26px;font-weight:700}
+p{margin:0}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+:focus-visible{outline:2px solid var(--verde);outline-offset:2px}
+
+/* barra */
+.topo{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:color-mix(in srgb,var(--nav) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--linha)}
+.topo-in{max-width:1180px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.marca{display:flex;align-items:center;gap:10px;margin-right:auto}
+.marca img{width:34px;height:34px}
+.marca b{font-family:var(--display);font-size:22px;font-weight:800;text-transform:uppercase;letter-spacing:.01em}
+.marca small{display:block;font-size:11px;color:var(--tinta3);font-family:var(--ui);letter-spacing:.04em;font-weight:500}
+.topo nav{display:flex;gap:2px;flex-wrap:wrap}
+.topo nav a{color:var(--tinta3);text-decoration:none;font-size:13px;font-weight:500;padding:6px 10px;border-radius:8px}
+.topo nav a:hover{color:var(--tinta);background:var(--elev)}
+.tema{display:inline-flex;border:1px solid var(--linha);border-radius:999px;padding:3px;gap:2px;background:var(--sup)}
+.tema button{border:0;background:transparent;color:var(--tinta3);font:500 12px var(--ui);padding:5px 10px;border-radius:999px;cursor:pointer}
+.tema button[aria-pressed="true"]{background:var(--verde);color:var(--verde-ink);font-weight:600}
+
+.pag{max-width:1180px;margin:0 auto;padding-block:0 80px;padding-inline:16px;display:flex;flex-direction:column;gap:84px}
+section{scroll-margin-top:84px}
+.cabeca{display:flex;flex-direction:column;gap:14px;max-width:720px;margin-bottom:28px}
+.cabeca p{color:var(--tinta2);font-size:16px}
+.rot{font-size:12px;font-weight:600;color:var(--verde);letter-spacing:.06em;text-transform:uppercase}
+
+/* hero */
+.hero{display:grid;grid-template-columns:1.1fr .9fr;gap:32px;align-items:center;padding-top:40px}
+.hero h1{font-size:clamp(56px,9vw,124px);font-weight:800;text-transform:uppercase;line-height:.9}
+.hero h1 span{color:var(--verde)}
+.hero .lead{font-size:18px;color:var(--tinta2);max-width:560px;margin-top:22px}
+.hero-fig{position:relative;display:grid;place-items:center}
+.hero-fig img{width:min(100%,420px);filter:drop-shadow(0 24px 30px rgb(0 0 0/.35))}
+.balao{position:absolute;top:6%;right:4%;background:var(--creme);color:var(--fundo);font-family:var(--display);font-weight:800;font-size:24px;text-transform:uppercase;padding:10px 16px;border-radius:14px 14px 14px 2px;transform:rotate(-4deg);box-shadow:var(--sombra)}
+@media (max-width:760px){.hero{grid-template-columns:1fr;padding-top:24px}.balao{font-size:18px;top:0;right:0}}
+
+/* poses */
+.poses{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+.pose{background:var(--sup);border:1px solid var(--linha);border-radius:14px;padding:12px 10px 10px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;color:var(--tinta);font:inherit;text-align:center}
+.pose img{height:110px;width:auto}
+.pose b{font-family:var(--display);font-size:20px;text-transform:uppercase;font-weight:700}
+.pose[aria-pressed="true"]{border-color:var(--verde);background:var(--verde-fundo)}
+.pose-det{margin-top:14px;display:grid;grid-template-columns:120px 1fr;gap:18px;align-items:center;background:var(--sup);border:1px solid var(--linha);border-radius:16px;padding:18px}
+.pose-det img{height:140px;width:auto;margin:0 auto}
+.pose-det dl{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;margin:0}
+.pose-det dt{color:var(--tinta3);font-size:13px}
+.pose-det dd{margin:0}
+.fala{font-family:var(--display);font-size:26px;font-weight:700;line-height:1.05}
+@media (max-width:760px){.poses{grid-template-columns:repeat(3,1fr)}.pose-det{grid-template-columns:1fr}}
+
+/* conceito */
+.tres{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.bloco{background:var(--sup);border:1px solid var(--linha);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:10px}
+.bloco h3{font-size:24px}
+.bloco ul{margin:0;padding-left:18px;color:var(--tinta2);display:flex;flex-direction:column;gap:6px;font-size:14px}
+.fase{border-left:3px solid var(--verde);padding-left:14px}
+.fase small{color:var(--tinta3);font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase}
+@media (max-width:760px){.tres{grid-template-columns:1fr}}
+
+/* identidade */
+.swatches{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.sw{border-radius:12px;border:1px solid var(--linha);overflow:hidden;background:var(--sup)}
+.sw i{display:block;height:64px}
+.sw div{padding:8px 10px;font-size:12px;color:var(--tinta2)}
+.sw b{display:block;color:var(--tinta);font-weight:600}
+.tipo{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+.spec{background:var(--sup);border:1px solid var(--linha);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.spec .d{font-family:var(--display);font-size:56px;font-weight:800;text-transform:uppercase;line-height:.95}
+.spec .u{font-size:15px;color:var(--tinta2)}
+.spec .m{font-family:var(--mono);font-size:30px;font-weight:600}
+.spec small{color:var(--tinta3);font-size:12px}
+.comp{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:14px;background:var(--sup);border:1px solid var(--linha);border-radius:16px;padding:18px}
+@media (max-width:760px){.tipo{grid-template-columns:1fr}}
+
+/* componentes do app */
+.btn{display:inline-flex;align-items:center;gap:7px;min-height:36px;padding:0 13px;border-radius:9px;border:1px solid var(--linha);background:var(--elev);color:var(--tinta);font:500 12.5px var(--ui);white-space:nowrap}
+.btn-p{background:var(--verde);border-color:var(--verde);color:var(--verde-ink);font-weight:700}
+.btn-g{background:transparent;color:var(--tinta3)}
+.tag{display:inline-flex;align-items:center;gap:6px;border-radius:7px;padding:4px 9px;font-size:11px;font-weight:600;border:1px solid var(--linha);background:var(--elev);color:var(--tinta2);white-space:nowrap}
+.tag i{width:7px;height:7px;border-radius:50%;background:var(--tinta3)}
+.tag.ok{background:var(--verde-fundo);border-color:var(--verde-borda);color:var(--verde)}.tag.ok i{background:var(--verde)}
+.tag.at{background:var(--ambar-fundo);border-color:color-mix(in srgb,var(--ambar) 40%,transparent);color:var(--ambar)}.tag.at i{background:var(--ambar)}
+.tag.bl{background:var(--rosa-fundo);border-color:color-mix(in srgb,var(--rosa) 40%,transparent);color:var(--rosa)}.tag.bl i{background:var(--rosa)}
+.barra{position:relative;height:6px;border-radius:3px;background:var(--linha);min-width:120px;flex:1}
+.barra b{position:absolute;inset:0 auto 0 0;border-radius:3px;background:var(--creme)}
+.barra u{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--verde)}
+.barra.estoura b{background:var(--ambar)}
+
+/* quadros de tela */
+.tela{display:flex;flex-direction:column;gap:16px}
+.tela-cab{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+.tela-cab h3{font-size:34px;text-transform:uppercase;font-weight:800}
+.tela-cab p{color:var(--tinta2);margin-top:8px}
+.notas{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px;font-size:14px;color:var(--tinta2)}
+.notas li{display:flex;gap:10px;align-items:flex-start}
+.n{flex:none;width:22px;height:22px;border-radius:50%;background:var(--verde);color:var(--verde-ink);font:700 12px var(--mono);display:grid;place-items:center;margin-top:2px}
+.quadro{overflow-x:auto;border:1px solid var(--linha);border-radius:18px;background:var(--sup2);box-shadow:var(--sombra)}
+.app{display:flex;width:1040px;min-height:560px;background:var(--fundo);color:var(--tinta);font-size:13px}
+.sb{width:220px;flex:none;background:var(--nav);border-right:1px solid var(--linha);padding:20px 14px;display:flex;flex-direction:column;gap:22px}
+.logo{display:flex;align-items:center;gap:10px;padding:0 6px}
+.logo img{width:30px;height:30px}
+.logo b{font-family:var(--display);font-size:20px;font-weight:800;text-transform:uppercase;line-height:1}
+.logo small{display:block;font-size:10px;color:var(--tinta4);letter-spacing:.08em;text-transform:uppercase;font-family:var(--ui);font-weight:600}
+.sb nav{display:flex;flex-direction:column;gap:2px}
+.sb nav span{min-height:40px;display:flex;align-items:center;padding:0 12px;border-radius:9px;color:var(--tinta3);font-weight:500}
+.sb nav span.on{background:var(--elev);color:var(--tinta);box-shadow:inset 3px 0 0 var(--verde)}
+.sb .eu{margin-top:auto;display:flex;align-items:center;gap:10px;border:1px solid var(--linha);border-radius:10px;padding:9px 11px;background:var(--sup)}
+.sb .eu i{width:30px;height:30px;border-radius:50%;background:var(--elev);display:grid;place-items:center;font-style:normal;font-weight:700;font-size:12px}
+.sb .eu small{display:block;color:var(--tinta4);font-size:11px}
+.main{flex:1;min-width:0;padding:26px 30px;display:flex;flex-direction:column;gap:18px}
+.cab{display:flex;align-items:flex-end;justify-content:space-between;gap:16px}
+.cab h4{margin:0;font-family:var(--display);font-size:38px;font-weight:800;text-transform:uppercase;line-height:.95}
+.cab p{color:var(--tinta3);font-size:12.5px;margin-top:6px}
+.cab .acoes{display:flex;gap:6px;align-items:center}
+.n-ass{display:flex;align-items:center;gap:14px;background:var(--sup);border:1px solid var(--linha);border-radius:14px;padding:12px 16px 12px 12px;max-width:420px}
+.n-ass img{height:64px;width:auto;flex:none}
+.n-ass b{font-family:var(--display);font-size:22px;font-weight:700;line-height:1;display:block}
+.n-ass span{color:var(--tinta3);font-size:12px;display:block;margin-top:4px}
+.andamento{display:flex;align-items:center;gap:18px;background:var(--verde-fundo);border:1px solid var(--verde-borda);border-radius:14px;padding:16px 18px}
+.andamento .t{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.andamento .t b{font-size:16px;font-weight:600}
+.andamento .t span{color:var(--tinta3);font-size:12px}
+.rel{font-family:var(--mono);font-size:30px;font-weight:600;line-height:1;letter-spacing:-.02em}
+.rel small{display:block;font-size:11px;color:var(--tinta4);text-align:right;margin-top:3px;font-family:var(--mono)}
+.sec{display:flex;flex-direction:column;gap:8px}
+.sec header{display:flex;align-items:baseline;gap:10px}
+.sec header b{font-family:var(--display);font-size:20px;text-transform:uppercase;font-weight:700}
+.sec header span{color:var(--tinta4);font-size:12px}
+.row{display:flex;align-items:center;gap:14px;background:var(--sup);border:1px solid var(--linha);border-radius:12px;padding:12px 14px}
+.row.late{border-color:color-mix(in srgb,var(--ambar) 45%,transparent)}
+.row .t{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.row .t b{font-weight:600;font-size:13.5px}
+.row .t span{color:var(--tinta3);font-size:11.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .t em{color:var(--verde);font-style:normal;font-size:11px}
+.tempo{font-family:var(--mono);font-size:13px;text-align:right;min-width:92px;color:var(--tinta2)}
+.tempo small{display:block;color:var(--tinta4);font-size:10.5px}
+.row .acoes{display:flex;gap:6px}
+
+/* entrar */
+.entrar{width:1040px;min-height:600px;background:var(--fundo);display:grid;grid-template-columns:1fr 1fr;position:relative;overflow:hidden}
+.entrar .lado{padding:64px 60px;display:flex;flex-direction:column;justify-content:center;gap:22px}
+.entrar h4{margin:0;font-family:var(--display);font-size:76px;font-weight:800;text-transform:uppercase;line-height:.88}
+.entrar h4 span{color:var(--verde)}
+.entrar p{color:var(--tinta2);max-width:380px}
+.entrar .fig{display:grid;place-items:center;background:radial-gradient(circle at 50% 60%,var(--verde-fundo),transparent 65%)}
+.entrar .fig img{height:460px;width:auto}
+.ggl{display:inline-flex;align-items:center;gap:10px;background:var(--creme);color:var(--fundo);border-radius:10px;padding:12px 18px;font-weight:700;font-size:14px;width:max-content}
+.ggl i{width:18px;height:18px;border-radius:50%;background:conic-gradient(#4285f4 0 25%,#34a853 0 50%,#fbbc05 0 75%,#ea4335 0);font-style:normal}
+.rodape{position:absolute;left:60px;bottom:28px;font-size:12px;color:var(--tinta4)}
+
+/* vazios */
+.dois{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.vazio{border:1px solid var(--linha);border-radius:18px;background:var(--fundo);overflow:hidden;display:flex;flex-direction:column}
+.vazio .cena{display:grid;place-items:center;padding:28px;background:var(--sup2)}
+.vazio .cena img{height:260px;width:auto;border-radius:12px}
+.vazio .txt{padding:18px 22px 22px;display:flex;flex-direction:column;gap:8px}
+.vazio .txt b{font-family:var(--display);font-size:30px;font-weight:800;text-transform:uppercase;line-height:.95}
+.vazio .txt p{color:var(--tinta2);font-size:14px}
+@media (max-width:760px){.dois{grid-template-columns:1fr}.tela-cab{grid-template-columns:1fr}}
+
+/* dock */
+.docks{display:flex;flex-wrap:wrap;gap:36px;align-items:flex-start;padding:30px;background:var(--sup2);border:1px solid var(--linha);border-radius:18px}
+.dock-item{display:flex;flex-direction:column;gap:12px}
+.dock-item small{color:var(--tinta3);font-size:12px}
+.pill{display:inline-flex;align-items:center;gap:7px;height:30px;width:96px;padding:0 8px 0 4px;border-radius:999px;background:var(--sup);border:1px solid var(--linha);box-shadow:var(--sombra)}
+.pill img{width:22px;height:22px}
+.pill b{font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:-.02em}
+.pill.parado{opacity:.75}.pill.parado b{color:var(--tinta3)}
+.pill i{width:7px;height:7px;border-radius:50%;background:var(--verde);box-shadow:0 0 0 3px var(--verde-fundo);animation:pulsa 1.4s ease-in-out infinite}
+@keyframes pulsa{50%{opacity:.35}}
+@media (prefers-reduced-motion:reduce){.pill i,.selo{animation:none}}
+.dock{width:300px;background:var(--sup);border:1px solid var(--linha);border-radius:16px;padding:14px 14px 12px;display:flex;flex-direction:column;gap:10px;box-shadow:var(--sombra);position:relative}
+.dock .cab-d{display:flex;gap:10px;align-items:flex-start}
+.dock .cab-d img{width:44px;height:44px;flex:none}
+.dock .cab-d b{font-size:13.5px;font-weight:600;display:block}
+.dock .cab-d span{display:block;color:var(--tinta3);font-size:11px}
+.dock .cab-d em{display:block;color:var(--verde);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;font-style:normal;margin-bottom:3px}
+.dock .rel{font-size:34px}
+.dock .acoes{display:flex;gap:6px}
+.dock .acoes .btn{flex:1;justify-content:center}
+
+/* dialogo entrega */
+.dlg-wrap{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
+.dlg{background:var(--sup);border:1px solid var(--linha);border-radius:18px;padding:22px;display:flex;flex-direction:column;gap:14px;box-shadow:var(--sombra);position:relative;overflow:hidden}
+.dlg h5{margin:0;font-family:var(--display);font-size:28px;font-weight:800;text-transform:uppercase;line-height:1}
+.dlg .sub{color:var(--tinta3);font-size:12.5px}
+.campo{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--tinta3)}
+.campo div{border:1px solid var(--linha);background:var(--sup2);border-radius:9px;padding:9px 11px;color:var(--tinta);font-size:13px}
+.selo{position:absolute;inset:0;display:grid;place-items:center;background:color-mix(in srgb,var(--fundo) 86%,transparent);backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity .25s}
+.selo.on{opacity:1;pointer-events:auto}
+.selo-in{display:flex;flex-direction:column;align-items:center;gap:4px;transform:rotate(-5deg)}
+.selo-in img{height:150px;width:auto}
+.selo-in b{font-family:var(--display);font-size:46px;font-weight:800;text-transform:uppercase;color:var(--verde);line-height:.9}
+.selo-in span{font-family:var(--display);font-size:18px;font-weight:700;color:var(--tinta2);text-transform:uppercase}
+@media (max-width:760px){.dlg-wrap{grid-template-columns:1fr}}
+
+/* frente / painel */
+.tabela{width:100%;border-collapse:collapse;font-size:12.5px}
+.tabela th{text-align:left;color:var(--tinta4);font-weight:600;font-size:11px;letter-spacing:.04em;text-transform:uppercase;padding:8px 10px;border-bottom:1px solid var(--linha)}
+.tabela td{padding:10px;border-bottom:1px solid var(--linha2);vertical-align:middle}
+.tabela td.num{color:var(--tinta2)}
+.ponto{display:inline-flex;align-items:center;gap:6px}
+.ponto img{width:18px;height:18px}
+.quem{display:inline-flex;align-items:center;gap:6px}
+.quem i{width:20px;height:20px;border-radius:50%;background:var(--elev);font-style:normal;font-size:9px;font-weight:700;display:grid;place-items:center}
+.quem.falta span{color:var(--ambar)}
+.hbar{display:grid;grid-template-columns:120px 1fr 110px;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid var(--linha2)}
+.hbar:last-child{border-bottom:0}
+.hbar b{font-weight:500}
+.hbar .num{text-align:right;color:var(--tinta2);font-size:12px}
+.taxa{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px}
+.taxa .c{background:var(--sup2);border:1px solid var(--linha);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:4px}
+.taxa .c small{color:var(--tinta4);font-size:11px}
+.taxa .c b{font-family:var(--display);font-size:30px;font-weight:800;line-height:1}
+.taxa .c span{font-size:11.5px;color:var(--tinta3)}
+.taxa .c.alerta{border-color:color-mix(in srgb,var(--ambar) 45%,transparent)}.taxa .c.alerta b{color:var(--ambar)}
+.taxa .c.ok b{color:var(--verde)}
+.card{background:var(--sup);border:1px solid var(--linha);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+.card h6{margin:0;font-family:var(--display);font-size:20px;font-weight:700;text-transform:uppercase}
+
+/* como funciona */
+.cf{display:grid;grid-template-columns:260px 1fr;gap:26px;align-items:start}
+.cf .narra{position:sticky;top:20px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
+.cf .narra img{height:300px;width:auto}
+.cf .narra .fala{font-size:22px}
+.cf .lista{display:flex;flex-direction:column;gap:14px}
+.cf .lista ul{margin:0;padding-left:18px;color:var(--tinta2);font-size:13px;display:flex;flex-direction:column;gap:5px}
+@media (max-width:760px){.cf{grid-template-columns:1fr}.cf .narra{position:static}}
+
+/* pendências */
+.pend{counter-reset:p;display:flex;flex-direction:column;gap:10px;margin:0;padding:0;list-style:none}
+.pend li{display:grid;grid-template-columns:34px 1fr;gap:12px;background:var(--sup);border:1px solid var(--linha);border-radius:14px;padding:16px}
+.pend li::before{counter-increment:p;content:counter(p);font-family:var(--display);font-size:30px;font-weight:800;color:var(--verde);line-height:1}
+.pend b{display:block;font-weight:600;margin-bottom:3px}
+.pend p{color:var(--tinta2);font-size:14px}
+
+/* corpo inteiro solto: nunca dentro de caixa, sempre tocando uma */
+.app,.andamento,.taxa .c,.card,.dlg,.quadro{position:relative}
+.livre{position:absolute;z-index:3;pointer-events:none;filter:drop-shadow(0 12px 14px rgb(0 0 0/.35))}
+.livre img{height:var(--h,150px);width:auto;display:block}
+.livre .balao{position:absolute;font-size:15px;padding:6px 11px;white-space:nowrap;transform:rotate(-3deg);border-radius:12px 12px 2px 12px;top:8px;right:calc(100% - 18px)}
+.livre .balao.dir{right:auto;left:calc(100% - 18px);border-radius:12px 12px 12px 2px}
+.tag img,.ponto img{width:14px;height:14px}
+.rostos{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:14px}
+.rostos div{background:var(--sup);border:1px solid var(--linha);border-radius:14px;padding:14px 12px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}
+.rostos img{width:72px;height:72px}
+.rostos b{font-family:var(--display);font-size:20px;text-transform:uppercase;font-weight:700}
+.rostos span{font-size:12px;color:var(--tinta3)}
+.regras{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:28px}
+.regras .bloco h3 img{width:28px;height:28px;vertical-align:-6px;margin-right:6px}
+.vazio{display:grid;grid-template-columns:210px 1fr;align-items:end;gap:0;background:transparent;border:0;overflow:visible}
+.vazio .fig{display:grid;place-items:end center;z-index:2;margin-right:-34px;filter:drop-shadow(0 12px 14px rgb(0 0 0/.35))}
+.vazio .fig img{height:250px;width:auto}
+.vazio .txt{background:var(--sup);border:1px solid var(--linha);border-radius:18px;padding:22px 24px 22px 54px}
+.pill img{width:22px;height:22px}
+.dock{overflow:visible}
+.dlg{overflow:visible}
+.selo{border-radius:18px}
+.selo-in{transform:none;gap:0}
+.selo-in img{position:absolute;right:18px;bottom:calc(100% - 26px);height:170px;filter:drop-shadow(0 12px 14px rgb(0 0 0/.35))}
+.selo-in b{transform:rotate(-5deg)}
+.pedidos{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.pedidos .bloco b{font-family:var(--display);font-size:22px;text-transform:uppercase;font-weight:700}
+.pedidos .bloco p{font-size:13px;color:var(--tinta2)}
+/* vagas: onde cada pose nova encosta. Tracejado = ainda não gerada */
+.status-ger{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--ambar-fundo);border:1px solid color-mix(in srgb,var(--ambar) 40%,transparent);color:var(--tinta2);border-radius:12px;padding:10px 14px;font-size:13px;margin-bottom:14px}
+.status-ger img{width:22px;height:22px}
+.status-ger b{color:var(--ambar);font-weight:600}
+.cena-v{position:relative;height:136px;border-radius:12px;background:var(--sup2);border:1px solid var(--linha2);overflow:hidden}
+.cena-v .cx{position:absolute;background:var(--elev);border:1px solid var(--linha);border-radius:9px;z-index:2}
+.cena-v .cx::before,.cena-v .cx::after{content:"";position:absolute;left:10px;height:5px;border-radius:3px;background:var(--linha)}
+.cena-v .cx::before{top:10px;width:46%}
+.cena-v .cx::after{top:21px;width:28%}
+.vaga{position:absolute;z-index:3;border:2px dashed var(--verde);border-radius:14px;background:color-mix(in srgb,var(--verde) 9%,transparent);display:grid;place-items:center;color:var(--verde);font:700 10px/1.1 var(--ui);letter-spacing:.06em;text-transform:uppercase;text-align:center;padding:2px}
+.vaga.atras{z-index:1}
+.pedidos .bloco small{font-size:12px;color:var(--tinta3)}
+.pedidos .bloco small b{font:600 12px var(--ui);text-transform:none;color:var(--tinta2)}
+.cena-v .pose-n{position:absolute;z-index:3;width:auto;filter:drop-shadow(0 6px 8px rgb(0 0 0/.3))}
+.cena-v .pose-n.atras{z-index:1}
+.status-ger.ok{background:var(--verde-fundo);border-color:var(--verde-borda)}
+.status-ger.ok b{color:var(--verde)}
+/* videos sem fundo */
+.vids{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+.vid{margin:0;display:flex;flex-direction:column;gap:8px;min-width:0}
+.vid .palco{position:relative;height:250px;border-radius:14px;background:var(--sup2);border:1px solid var(--linha);overflow:hidden;display:grid;place-items:end center}
+.vid .anim{position:relative;z-index:2;height:196px;width:auto;max-width:100%;margin-bottom:44px}
+.vid .cx-p{position:absolute;left:12px;right:12px;bottom:12px;height:34px;border-radius:9px;background:var(--elev);border:1px solid var(--linha);z-index:1}
+.vid figcaption{font-size:12.5px;color:var(--tinta2)}
+.vid figcaption b{display:block;font:700 18px var(--display);text-transform:uppercase;color:var(--tinta)}
+.vid.ruim .palco{border-color:var(--ambar)}
+.vid.ruim figcaption b{color:var(--ambar)}
+@media (max-width:900px){.vids{grid-template-columns:1fr 1fr}}
+@media (max-width:520px){.vids{grid-template-columns:1fr}}
+.palco-a{height:240px;border-radius:10px;background:var(--sup2);border:1px solid var(--linha);display:grid;place-items:center}
+.palco-a .anim{max-height:220px;width:auto}
+/* caminhada por sprite */
+.passeio{position:relative;height:220px;border-radius:16px;background:var(--sup2);border:1px solid var(--linha);overflow:hidden;margin-bottom:14px}
+.pas-caixa{position:absolute;left:16px;right:16px;bottom:16px;height:70px;background:var(--sup);border:1px solid var(--linha);border-radius:12px;padding:12px 16px;display:flex;flex-direction:column;gap:2px}
+.pas-caixa b{font:800 22px var(--display);text-transform:uppercase}
+.pas-caixa span{font-size:12.5px;color:var(--tinta3)}
+.anda{position:absolute;bottom:84px;left:-142px;width:107px;height:120px;background:url(sr-minutos/pecas/andando-sprite.png) 0 0/1278px 120px no-repeat;animation:passos .8s steps(12) infinite,atravessa 11s linear infinite;filter:drop-shadow(0 6px 6px rgb(0 0 0/.3))}
+@keyframes passos{to{background-position:-1278px 0}}
+@keyframes atravessa{from{left:-120px}to{left:100%}}
+@media (prefers-reduced-motion:reduce){.anda{animation:none;left:60%}}
+/* pecas: icones e previa */
+.pecas{display:grid;grid-template-columns:repeat(5,auto) 1fr;gap:18px;align-items:end}
+.pecas figure{margin:0;display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.pecas figcaption{font-size:12px;color:var(--tinta3)}
+.pecas .og{grid-column:1/-1}
+.pecas .og img{width:100%;max-width:720px;border-radius:12px;border:1px solid var(--linha)}
+.aba{display:inline-flex;align-items:center;gap:8px;background:var(--elev);border:1px solid var(--linha);border-radius:9px 9px 0 0;padding:7px 12px;font-size:12px}
+@media (max-width:760px){.pecas{grid-template-columns:repeat(2,1fr)}}
+/* notch: meia-lua na borda da tela */
+.nt-ctrl{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:12px;font-size:12px;color:var(--tinta3)}
+.nt-ctrl span{font-weight:600;letter-spacing:.05em;text-transform:uppercase;margin:0 4px 0 8px}
+.nt-ctrl button{border:1px solid var(--linha);background:var(--sup);color:var(--tinta2);font:500 12px var(--ui);padding:6px 10px;border-radius:999px;cursor:pointer}
+.nt-ctrl button[aria-pressed="true"]{background:var(--verde);border-color:var(--verde);color:var(--verde-ink);font-weight:600}
+.tela-pc{position:relative;height:520px;border-radius:18px;border:1px solid var(--linha);background:linear-gradient(160deg,var(--sup2),var(--elev));overflow:hidden;box-shadow:var(--sombra)}
+.pc-barra{display:flex;align-items:center;gap:7px;padding:10px 14px;border-bottom:1px solid var(--linha);background:var(--sup);font-size:12px;color:var(--tinta3)}
+.pc-barra span{width:10px;height:10px;border-radius:50%;background:var(--linha)}
+.pc-barra b{font-weight:500;margin-left:8px}
+.pc-corpo{padding:22px 110px;display:flex;flex-direction:column;gap:12px}
+.pc-corpo i{display:block;height:14px;border-radius:7px;background:var(--linha2)}
+.pc-corpo i:nth-child(odd){width:72%}.pc-corpo i:nth-child(3n){width:48%}
+.nt{--nt-cor:var(--verde);position:absolute;z-index:5;outline:none;--nt-preto:#050806}
+.nt[data-estado="pausado"]{--nt-cor:var(--ambar)}
+.nt[data-estado="vencido"]{--nt-cor:var(--rosa)}
+.nt[data-canto="baixo-dir"]{bottom:0;right:90px}.nt[data-canto="baixo-esq"]{bottom:0;left:90px}
+.nt[data-canto="dir-alto"]{right:0;top:70px}.nt[data-canto="esq-alto"]{left:0;top:70px}
+.nt-cab{position:relative;width:140px;height:76px;cursor:pointer}
+.nt[data-canto^="dir"] .nt-cab,.nt[data-canto^="esq"] .nt-cab{width:76px;height:140px}
+.nt-lua{position:absolute;left:0;top:0;width:140px;height:76px;filter:drop-shadow(0 -4px 14px rgb(0 0 0/.35));transition:transform .2s}
+.nt[data-canto^="dir"] .nt-lua{left:-32px;top:32px;transform:rotate(-90deg)}
+.nt[data-canto^="esq"] .nt-lua{left:-32px;top:32px;transform:rotate(90deg)}
+.nt[data-canto^="baixo"]:hover .nt-lua{transform:translateY(-3px)}
+.nt-corpo{fill:var(--nt-preto)}
+.nt-trilho{fill:none;stroke:#1c2420;stroke-width:9;stroke-linecap:round}
+.nt-aro{fill:none;stroke:var(--nt-cor);stroke-width:9;stroke-linecap:round;stroke-dasharray:0 100;transition:stroke-dasharray .6s ease,stroke .3s}
+.nt-mostrador{fill:#F2E8D5}
+.nt-marcas rect{fill:#10261A}
+.nt-olho .ob{fill:#fff;stroke:#10261A;stroke-width:2}
+.nt-olho .op{fill:#10261A;transition:transform .4s}
+.nt-olho .ol{fill:#fff}
+.nt-boca{fill:none;stroke:#10261A;stroke-width:3;stroke-linecap:round}
+.nt-bigode{fill:none;stroke:#10261A;stroke-linecap:round;stroke-linejoin:round;transform-origin:70px 70px;transition:transform .6s ease}
+.nt-bigode.fixo{stroke-width:5.5;transform:rotate(var(--ga,0deg))}
+.nt-bigode.anda{stroke:var(--nt-cor);stroke-width:4;transform:rotate(var(--gb,0deg))}
+.nt-nariz{fill:var(--nt-cor)}
+.nt[data-estado="vencido"] .nt-olho .op{transform:translateY(2.5px)}
+.nt[data-estado="pausado"] .nt-olho .op{transform:translateX(-1.5px)}
+.nt-resumo,.nt-painel{position:absolute;top:0;background:var(--nt-preto);color:#F2E8D5;border-radius:18px;padding:14px 16px;box-shadow:0 18px 44px rgb(0 0 0/.45);opacity:0;pointer-events:none;transform:scale(.96);transition:opacity .16s,transform .16s;font-size:12.5px}
+.nt[data-canto="dir-alto"] .nt-resumo,.nt[data-canto="dir-alto"] .nt-painel{right:86px;transform-origin:right top}
+.nt[data-canto="esq-alto"] .nt-resumo,.nt[data-canto="esq-alto"] .nt-painel{left:86px;transform-origin:left top}
+.nt[data-canto^="baixo"] .nt-resumo,.nt[data-canto^="baixo"] .nt-painel{top:auto;bottom:86px;transform-origin:center bottom}
+.nt[data-canto="baixo-dir"] .nt-resumo,.nt[data-canto="baixo-dir"] .nt-painel{right:0}
+.nt[data-canto="baixo-esq"] .nt-resumo,.nt[data-canto="baixo-esq"] .nt-painel{left:0}
+.nt-resumo{width:260px;display:flex;flex-direction:column;gap:5px}
+.nt:hover:not(.aberto) .nt-resumo,.nt:focus-within:not(.aberto) .nt-resumo{opacity:1;pointer-events:auto;transform:none}
+.nt.aberto .nt-painel{opacity:1;pointer-events:auto;transform:none}
+.nt-resumo em{font-style:normal;font:700 10px var(--ui);letter-spacing:.1em;text-transform:uppercase;color:var(--nt-cor)}
+.nt-resumo b{font-size:14px;font-weight:600}
+.nt-resumo>span{color:#8E9A90;font-size:11.5px}
+.nt-rel{display:flex;align-items:baseline;gap:8px;margin-top:4px}
+.nt-rel .num:first-child{font:600 28px var(--mono);letter-spacing:-.02em}
+.nt-rel small{color:#8E9A90;font-size:11px}
+.nt-barra{display:block;height:5px;border-radius:3px;background:#1c2420;overflow:hidden}
+.nt-barra i{display:block;height:100%;width:0;background:var(--nt-cor);transition:width .6s}
+.nt-acoes{display:flex;gap:6px;margin-top:6px}
+.nt-acoes button,.nt-item button{flex:1;min-height:34px;border-radius:9px;border:1px solid #26302A;background:#1A221C;color:#F2E8D5;font:500 12px var(--ui);cursor:pointer}
+.nt-acoes button.p{background:#3DD15A;border-color:#3DD15A;color:#07120d;font-weight:700}
+.nt-dica{color:#6F7B72;font-size:10.5px;margin-top:2px}
+.nt-painel{width:330px;display:flex;flex-direction:column;gap:8px}
+.nt-pcab{display:flex;justify-content:space-between;align-items:center}
+.nt-pcab b{font:800 24px var(--display);text-transform:uppercase}
+.nt-pcab button{width:28px;height:28px;border-radius:8px;border:1px solid #26302A;background:#1A221C;color:#F2E8D5;font-size:16px;cursor:pointer}
+.nt-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:11px;background:#121814;border:1px solid #1E2722}
+.nt-item.atual{border-color:var(--nt-cor)}
+.nt-item div{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.nt-item b{font-size:12.5px;font-weight:600}
+.nt-item div span{color:#8E9A90;font-size:11px}
+.nt-item button{flex:none;padding:0 10px;min-height:30px}
+.pt{width:10px;height:10px;border-radius:50%;background:var(--nt-cor);flex:none}
+.pt.am{background:#F06A7E}.pt.cr{background:#F2E8D5}
+.nt-sem{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;align-items:center;padding:6px 2px}
+.nt-sem span:first-child{color:#8E9A90;font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+.nt-sem b{text-align:right}
+.nt-sem .nt-barra{grid-column:1/-1}
+.nt-link{color:#3DD15A;font-size:12px;font-weight:600;text-decoration:none}
+@media (max-width:760px){.pc-corpo{padding:22px 80px 22px 20px}.nt-resumo{width:220px}.nt-painel{width:250px}}
+@media (prefers-reduced-motion:reduce){.nt-aro,.nt-barra i,.nt-lua,.nt-resumo,.nt-painel{transition:none}}
+/* galeria do dia */
+.gal{display:flex;flex-direction:column;gap:12px}
+.gal h3{font-size:24px;text-transform:uppercase;margin-top:12px}
+.gal h3 small{display:block;font:500 13px var(--ui);text-transform:none;color:var(--tinta3);margin-top:4px;letter-spacing:0}
+.gal-grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.gal-grade figure{margin:0;display:flex;flex-direction:column;gap:6px}
+.gal-grade img{width:100%;height:190px;object-fit:contain;background:#fff;border:1px solid var(--linha);border-radius:12px;padding:6px}
+.gal-grade.fin img{background:var(--sup);height:220px}
+.gal-grade figcaption{font-size:12px;color:var(--tinta2);font-weight:600}
+.gal-grade figure.ruim img{border-color:var(--ambar)}
+.gal-grade figure.ruim figcaption{color:var(--ambar)}
+/* comparacao dos geradores */
+.rolar{overflow-x:auto}
+.comp-tab{display:grid;grid-template-columns:110px repeat(3,minmax(150px,1fr));gap:8px;align-items:stretch;min-width:620px}
+.comp-tab .cab-m{font:600 12px var(--ui);color:var(--tinta3);letter-spacing:.05em;text-transform:uppercase;padding:0 4px}
+.comp-tab .cab-m b{display:block;font:700 18px var(--display);color:var(--tinta);letter-spacing:0}
+.comp-tab .nome{font:700 20px/1 var(--display);text-transform:uppercase;align-self:center}
+.comp-tab figure{margin:0;position:relative;background:#fff;border:1px solid var(--linha);border-radius:10px;padding:6px;display:grid;place-items:center;height:140px}
+.comp-tab figure img{max-height:126px;width:auto}
+.comp-tab figure.esc{outline:2px solid var(--verde);outline-offset:2px}
+.comp-tab figure figcaption{position:absolute;top:6px;left:6px;font:700 10px var(--ui);letter-spacing:.06em;text-transform:uppercase;background:var(--verde);color:var(--verde-ink);padding:2px 6px;border-radius:5px}
+.comp-tab figure.falha figcaption{background:var(--ambar);color:var(--fundo)}
+.veredito{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+.veredito .bloco b{font:700 22px var(--display);text-transform:uppercase}
+.veredito .bloco p{font-size:13px;color:var(--tinta2)}
+@media (max-width:760px){.veredito{grid-template-columns:1fr}}
+/* mapa de producao */
+.prod{width:100%;border-collapse:collapse;font-size:13px;min-width:760px}
+.prod th{text-align:left;color:var(--tinta4);font-weight:600;font-size:11px;letter-spacing:.05em;text-transform:uppercase;padding:8px 10px;border-bottom:1px solid var(--linha)}
+.prod td{padding:10px;border-bottom:1px solid var(--linha2);vertical-align:top;color:var(--tinta2)}
+.prod td:first-child{color:var(--tinta);font-weight:600}
+.prod td small{display:block;color:var(--tinta3);font-size:12px;margin-top:2px;font-weight:400}
+.prod tr.grupo td{background:var(--sup2);font:700 16px var(--display);text-transform:uppercase;color:var(--tinta);letter-spacing:.01em;padding:8px 10px}
+.ferr{display:inline-flex;align-items:center;gap:5px;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:600;border:1px solid var(--linha);background:var(--elev);color:var(--tinta);white-space:nowrap;margin:0 4px 4px 0}
+.ferr.grok{border-color:var(--verde-borda);background:var(--verde-fundo);color:var(--verde)}
+.est{font-size:11px;font-weight:600;white-space:nowrap}
+.est.pronto{color:var(--verde)}.est.rasc{color:var(--ambar)}.est.falta{color:var(--tinta3)}
+@media (max-width:760px){.rostos{grid-template-columns:repeat(3,1fr)}.regras{grid-template-columns:1fr}.vazio{grid-template-columns:1fr}.vazio .fig{margin:0 0 -30px;place-items:end start;padding-left:20px}.vazio .txt{padding-left:24px;padding-top:40px}}
+</style>
+
+<header class="topo">
+  <div class="topo-in">
+    <div class="marca">
+      <img src="sr-minutos/rosto.png" alt="">
+      <div><b>Sr. Minutos</b><small>Atividades OPEC · v4 · 02/10/2026 · poses novas geradas</small></div>
+    </div>
+    <nav aria-label="Seções">
+      <a href="#notch">Notch</a><a href="#galeria">Galeria</a><a href="#conceito">Conceito</a><a href="#identidade">Identidade</a><a href="#animacoes">Animações</a><a href="#pedidos">Poses novas</a><a href="#comparar">Geradores</a><a href="#producao">Produção</a><a href="#telas">Telas</a><a href="#pecas">Ícones</a><a href="#decisoes">Decisões</a>
+    </nav>
+    <div class="tema" role="group" aria-label="Tema do mockup">
+      <button type="button" id="t-noite" aria-pressed="true">Noite</button>
+      <button type="button" id="t-mostrador" aria-pressed="false">Mostrador</button>
+    </div>
+  </div>
+</header>
+
+<main class="pag">
+
+<section class="hero" id="inicio">
+  <div>
+    <h1>O cronômetro<br>ganhou <span>cara.</span></h1>
+    <p class="lead">O app de atividades continua a mesma ferramenta: planejado contra executado, cronômetro manual, nada de vigilância. Muda a casca, pra estética LiveMode/CazéTV, e entra o Sr. Minutos: um relógio que fala com você sobre o seu tempo, e só sobre o seu. Ele anda solto pela plataforma: fica em pé em cima dos cartões, do lado das tabelas, atrás dos diálogos. Dentro das caixas só entra o rosto dele, como símbolo, e a cor do rosto diz o estado.</p>
+  </div>
+  <div class="hero-fig">
+    <img src="sr-minutos/apontando.png" alt="Sr. Minutos, um relógio verde de luvas brancas, apontando para cima">
+    <div class="balao">Bora marcar hora?</div>
+  </div>
+</section>
+
+<section id="notch">
+  <div class="cabeca">
+    <span class="rot">Ideia nova · inspirada no Codenotch</span>
+    <h2>A meia-lua na borda da tela</h2>
+    <p>O dock vira um notch: meia cabeça do Sr. Minutos saindo da borda da tela, os dois olhos de fora e a borda cortando bem no nariz. Os ponteiros são o bigode: um fica parado, o outro varre o arco conforme o tempo passa, e quando o bigode fecha simétrico acabou o previsto. Fora do prazo, o bigode murcha. Passe o mouse pra ver o resumo e pausar ou entregar ali mesmo; clique pra abrir tudo. Teste abaixo: o tempo corre de verdade.</p>
+  </div>
+  <div class="nt-ctrl" role="group" aria-label="Controles da demonstração">
+    <span>Estado</span>
+    <button type="button" data-estado="rodando" aria-pressed="true">Rodando</button>
+    <button type="button" data-estado="pausado" aria-pressed="false">Pausado</button>
+    <button type="button" data-estado="vencido" aria-pressed="false">Fora do prazo</button>
+    <span>Canto</span>
+    <button type="button" data-canto="baixo-dir" aria-pressed="true">Embaixo, direita</button>
+    <button type="button" data-canto="baixo-esq" aria-pressed="false">Embaixo, esquerda</button>
+    <button type="button" data-canto="dir-alto" aria-pressed="false">Lateral direita</button>
+    <button type="button" data-canto="esq-alto" aria-pressed="false">Lateral esquerda</button>
+  </div>
+  <div class="tela-pc" id="tela-pc">
+    <div class="pc-barra"><span></span><span></span><span></span><b>Planilha da escala · outra janela qualquer</b></div>
+    <div class="pc-corpo" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+
+    <div class="nt" id="nt" data-estado="rodando" data-canto="baixo-dir" tabindex="0" role="button" aria-label="Sr. Minutos: tarefa em andamento. Passe o mouse ou foque para ver o resumo; clique para abrir">
+      <div class="nt-cab"><svg class="nt-lua" viewBox="0 0 140 76" aria-hidden="true">
+        <circle cx="70" cy="70" r="66" class="nt-corpo"></circle>
+        <path d="M14,70 A56,56 0 0 1 126,70" class="nt-trilho" pathLength="100"></path>
+        <path d="M14,70 A56,56 0 0 1 126,70" class="nt-aro" id="nt-aro" pathLength="100"></path>
+        <circle cx="70" cy="70" r="46" class="nt-mostrador"></circle>
+        <g class="nt-marcas">
+          <rect x="68.5" y="27" width="3" height="9" rx="1.5"></rect>
+          <rect x="68.5" y="27" width="3" height="7" rx="1.5" transform="rotate(-45 70 70)"></rect>
+          <rect x="68.5" y="27" width="3" height="7" rx="1.5" transform="rotate(45 70 70)"></rect>
+          <rect x="68.5" y="27" width="3" height="9" rx="1.5" transform="rotate(-90 70 70)"></rect>
+          <rect x="68.5" y="27" width="3" height="9" rx="1.5" transform="rotate(90 70 70)"></rect>
+        </g>
+        <line x1="70" y1="70" x2="44" y2="70" class="nt-bigode fixo" id="nt-bigode-a"></line>
+        <line x1="70" y1="70" x2="38" y2="70" class="nt-bigode anda" id="nt-bigode-b"></line>
+        <g class="nt-olho" id="nt-olhos">
+          <ellipse class="ob" cx="54" cy="47" rx="8" ry="10.5"></ellipse><ellipse class="op" cx="55.5" cy="49.5" rx="4.4" ry="6.2"></ellipse><circle class="ol" cx="57" cy="46.5" r="1.7"></circle>
+          <ellipse class="ob" cx="86" cy="47" rx="8" ry="10.5"></ellipse><ellipse class="op" cx="87.5" cy="49.5" rx="4.4" ry="6.2"></ellipse><circle class="ol" cx="89" cy="46.5" r="1.7"></circle>
+        </g>
+        <circle cx="70" cy="70" r="5" class="nt-nariz"></circle>
+      </svg></div>
+
+      <div class="nt-resumo" role="dialog" aria-label="Resumo da tarefa">
+        <em id="nt-tag">Em andamento</em>
+        <b>Materiais · Fut Inter</b>
+        <span>Premier League · evento sáb 04/10</span>
+        <div class="nt-rel"><span class="num" id="nt-tempo">00:41:12</span><small class="num">de 01:30</small></div>
+        <span class="nt-barra"><i id="nt-barra"></i></span>
+        <div class="nt-acoes"><button type="button" id="nt-pausa">Pausar</button><button type="button" class="p" id="nt-entrega">Entregar</button></div>
+        <small class="nt-dica">Clique no Sr. Minutos pra ver tudo</small>
+      </div>
+
+      <div class="nt-painel" role="dialog" aria-label="Painel completo">
+        <div class="nt-pcab"><b>Hoje</b><button type="button" id="nt-fecha" aria-label="Fechar">×</button></div>
+        <div class="nt-item atual"><span class="pt"></span><div><b>Materiais · Fut Inter</b><span>Premier League · <span class="num" id="nt-tempo2">00:41:12</span> de 01:30</span></div></div>
+        <div class="nt-item"><span class="pt am"></span><div><b>Auditoria · Olímpicos</b><span>Grand Slam de Judô · prazo venceu qua 01/10</span></div><button type="button">Iniciar</button></div>
+        <div class="nt-item"><span class="pt"></span><div><b>Sincronização · Fut Inter</b><span>Bundesliga · abre hoje, entrega sáb</span></div><button type="button">Iniciar</button></div>
+        <div class="nt-item"><span class="pt cr"></span><div><b>Materiais · Programas</b><span>Programa CazéTV · abre sexta</span></div></div>
+        <div class="nt-sem"><span>Semana</span><b class="num">3h41 de 8h30</b><span class="nt-barra"><i style="width:43%"></i></span></div>
+        <a href="#t-semana" class="nt-link">Abrir Minha semana</a>
+      </div>
+    </div>
+  </div>
+  <div class="tres" style="margin-top:14px">
+    <div class="bloco"><h3>Recolhido</h3><ul><li>Meia cabeça na borda, 140×76 px: olhos de fora, corte no nariz. Não cobre nada.</li><li>O aro enche da esquerda pra direita junto com o ponteiro do bigode: tempo medido contra o previsto.</li><li>Bigode fechado e simétrico = previsto atingido. Murcho = passou do prazo. Parado = pausado.</li></ul></div>
+    <div class="bloco"><h3>Cores do aro</h3><ul><li><b style="color:var(--verde)">Verde</b>: rodando, dentro do previsto.</li><li><b style="color:var(--ambar)">Âmbar</b>: pausado, como você pediu (amarelo).</li><li><b style="color:var(--rosa)">Rosa-vermelho</b>: fora do prazo.</li><li>Isso muda a regra dos rostos (lá, âmbar era "fora do prazo"). Se aprovar, alinho tudo pra esta.</li></ul></div>
+    <div class="bloco"><h3>Onde roda</h3><ul><li>Dentro do app: fixo no canto de todas as telas, já dá pra fazer.</li><li>Por cima de qualquer programa, na borda da tela de verdade (como o Codenotch): só com o app de computador (Tauri, que é o que o Codenotch usa no Windows). Navegador não consegue grudar na borda da tela.</li><li>Meio-termo no navegador: a janelinha flutuante (picture-in-picture) que o dock já usa.</li></ul></div>
+  </div>
+</section>
+
+<section id="galeria">
+  <div class="cabeca">
+    <span class="rot">Galeria · 02/10</span>
+    <h2>Tudo que foi gerado hoje</h2>
+    <p>As 24 imagens que os geradores devolveram, mais as 6 finais. Primeiro as finais já recortadas, que estão nas telas daqui pra baixo. Depois tudo cru, como cada gerador devolveu, inclusive o que deu errado (borda âmbar).</p>
+  </div>
+  <div class="gal">
+    <h3>Finais, recortadas <small>fundo transparente, prontas pras telas</small></h3>
+    <div class="gal-grade fin">
+      <figure><img src="sr-minutos/sentado.png" alt="Sentado"><figcaption>Sentado</figcaption></figure>
+      <figure><img src="sr-minutos/debrucado.png" alt="Debruçado"><figcaption>Debruçado</figcaption></figure>
+      <figure><img src="sr-minutos/espiando.png" alt="Espiando"><figcaption>Espiando</figcaption></figure>
+      <figure><img src="sr-minutos/andando.png" alt="Andando"><figcaption>Andando</figcaption></figure>
+      <figure><img src="sr-minutos/deitado.png" alt="Deitado"><figcaption>Deitado</figcaption></figure>
+      <figure><img src="sr-minutos/pendurado.png" alt="Pendurado"><figcaption>Pendurado</figcaption></figure>
+    </div>
+    <h3>Grok, direto na sua conta xAI <small>4 imagens · US$0,36 · viraram final</small></h3>
+    <div class="gal-grade">
+      <figure><img src="sr-minutos/comp/xai-sentado.jpg" alt=""><figcaption>Sentado</figcaption></figure>
+      <figure><img src="sr-minutos/comp/xai-debrucado.jpg" alt=""><figcaption>Debruçado</figcaption></figure>
+      <figure><img src="sr-minutos/comp/xai-deitado.jpg" alt=""><figcaption>Deitado</figcaption></figure>
+      <figure><img src="sr-minutos/comp/xai-pendurado.jpg" alt=""><figcaption>Pendurado</figcaption></figure>
+    </div>
+    <h3>Grok pelo Higgsfield <small>6 imagens · espiando e andando viraram final; as outras vieram com linha desenhada</small></h3>
+    <div class="gal-grade">
+      <figure><img src="sr-minutos/comp/grok-sentado.jpg" alt=""><figcaption>Sentado</figcaption></figure>
+      <figure><img src="sr-minutos/comp/grok-debrucado.jpg" alt=""><figcaption>Debruçado</figcaption></figure>
+      <figure><img src="sr-minutos/comp/grok-espiando.jpg" alt=""><figcaption>Espiando</figcaption></figure>
+      <figure><img src="sr-minutos/comp/grok-andando.jpg" alt=""><figcaption>Andando</figcaption></figure>
+      <figure><img src="sr-minutos/comp/grok-deitado.jpg" alt=""><figcaption>Deitado</figcaption></figure>
+      <figure><img src="sr-minutos/comp/grok-pendurado.jpg" alt=""><figcaption>Pendurado</figcaption></figure>
+    </div>
+    <h3>Nano Banana pelo Higgsfield <small>7 imagens</small></h3>
+    <div class="gal-grade">
+      <figure class="ruim"><img src="sr-minutos/comp/extra-nb-sentado1.jpg" alt=""><figcaption>Sentado, 1ª: quatro pernas</figcaption></figure>
+      <figure><img src="sr-minutos/comp/nb-sentado.jpg" alt=""><figcaption>Sentado, 2ª</figcaption></figure>
+      <figure><img src="sr-minutos/comp/nb-debrucado.jpg" alt=""><figcaption>Debruçado</figcaption></figure>
+      <figure><img src="sr-minutos/comp/nb-espiando.jpg" alt=""><figcaption>Espiando</figcaption></figure>
+      <figure><img src="sr-minutos/comp/nb-andando.jpg" alt=""><figcaption>Andando</figcaption></figure>
+      <figure><img src="sr-minutos/comp/nb-deitado.jpg" alt=""><figcaption>Deitado</figcaption></figure>
+      <figure><img src="sr-minutos/comp/nb-pendurado.jpg" alt=""><figcaption>Pendurado</figcaption></figure>
+    </div>
+    <h3>GPT Image pelo Higgsfield <small>7 imagens</small></h3>
+    <div class="gal-grade">
+      <figure class="ruim"><img src="sr-minutos/comp/extra-gpt-sentado1.jpg" alt=""><figcaption>Sentado, 1ª: em pé</figcaption></figure>
+      <figure class="ruim"><img src="sr-minutos/comp/gpt-sentado.jpg" alt=""><figcaption>Sentado, 2ª: em pé</figcaption></figure>
+      <figure><img src="sr-minutos/comp/gpt-debrucado.jpg" alt=""><figcaption>Debruçado</figcaption></figure>
+      <figure><img src="sr-minutos/comp/gpt-espiando.jpg" alt=""><figcaption>Espiando</figcaption></figure>
+      <figure class="ruim"><img src="sr-minutos/comp/gpt-andando.jpg" alt=""><figcaption>Andando: ganhou ponteiros</figcaption></figure>
+      <figure><img src="sr-minutos/comp/gpt-deitado.jpg" alt=""><figcaption>Deitado</figcaption></figure>
+      <figure><img src="sr-minutos/comp/gpt-pendurado.jpg" alt=""><figcaption>Pendurado</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<section id="conceito">
+  <div class="cabeca">
+    <span class="rot">Conceito</span>
+    <h2>Quem é o Sr. Minutos</h2>
+    <p>Ele é o cronômetro do app com rosto. Não é mascote decorativo: toda vez que aparece, está dizendo algo sobre o tempo da pessoa logada. Clique numa pose pra ver quando ela aparece e o que ele diz. Seis poses, todas com fundo transparente, mais o rosto isolado pro dock e pro avatar.</p>
+  </div>
+
+  <div class="poses" id="poses">
+    <button class="pose" type="button" data-pose="apontando" aria-pressed="true"><img src="sr-minutos/apontando.png" alt=""><b>Apontando</b></button>
+    <button class="pose" type="button" data-pose="joinha" aria-pressed="false"><img src="sr-minutos/joinha.png" alt=""><b>Joinha</b></button>
+    <button class="pose" type="button" data-pose="bravo" aria-pressed="false"><img src="sr-minutos/bravo.png" alt=""><b>Bravo</b></button>
+    <button class="pose" type="button" data-pose="furioso" aria-pressed="false"><img src="sr-minutos/furioso.png" alt=""><b>Furioso</b></button>
+    <button class="pose" type="button" data-pose="triste" aria-pressed="false"><img src="sr-minutos/triste.png" alt=""><b>Triste</b></button>
+    <button class="pose" type="button" data-pose="ferias" aria-pressed="false"><img src="sr-minutos/ferias.png" alt=""><b>Férias</b></button>
+  </div>
+  <div class="pose-det" id="pose-det">
+    <img id="pd-img" src="sr-minutos/apontando.png" alt="">
+    <div>
+      <p class="fala" id="pd-fala">"Roteiro da Premier League abre hoje. Bora?"</p>
+      <dl style="margin-top:12px">
+        <dt>Quando</dt><dd id="pd-quando">Tem tarefa abrindo ou vencendo hoje. Ele aponta a próxima.</dd>
+        <dt>Onde</dt><dd id="pd-onde">Minha semana (cartão), Entrar (herói), Como funciona (narrador).</dd>
+        <dt>Arquivo</dt><dd id="pd-arq" class="num" style="font-size:12px">public/sr-minutos/apontando.png</dd>
+      </dl>
+    </div>
+  </div>
+
+  <div class="regras">
+    <div class="bloco">
+      <h3>Fora das caixas: corpo inteiro</h3>
+      <ul>
+        <li>Ele nunca fica dentro de um cartão, botão ou tabela. Fica em cima, do lado ou atrás.</li>
+        <li>Sempre toca uma caixa: pé na borda de cima, ombro encostado, meio corpo saindo de trás. Flutuar solto no vazio não.</li>
+        <li>Nunca cobre texto nem botão. Ocupa o ar que a tela já tem: o canto do cabeçalho, a borda de um cartão, a lateral de uma tabela.</li>
+        <li>Mesmo tamanho na tela inteira: 150 px de altura no desktop, 110 no celular. Só o herói do Entrar é maior.</li>
+        <li>Depois, com as animações: ele anda pela borda de baixo da área principal e para em cima do que importa.</li>
+      </ul>
+    </div>
+    <div class="bloco">
+      <h3><img src="sr-minutos/rosto.png" alt="">Dentro das caixas: só o rosto</h3>
+      <ul>
+        <li>O rosto é o símbolo dele. Entra em etiqueta de status, no dock recolhido, no logo, no avatar e em qualquer lugar onde hoje tem um pontinho colorido.</li>
+        <li>A cor do aro diz o estado. Verde é andamento e entregue; âmbar é fora do prazo; rosa é bloqueado; cinza é pausado ou inativo; creme é sem estado.</li>
+        <li>Cor nunca vem sozinha: rosto mais texto, sempre. Quem não distingue verde de âmbar lê a palavra.</li>
+        <li>Rosto não fala. Balão é só do corpo inteiro.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="tres" style="margin-top:14px">
+    <div class="bloco">
+      <h3>Papel</h3>
+      <ul>
+        <li>Assistente de tempo da pessoa logada. Fala só com ela, sobre as tarefas dela.</li>
+        <li>Cobra o relógio, nunca a pessoa. Quando atrasa, o inimigo é o prazo.</li>
+        <li>Comenta a taxa pro gestor, nunca o indivíduo: barra passando do traço é taxa defasada.</li>
+        <li>Narra a página de confiança: "eu conto minutos, não leio tela".</li>
+      </ul>
+    </div>
+    <div class="bloco">
+      <h3>Voz</h3>
+      <ul>
+        <li>Arquibancada carioca. Frase curta, verbo na frente.</li>
+        <li>"Valeu cara" é o bordão de entrega. Única celebração do app.</li>
+        <li>Sem bronca pessoal. Sem "você está atrasado". Sim "o prazo passou".</li>
+        <li>Sem som. Nunca modal. Nunca bloqueia ação.</li>
+      </ul>
+    </div>
+    <div class="bloco">
+      <h3>Em três fases</h3>
+      <div class="fase"><small>Agora · visual</small><p style="font-size:14px;color:var(--tinta2)">Pose por regra simples sobre os dados que a tela já carrega. Frases de tabela fixa.</p></div>
+      <div class="fase" style="border-color:var(--linha)"><small>Depois · reativo</small><p style="font-size:14px;color:var(--tinta2)">Frases com dado real (competição, horas, prazo). Transições animadas. Rosto no dock.</p></div>
+      <div class="fase" style="border-color:var(--linha)"><small>Por fim · interativo</small><p style="font-size:14px;color:var(--tinta2)">Clicar nele abre atalhos; depois conversa sobre os próprios dados. Só aí entra IA.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="animacoes">
+  <div class="cabeca">
+    <span class="rot">Animações</span>
+    <h2>Ele se mexe</h2>
+    <p>Três vídeos de 6 a 7 segundos, gerados com fundo branco. Abaixo, onde cada um entra e o que falta pra usar em cima do fundo escuro e nos formatos pequenos.</p>
+  </div>
+  <div class="status-ger ok"><img src="sr-minutos/rosto.png" alt=""><span><b>Teste de 02/10: fundo transparente funcionando.</b> Os vídeos abaixo rodam sem fundo, em cima da caixa da página. Troque o tema lá em cima: o mesmo arquivo serve pros dois. Dois são novos, gerados na sua conta do Grok (3 s cada, US$0,43 cada).</span></div>
+  <div class="vids">
+    <figure class="vid ruim">
+      <div class="palco"><img class="anim" src="sr-minutos/anim/hf-teste.jpg" alt="Quadro do teste do removedor do Higgsfield: fundo preto e braço apagado"></div>
+      <figcaption><b>Removedor do Higgsfield</b>1 crédito. Fundo virou preto (não transparente) e apagou o braço e o drinque: sobram luvas soltas. Descartado.</figcaption>
+    </figure>
+    <figure class="vid">
+      <div class="palco"><img class="anim" src="sr-minutos/anim/ferias.webp" alt="Sr. Minutos de férias, sem fundo"><span class="cx-p"></span></div>
+      <figcaption><b>Férias, meu recorte</b>Quadro a quadro, o mesmo método das poses. Grátis. O braço esticado no começo já vem do vídeo original.</figcaption>
+    </figure>
+    <figure class="vid">
+      <div class="palco"><img class="anim" src="sr-minutos/anim/joinha.webp" alt="Sr. Minutos comemorando com joinha, sem fundo"><span class="cx-p"></span></div>
+      <figcaption><b>Joinha comemorando · novo</b>Pro selo "Valeu cara". Cortei só o trecho do joinha com a piscadinha (0,9 s) e montei ida e volta: loop de 1,8 s sem emenda.</figcaption>
+    </figure>
+    <figure class="vid">
+      <div class="palco"><img class="anim" src="sr-minutos/anim/acena.webp" alt="Sr. Minutos acenando, sem fundo"><span class="cx-p"></span></div>
+      <figcaption><b>Acenando · novo</b>Pro herói do Entrar. Refeito com margem: inteiro no quadro, e termina na pose do começo, então fecha o loop sozinho.</figcaption>
+    </figure>
+  </div>
+  <div class="passeio" aria-label="Sr. Minutos andando em cima de uma caixa">
+    <div class="pas-caixa"><b>Minha semana</b><span>Ele anda pela borda de cima da caixa. Sprite de 12 quadros, tirado de um vídeo do Grok (o AutoSprite do Higgsfield recusou pelo MCP).</span></div>
+    <span class="anda" role="img" aria-label="Sr. Minutos andando"></span>
+  </div>
+  <div class="tres">
+    <div class="bloco">
+      <div class="palco-a"><img class="anim" src="sr-minutos/anim/bravo.webp" alt="Sr. Minutos apontando e depois ficando bravo"></div>
+      <h3>Apontando, depois bravo</h3>
+      <ul><li>Abertura do "Como funciona" na primeira visita.</li><li>No dock: transição quando o prazo vira de "vence hoje" pra "venceu".</li><li>7 s, 944 px.</li></ul>
+    </div>
+    <div class="bloco">
+      <div class="palco-a"><img class="anim" src="sr-minutos/anim/ferias.webp" alt="Sr. Minutos de óculos escuros, com drinque, mexendo no celular"></div>
+      <h3>Férias em loop</h3>
+      <ul><li>Estado vazio "hoje não tem nada aberto", no lugar da imagem parada.</li><li>Dock recolhido no fim de semana, se couber.</li><li>6 s, 544 px.</li></ul>
+    </div>
+    <div class="bloco">
+      <div class="palco-a"><img class="anim" src="sr-minutos/anim/triste.webp" alt="Sr. Minutos triste andando, leva um susto e volta a andar"></div>
+      <h3>Triste andando</h3>
+      <ul><li>Estado vazio "ninguém ligou o cronômetro essa semana".</li><li>O susto no meio dá pra cortar como reação a "Iniciar".</li><li>6 s, 544 px.</li></ul>
+    </div>
+  </div>
+  <div class="bloco" style="margin-top:14px">
+    <h3>O que falta pra usar de verdade</h3>
+    <ul>
+      <li><b>Fundo.</b> Os vídeos vieram com fundo branco. Pra sentar no fundo escuro, o caminho é tirar o branco quadro a quadro e exportar WebM com transparência (VP9 alpha) mais um fallback MP4 com o fundo da tela pintado. O ffmpeg já está instalado aqui.</li>
+      <li><b>Formato pequeno.</b> Pro dock (96×30 px) vídeo não compensa. O plano é extrair 8 a 12 quadros do loop e montar um sprite sheet PNG, animado por CSS. Leve, sem áudio, funciona em janela flutuante.</li>
+      <li><b>Loop limpo.</b> Nenhum dos três fecha o ciclo perfeitamente. Precisa escolher o ponto de corte ou fazer crossfade de meio segundo no fim.</li>
+      <li><b>Movimento reduzido.</b> Quem ativa "reduzir movimento" no sistema vê a pose parada correspondente. Já é regra do personagem.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="pedidos">
+  <div class="cabeca">
+    <span class="rot">Geradas em 02/10</span>
+    <h2>As poses que faltavam pra ele andar solto</h2>
+    <p>Com as seis poses atuais ele só consegue ficar em pé em cima das coisas. Pra sentar, se debruçar e espiar, precisa destas. Sugestão de descrição pro gerador, no mesmo estilo dos assets de hoje: "mesmo personagem, relógio de parede verde com luvas brancas e botas verdes, cartoon de traço grosso, fundo branco liso, sem texto, sem balão".</p>
+  </div>
+  <div class="status-ger ok"><img src="sr-minutos/rosto.png" alt=""><span><b>6 de 6 geradas.</b> Grok Imagine 2.0, 02/10: espiando e andando pelo Higgsfield; sentado, debruçado, deitado e pendurado direto na sua conta da xAI, já sem linha de apoio. Fundo tirado por script. Cada quadro mostra a pose encostada na caixa do jeito que vai ficar no app. Falta você escolher entre os geradores, logo abaixo.</span></div>
+  <div class="pedidos">
+    <div class="bloco">
+      <div class="cena-v"><div class="cx" style="left:14px;right:14px;bottom:14px;height:52px"></div><img class="pose-n" src="sr-minutos/sentado.png" alt="Sr. Minutos sentado na borda da caixa" style="right:30px;top:4px;height:112px"></div>
+      <b>Sentado na borda</b><p>Sentado na beirada de uma mesa invisível, pernas balançando pra frente, mãos apoiadas ao lado do corpo, visto de frente e levemente de cima.</p><small><b>Onde:</b> canto do cartão "Em andamento" de Minha semana, no lugar do apontando quando nada abre hoje.</small>
+    </div>
+    <div class="bloco">
+      <div class="cena-v"><div class="cx" style="left:14px;right:14px;bottom:14px;height:52px"></div><img class="pose-n" src="sr-minutos/debrucado.png" alt="Sr. Minutos debruçado na borda da caixa" style="left:calc(50% - 46px);bottom:56px;height:92px"></div>
+      <b>Debruçado</b><p>Braços cruzados apoiados numa borda à altura do peito, queixo quase encostado nos braços, olhando pra baixo com curiosidade.</p><small><b>Onde:</b> borda de cima da tabela de Minha frente, olhando as linhas sem quem fez.</small>
+    </div>
+    <div class="bloco">
+      <div class="cena-v"><div class="cx" style="left:14px;top:14px;bottom:14px;width:58%"></div><img class="pose-n atras" src="sr-minutos/espiando.png" alt="Sr. Minutos espiando de trás da caixa" style="left:calc(14px + 58% - 4px);top:18px;height:104px"></div>
+      <b>Espiando de trás</b><p>Só a metade de cima visível, saindo por trás de uma borda vertical, uma luva segurando a borda.</p><small><b>Onde:</b> atrás do diálogo Entregar e da janela do dock expandido.</small>
+    </div>
+    <div class="bloco">
+      <div class="cena-v"><div class="cx" style="left:14px;right:14px;bottom:14px;height:26px"></div><img class="pose-n" src="sr-minutos/andando.png" alt="Sr. Minutos andando pela borda" style="left:24%;bottom:39px;height:92px"></div>
+      <b>Andando de perfil</b><p>Caminhando pra direita, perfil completo, um pé no ar, braços em balanço, expressão neutra.</p><small><b>Onde:</b> base do ciclo de caminhada pela borda de baixo da área principal (fase 2, animado).</small>
+    </div>
+    <div class="bloco">
+      <div class="cena-v"><div class="cx" style="left:14px;right:14px;bottom:14px;height:52px"></div><img class="pose-n" src="sr-minutos/deitado.png" alt="Sr. Minutos deitado em cima da caixa" style="left:calc(50% - 64px);bottom:63px;height:66px"></div>
+      <b>Deitado em cima</b><p>Deitado de lado sobre uma superfície, apoiado num cotovelo, relaxado.</p><small><b>Onde:</b> em cima da caixa "Hoje não tem nada aberto", variante das férias.</small>
+    </div>
+    <div class="bloco">
+      <div class="cena-v"><div class="cx" style="left:14px;right:14px;top:14px;height:40px"></div><img class="pose-n" src="sr-minutos/pendurado.png" alt="Sr. Minutos pendurado embaixo da caixa" style="right:40px;top:46px;height:88px"></div>
+      <b>Pendurado</b><p>Pendurado pelas duas mãos numa borda acima da cabeça, pernas soltas, cara de esforço cômico.</p><small><b>Onde:</b> embaixo do cartão da taxa que está estourando, no Painel.</small>
+    </div>
+  </div>
+  <p style="margin-top:12px;font-size:13px;color:var(--tinta3);max-width:720px">Recorte limpo nas seis: as quatro refeitas pela sua conta já vieram sem linha desenhada, então nada de bolsão branco nem luva manchada. Em Minha frente ele já aparece debruçado na tabela.</p>
+</section>
+
+<section id="comparar">
+  <div class="cabeca">
+    <span class="rot">Geradores</span>
+    <h2>Grok, Nano Banana ou GPT</h2>
+    <p>Mesmas seis descrições, mesma imagem de referência (o apontando), como cada gerador devolveu, sem tratamento. O contorno verde marca a que está nas cenas acima. Âmbar marca o que saiu errado.</p>
+  </div>
+  <div class="rolar">
+    <div class="comp-tab">
+      <span></span>
+      <span class="cab-m"><b>Grok Image 2.0</b>xAI · 2,5 créditos</span>
+      <span class="cab-m"><b>Nano Banana Pro</b>Google · 2 créditos</span>
+      <span class="cab-m"><b>GPT Image 2.5</b>OpenAI · 1,5 crédito, já sai transparente</span>
+
+      <span class="nome">Sentado</span>
+      <figure class="esc"><img src="sr-minutos/comp/grok-sentado.jpg" alt="Grok, sentado"><figcaption>na cena</figcaption></figure>
+      <figure><img src="sr-minutos/comp/nb-sentado.jpg" alt="Nano Banana, sentado"></figure>
+      <figure class="falha"><img src="sr-minutos/comp/gpt-sentado.jpg" alt="GPT, sentado"><figcaption>ficou em pé</figcaption></figure>
+
+      <span class="nome">Debruçado</span>
+      <figure class="esc"><img src="sr-minutos/comp/grok-debrucado.jpg" alt="Grok, debruçado"><figcaption>na cena</figcaption></figure>
+      <figure><img src="sr-minutos/comp/nb-debrucado.jpg" alt="Nano Banana, debruçado"></figure>
+      <figure><img src="sr-minutos/comp/gpt-debrucado.jpg" alt="GPT, debruçado"></figure>
+
+      <span class="nome">Espiando</span>
+      <figure class="esc"><img src="sr-minutos/comp/grok-espiando.jpg" alt="Grok, espiando"><figcaption>na cena</figcaption></figure>
+      <figure><img src="sr-minutos/comp/nb-espiando.jpg" alt="Nano Banana, espiando"></figure>
+      <figure><img src="sr-minutos/comp/gpt-espiando.jpg" alt="GPT, espiando"></figure>
+
+      <span class="nome">Andando</span>
+      <figure class="esc"><img src="sr-minutos/comp/grok-andando.jpg" alt="Grok, andando"><figcaption>na cena</figcaption></figure>
+      <figure><img src="sr-minutos/comp/nb-andando.jpg" alt="Nano Banana, andando"></figure>
+      <figure class="falha"><img src="sr-minutos/comp/gpt-andando.jpg" alt="GPT, andando"><figcaption>ganhou ponteiros</figcaption></figure>
+
+      <span class="nome">Deitado</span>
+      <figure class="esc"><img src="sr-minutos/comp/grok-deitado.jpg" alt="Grok, deitado"><figcaption>na cena</figcaption></figure>
+      <figure><img src="sr-minutos/comp/nb-deitado.jpg" alt="Nano Banana, deitado"></figure>
+      <figure><img src="sr-minutos/comp/gpt-deitado.jpg" alt="GPT, deitado"></figure>
+
+      <span class="nome">Pendurado</span>
+      <figure class="esc"><img src="sr-minutos/comp/grok-pendurado.jpg" alt="Grok, pendurado"><figcaption>na cena</figcaption></figure>
+      <figure><img src="sr-minutos/comp/nb-pendurado.jpg" alt="Nano Banana, pendurado"></figure>
+      <figure><img src="sr-minutos/comp/gpt-pendurado.jpg" alt="GPT, pendurado"></figure>
+    </div>
+  </div>
+  <div class="veredito">
+    <div class="bloco"><b>Grok: o mais fiel</b><p>Manteve o relógio de pulso, as marcas do mostrador e a cara dos originais, que também vieram do Grok. Errou zero poses. É a recomendação pras estáticas.</p></div>
+    <div class="bloco"><b>Nano Banana: bom, varia</b><p>Traço bonito, mas a primeira tentativa do sentado saiu com quatro pernas e a cara muda um pouco de pose pra pose. Bom como segunda opção.</p></div>
+    <div class="bloco"><b>GPT: o mais barato</b><p>Já entrega fundo transparente, sem recorte. Mas errou o sentado duas vezes e pôs ponteiros que ele não tem. Fica pra ícone e peça simples.</p></div>
+  </div>
+</section>
+
+<section id="producao">
+  <div class="cabeca">
+    <span class="rot">Produção</span>
+    <h2>Tudo que falta produzir, e onde</h2>
+    <p>Lista completa de imagem, vídeo e movimento pro app, com a ferramenta de cada um. Estáticas no Grok; vídeo e movimento no Higgsfield; tratamento e montagem comigo (Python e ffmpeg) ou no DaVinci quando o recorte automático não der conta.</p>
+  </div>
+  <div class="rolar">
+    <table class="prod">
+      <thead><tr><th>Peça</th><th>Onde entra</th><th>Onde faz</th><th>Estado</th></tr></thead>
+      <tbody>
+        <tr class="grupo"><td colspan="4">Imagens paradas</td></tr>
+        <tr><td>6 poses originais<small>apontando, joinha, bravo, furioso, triste, férias</small></td><td>telas, selo, dock</td><td><span class="ferr grok">Grok</span><span class="ferr">Python: recorte</span></td><td><span class="est pronto">pronto</span></td></tr>
+        <tr><td>6 poses novas<small>sentado, debruçado, espiando, andando, deitado, pendurado</small></td><td>bordas das caixas</td><td><span class="ferr grok">Grok</span><span class="ferr">Python: recorte</span></td><td><span class="est rasc">rascunho, falta escolher</span></td></tr>
+        <tr><td>Rosto em 5 cores</td><td>etiquetas, dock, logo</td><td><span class="ferr">Python: troca de cor</span></td><td><span class="est pronto">pronto</span></td></tr>
+        <tr><td>Ponteiro que gira<small>desenho vetorial por cima do rosto, gira por CSS enquanto o cronômetro roda</small></td><td>dock rodando</td><td><span class="ferr">eu desenho em SVG</span></td><td><span class="est falta">a fazer</span></td></tr>
+        <tr><td>Ícones do app<small>favicon, iPhone 180, instalação 192 e 512</small></td><td>aba, tela inicial, instalar</td><td><span class="ferr">Python, a partir do rosto</span></td><td><span class="est pronto">pronto, veja abaixo</span></td></tr>
+        <tr><td>Prévia do link 1200×630</td><td>convite do piloto no WhatsApp</td><td><span class="ferr">composição: herói + título</span></td><td><span class="est pronto">pronto, veja abaixo</span></td></tr>
+        <tr class="grupo"><td colspan="4">Vídeo</td></tr>
+        <tr><td>3 vídeos que já existem<small>apontando→bravo, férias, triste andando</small></td><td>Como funciona, estados vazios, dock</td><td><span class="ferr grok">Grok</span></td><td><span class="est pronto">gerados, fundo branco</span></td></tr>
+        <tr><td>Tirar o fundo branco<small>sai WebM transparente + MP4 com fundo pintado (Noite e Mostrador)</small></td><td>os 3 vídeos</td><td><span class="ferr">Higgsfield: removedor de fundo de vídeo</span><span class="ferr">Python quadro a quadro</span><span class="ferr">DaVinci se falhar</span></td><td><span class="est pronto">funciona: meu recorte quadro a quadro (o do Higgsfield falhou)</span></td></tr>
+        <tr><td>Joinha comemorando, 3 s</td><td>selo "Valeu cara"</td><td><span class="ferr grok">Grok vídeo</span></td><td><span class="est pronto">pronto: loop de 1,8 s</span></td></tr>
+        <tr><td>Apontando acenando, 3 s</td><td>herói do Entrar</td><td><span class="ferr grok">Grok vídeo</span></td><td><span class="est pronto">pronto, fecha o loop</span></td></tr>
+        <tr><td>Loops limpos<small>ponto de corte ou crossfade de meio segundo</small></td><td>todos os vídeos</td><td><span class="ferr">ffmpeg</span><span class="ferr">DaVinci</span></td><td><span class="est falta">a fazer</span></td></tr>
+        <tr class="grupo"><td colspan="4">Movimento pequeno (sprite)</td></tr>
+        <tr><td>Ciclo de caminhada<small>8 a 12 quadros, a partir do andando</small></td><td>ele andando pela borda</td><td><span class="ferr grok">Grok vídeo</span><span class="ferr">Python: sprite</span></td><td><span class="est pronto">pronto (AutoSprite recusou pelo MCP)</span></td></tr>
+        <tr><td>Dock: respirando, bravo, férias<small>8 a 12 quadros cada, 96×30</small></td><td>dock recolhido</td><td><span class="ferr">AutoSprite (idle)</span><span class="ferr">ffmpeg dos vídeos</span></td><td><span class="est falta">a gerar</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="margin-top:12px;font-size:13px;color:var(--tinta3);max-width:720px">Gasto até aqui: 47 dos 200 créditos do Higgsfield (sobram 153) nas 23 imagens da comparação, mais 1 crédito no teste do removedor de vídeo, e US$2,08 na sua conta da xAI: 4 imagens a US$0,09 e 4 vídeos de 3 s a US$0,43 (dois aproveitados, um refeito, um virou o sprite). Estática e vídeo saem pela xAI; o Higgsfield ficou sem uso certo por enquanto. Movimento reduzido ligado no sistema mostra sempre a pose parada.</p>
+</section>
+
+<section id="identidade">
+  <div class="cabeca">
+    <span class="rot">Identidade</span>
+    <h2>Verde do corpo, creme do mostrador</h2>
+    <p>A paleta sai do personagem. O preto esverdeado é o que faz o verde vibrar como na CazéTV. O azul do app atual sai: ação, andamento e entrega são verdes; tempo medido é barra creme; previsto é traço verde. Sem guia oficial da LiveMode ou da CazéTV em mãos, estes valores são derivados e trocáveis.</p>
+  </div>
+  <div class="swatches">
+    <div class="sw"><i style="background:var(--fundo)"></i><div><b>Fundo</b>noite #0B0F0C · mostrador #F4ECDA</div></div>
+    <div class="sw"><i style="background:var(--sup);border-bottom:1px solid var(--linha)"></i><div><b>Superfície</b>#121814 · #FBF6EA</div></div>
+    <div class="sw"><i style="background:var(--tinta)"></i><div><b>Texto</b>creme #F2E8D5 · verde-tinta #10261A</div></div>
+    <div class="sw"><i style="background:var(--verde)"></i><div><b>Verde Sr. Minutos</b>ação, andamento, entregue</div></div>
+    <div class="sw"><i style="background:var(--ambar)"></i><div><b>Âmbar</b>fora do prazo</div></div>
+    <div class="sw"><i style="background:var(--rosa)"></i><div><b>Rosa</b>bloqueado</div></div>
+  </div>
+  <p style="margin-top:10px;font-size:13px;color:var(--tinta3);max-width:720px">Na v3.1 o verde do Mostrador ficou mais escuro (<span class="num">#18762F</span>) e o texto mais fraco também (<span class="num">#5F6C63</span>): os da v3 davam 3,5:1 sobre o creme, abaixo dos 4,5:1 de leitura. São os mesmos valores que já estão no app, na branch de preview.</p>
+  <div class="rostos">
+    <div><img src="sr-minutos/rosto.png" alt=""><b>Verde</b><span>em andamento, entregue, normal</span></div>
+    <div><img src="sr-minutos/rosto-ambar.png" alt=""><b>Âmbar</b><span>fora do prazo</span></div>
+    <div><img src="sr-minutos/rosto-rosa.png" alt=""><b>Rosa</b><span>bloqueado</span></div>
+    <div><img src="sr-minutos/rosto-cinza.png" alt=""><b>Cinza</b><span>pausado, inativo</span></div>
+    <div><img src="sr-minutos/rosto-creme.png" alt=""><b>Creme</b><span>sem estado: ainda não abriu, não aplicável</span></div>
+  </div>
+  <div class="tipo">
+    <div class="spec"><span class="d">Minha semana</span><small>Barlow Condensed 800 · títulos e números grandes. É o eco da tipografia esportiva da CazéTV.</small></div>
+    <div class="spec"><span class="u">Roteiro · Fut Inter · Premier League · entrega até qui 02/10</span><span class="m">01:12:48</span><small>Archivo na interface (já é a do app). IBM Plex Mono no tempo (já é a do app).</small></div>
+  </div>
+  <div class="comp">
+    <span class="btn btn-p">Iniciar</span><span class="btn">Pausar</span><span class="btn btn-g">Ajustar tempo</span>
+    <span class="tag ok"><img src="sr-minutos/rosto.png" alt="">Em andamento</span><span class="tag"><img src="sr-minutos/rosto-cinza.png" alt="">Pausada</span><span class="tag at"><img src="sr-minutos/rosto-ambar.png" alt="">Fora do prazo</span><span class="tag bl"><img src="sr-minutos/rosto-rosa.png" alt="">Bloqueada</span><span class="tag"><img src="sr-minutos/rosto-creme.png" alt="">Abre sexta</span>
+    <span class="barra" style="max-width:220px"><b style="width:62%"></b><u style="left:80%"></u></span>
+    <span class="barra estoura" style="max-width:220px"><b style="width:100%"></b><u style="left:70%"></u></span>
+  </div>
+</section>
+
+<section id="telas">
+  <div class="cabeca">
+    <span class="rot">Telas</span>
+    <h2>As telas com ele dentro</h2>
+    <p>Mesmas rotas do app no ar. Em cada quadro, repare onde o corpo inteiro está encostado e onde o rosto substituiu o pontinho de status. Os quadros rolam de lado no celular.</p>
+  </div>
+
+  <!-- ENTRAR -->
+  <div class="tela" id="t-entrar">
+    <div class="tela-cab">
+      <div><h3>Entrar</h3><p>Primeira coisa que o time vê no piloto. É aqui que o personagem se apresenta.</p></div>
+      <ul class="notas">
+        <li><span class="n">1</span>Sr. Minutos apontando é o herói; o balão é a única frase de boas-vindas.</li>
+        <li><span class="n">2</span>Botão único, conta LiveMode. Estado "fora do time" continua existindo, com ele triste.</li>
+        <li><span class="n">3</span>Título condensado em caixa alta: primeira aparição da nova tipografia.</li>
+      </ul>
+    </div>
+    <div class="quadro">
+      <div class="entrar">
+        <div class="lado">
+          <div class="logo"><img src="sr-minutos/rosto.png" alt=""><div><b>Atividades</b><small>OPEC · LiveMode</small></div></div>
+          <h4>Planejado<br>contra<br><span>executado.</span></h4>
+          <p>Registre o que você fez e quanto tempo levou. O líder vê a semana da frente, o gestor vê se a taxa ainda vale.</p>
+          <span class="ggl"><i></i>Entrar com a conta LiveMode</span>
+          <div class="rodape">Só e-mails @livemode.com cadastrados pelo gestor. Nada de senha.</div>
+        </div>
+        <div class="fig" style="position:relative">
+          <img src="sr-minutos/apontando.png" alt="">
+          <div class="balao" style="top:12%;right:10%">Bora marcar hora?</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MINHA SEMANA -->
+  <div class="tela" id="t-semana">
+    <div class="tela-cab">
+      <div><h3>Minha semana</h3><p>A tela onde a pessoa passa o dia. Estrutura igual à do código: em andamento, pausadas, pendentes, entregues.</p></div>
+      <ul class="notas">
+        <li><span class="n">1</span>Ele está em pé em cima do cartão de andamento, no canto, com o balão da próxima tarefa. Não tem cartão dele: o cartão é o da tarefa.</li>
+        <li><span class="n">2</span>Toda etiqueta de status troca o pontinho pelo rosto: verde em andamento, cinza pausada, âmbar prazo vencido, creme ainda não abriu.</li>
+        <li><span class="n">3</span>Prazo vencido é só a etiqueta âmbar com o rosto âmbar. Ele continua apontando lá em cima, sem bronca.</li>
+        <li><span class="n">4</span>Barra de tempo creme contra traço verde da taxa, como antes.</li>
+      </ul>
+    </div>
+    <div class="quadro">
+      <div class="app">
+        <aside class="sb">
+          <div class="logo"><img src="sr-minutos/rosto.png" alt=""><div><b>Atividades</b><small>OPEC</small></div></div>
+          <nav><span class="on">Minha semana</span><span>Minha frente</span><span>Quadro</span><span>Painel</span><span>Como funciona</span></nav>
+          <div class="eu"><i>JU</i><div>Juliana<small>Líder de frente</small></div></div>
+        </aside>
+        <div class="main">
+          <div class="cab" style="min-height:92px">
+            <div><h4>Minha semana</h4><p>29 set a 5 out · 6 tarefas · 3h41 de 8h30</p></div>
+          </div>
+          <div class="andamento">
+            <div class="livre" style="right:26px;bottom:calc(100% - 7px);--h:150px"><img src="sr-minutos/apontando.png" alt="Sr. Minutos em pé em cima do cartão, apontando"><div class="balao">Roteiro do Brasileirão abre hoje.</div></div>
+            <div class="t">
+              <span class="tag ok" style="width:max-content"><img src="sr-minutos/rosto.png" alt="">Em andamento</span>
+              <b>Materiais · Fut Inter</b>
+              <span>Premier League · evento sáb 04/10</span>
+              <em>Lucas também está nisso agora</em>
+            </div>
+            <div class="rel">00:41:12<small>de 01:30</small></div>
+            <div class="acoes" style="display:flex;gap:6px"><span class="btn">Pausar</span><span class="btn btn-p">Entregar</span><span class="btn btn-g">Partes</span></div>
+          </div>
+          <div class="sec">
+            <header><b>Pausadas</b><span>1 · 0h26 já contados</span></header>
+            <div class="row">
+              <span class="tag"><img src="sr-minutos/rosto-cinza.png" alt="">Pausada</span>
+              <div class="t"><b>Roteiro · Nacional</b><span>Brasileirão · entrega até sex 03/10</span></div>
+              <div class="tempo">00:26:10<small>de 01:00</small></div>
+              <div class="acoes"><span class="btn">Retomar</span><span class="btn btn-g">Entregar</span></div>
+            </div>
+          </div>
+          <div class="sec">
+            <header><b>Pendentes</b><span>3</span></header>
+            <div class="row late">
+              <span class="tag at"><img src="sr-minutos/rosto-ambar.png" alt="">Prazo venceu</span>
+              <div class="t"><b>Auditoria · Olímpicos</b><span>Grand Slam de Judô · evento seg 29/09 · prazo venceu qua 01/10</span></div>
+              <div class="tempo">—<small>de 02:00</small></div>
+              <div class="acoes"><span class="btn">Iniciar</span><span class="btn btn-g">Não necessária</span></div>
+            </div>
+            <div class="row">
+              <span class="tag"><img src="sr-minutos/rosto.png" alt="">Abre hoje</span>
+              <div class="t"><b>Sincronização · Fut Inter</b><span>Bundesliga · evento sáb 04/10 · entrega até sáb 04/10</span></div>
+              <div class="tempo">—<small>de 01:30</small></div>
+              <div class="acoes"><span class="btn">Iniciar</span><span class="btn btn-g">Entregar</span></div>
+            </div>
+            <div class="row">
+              <span class="tag"><img src="sr-minutos/rosto-creme.png" alt="">Abre sex</span>
+              <div class="t"><b>Materiais · Programas</b><span>Programa Geral CazéTV · evento dom 05/10</span></div>
+              <div class="tempo">—<small>de 01:30</small></div>
+              <div class="acoes"><span class="btn">Iniciar</span><span class="btn btn-g">Entregar</span></div>
+            </div>
+          </div>
+          <div class="sec">
+            <header><b>Entregues</b><span>1 · 1h12</span></header>
+            <div class="row" style="opacity:.8">
+              <span class="tag ok"><img src="sr-minutos/rosto.png" alt="">Entregue</span>
+              <div class="t"><b>Materiais · Copas FIFA</b><span>Copa do Mundo Sub-20 · entregue ter 30/09 · dentro da taxa</span></div>
+              <div class="tempo">01:12:48<small>de 01:30</small></div>
+              <span class="barra" style="max-width:140px"><b style="width:81%"></b><u style="left:100%"></u></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VAZIOS -->
+  <div class="tela" id="t-vazios">
+    <div class="tela-cab">
+      <div><h3>Estados vazios</h3><p>Os dois momentos em que o app hoje mostra só uma frase cinza. Ele fica do lado de fora da caixa de texto, encostado nela.</p></div>
+      <ul class="notas">
+        <li><span class="n">1</span>Semana sem nenhuma sessão registrada: triste, encostado na caixa. É a dor real do piloto. Aqui entra o vídeo dele andando, em loop, passando na frente da caixa.</li>
+        <li><span class="n">2</span>Dia sem tarefa aberta: férias. Aqui entra o loop do drinque e do celular.</li>
+      </ul>
+    </div>
+    <div class="dois">
+      <div class="vazio">
+        <div class="fig"><img src="sr-minutos/triste.png" alt="Sr. Minutos triste, chorando, encostado na caixa"></div>
+        <div class="txt"><b>Ninguém ligou o cronômetro essa semana.</b><p>Sem número, eu não sirvo pra nada. Tem 4 tarefas abertas pra você. Esqueceu de marcar? Ajuste o tempo com o motivo, vale mais do que nada.</p><span class="btn btn-p" style="width:max-content">Ver pendentes</span></div>
+      </div>
+      <div class="vazio">
+        <div class="fig"><img src="sr-minutos/ferias.png" alt="Sr. Minutos de óculos escuros com um drinque, encostado na caixa"></div>
+        <div class="txt"><b>Hoje não tem nada aberto.</b><p>Próxima janela: materiais da Bundesliga, abre quinta. Até lá, vai viver.</p><span class="btn" style="width:max-content">Ver próxima semana</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DOCK -->
+  <div class="tela" id="t-dock">
+    <div class="tela-cab">
+      <div><h3>Dock</h3><p>A janelinha que fica aberta o dia inteiro. É a caixa mais pequena do app, então aqui o rosto trabalha sozinho e a cor dele carrega o estado.</p></div>
+      <ul class="notas">
+        <li><span class="n">1</span>Recolhido: rosto mais relógio, 96×30 px. Verde rodando, cinza parado, âmbar com o prazo vencido, rosa bloqueada.</li>
+        <li><span class="n">2</span>Expandido: o rosto fica no cartão com a cor do estado. O corpo inteiro só aparece em cima da janela, de fora, quando o prazo venceu: bravo em pé na borda.</li>
+        <li><span class="n">3</span>Bravo e furioso vivem só aqui, pequenos e sem frase. Prazo vence hoje e nada começou: bravo. Já venceu: furioso.</li>
+      </ul>
+    </div>
+    <div class="docks">
+      <div class="dock-item"><span class="pill"><img src="sr-minutos/rosto.png" alt=""><b>00:41:12</b><i></i></span><small>rodando</small></div>
+      <div class="dock-item"><span class="pill parado"><img src="sr-minutos/rosto-cinza.png" alt=""><b>00:26:10</b></span><small>parado</small></div>
+      <div class="dock-item"><span class="pill"><img src="sr-minutos/rosto-ambar.png" alt=""><b style="color:var(--ambar)">venceu</b></span><small>prazo vencido, nada rodando</small></div>
+      <div class="dock-item"><span class="pill"><img src="sr-minutos/rosto-rosa.png" alt=""><b style="color:var(--rosa)">travou</b></span><small>bloqueada por exceção</small></div>
+      <div class="dock-item" style="padding-top:110px">
+        <div class="dock">
+          <div class="livre" style="right:14px;bottom:calc(100% - 6px);--h:120px"><img src="sr-minutos/bravo.png" alt="Sr. Minutos bravo em pé em cima da janela do dock"></div>
+          <div class="cab-d"><img src="sr-minutos/rosto-ambar.png" alt=""><div><em style="color:var(--ambar)">Prazo venceu</em><b>Auditoria · Olímpicos</b><span>Grand Slam de Judô · venceu qua 01/10</span></div></div>
+          <div class="rel">00:00:00<small style="text-align:left">de 02:00</small></div>
+          <span class="barra"><b style="width:0%"></b><u style="left:100%"></u></span>
+          <div class="acoes"><span class="btn btn-p">Iniciar</span><span class="btn">Não necessária</span></div>
+        </div>
+        <small>expandido, com o prazo vencido: bravo do lado de fora</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- ENTREGAR -->
+  <div class="tela" id="t-entregar">
+    <div class="tela-cab">
+      <div><h3>Entregar</h3><p>O diálogo que já existe em Minha semana, e a única celebração do app. Clique em Entregar no quadro pra ver o selo.</p></div>
+      <ul class="notas">
+        <li><span class="n">1</span>Campo "quem fez de verdade" continua: é o dado mais valioso pro mapa.</li>
+        <li><span class="n">2</span>Ao confirmar, o texto do selo cobre o diálogo e ele aparece de joinha em cima da borda, do lado de fora. Some sozinho em 3 segundos.</li>
+      </ul>
+    </div>
+    <div class="dlg-wrap">
+      <div class="dlg" id="dlg">
+        <h5>Entregar materiais · Fut Inter</h5>
+        <p class="sub">Premier League · evento sáb 04/10</p>
+        <div class="campo">Tempo medido<div class="num">01:12:48 <span style="color:var(--tinta3)">de 01:30 previstos</span></div></div>
+        <div class="campo">Quem fez de verdade<div>Juliana (escalada) · Lucas ajudou 0h18</div></div>
+        <div class="campo">Observação (opcional)<div style="color:var(--tinta4)">Ex.: material chegou atrasado da produção</div></div>
+        <div style="display:flex;gap:8px;justify-content:flex-end"><span class="btn btn-g">Cancelar</span><button type="button" class="btn btn-p" id="btn-entregar" style="cursor:pointer">Entregar</button></div>
+        <div class="selo" id="selo" aria-live="polite"><div class="selo-in"><img src="sr-minutos/joinha.png" alt="Sr. Minutos de joinha, em pé em cima do diálogo"><b>Valeu cara</b><span>aprovado pelo Sr. Minutos</span></div></div>
+      </div>
+      <div class="bloco">
+        <h3>Regra do selo</h3>
+        <ul>
+          <li>Aparece em toda entrega, dentro ou fora da taxa. Entregar é sempre bom. Decidido em 01/10.</li>
+          <li>Não guarda nada, não vira pontuação, não aparece pro líder.</li>
+          <li>Fora do prazo, o texto muda: "Valeu cara. Fechou, mesmo atrasada." Sem pose brava na entrega.</li>
+          <li>Respeita "reduzir movimento" do sistema: sem animação, só aparece e some.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- FRENTE -->
+  <div class="tela" id="t-frente">
+    <div class="tela-cab">
+      <div><h3>Minha frente</h3><p>Visão do líder. Escalado ao lado de quem fez. Ele está em pé na borda da tabela, apontando pra baixo, pras linhas que faltam.</p></div>
+      <ul class="notas">
+        <li><span class="n">1</span>Corpo inteiro em cima do canto da tabela, sem frase. É só presença: "tem coisa pra resolver aqui".</li>
+        <li><span class="n">2</span>Na coluna "quem fez", linha sem resposta leva o rosto âmbar. Desvio (quem fez diferente do escalado) leva o rosto verde: é dado bom, não alerta.</li>
+        <li><span class="n">3</span>Status com rosto, como em Minha semana.</li>
+      </ul>
+    </div>
+    <div class="quadro">
+      <div class="app" style="min-height:460px">
+        <aside class="sb">
+          <div class="logo"><img src="sr-minutos/rosto.png" alt=""><div><b>Atividades</b><small>OPEC</small></div></div>
+          <nav><span>Minha semana</span><span class="on">Minha frente</span><span>Quadro</span><span>Painel</span><span>Como funciona</span></nav>
+          <div class="eu"><i>JU</i><div>Juliana<small>Líder de frente</small></div></div>
+        </aside>
+        <div class="main">
+          <div class="cab" style="min-height:92px"><div><h4>Fut Inter</h4><p>Semana de 29 set a 5 out · 12 tarefas · 2 sem quem fez · 1 desvio</p></div></div>
+          <div class="card" style="padding:4px 14px 8px">
+            <div class="livre" style="right:22px;bottom:calc(100% - 16px);--h:96px"><img src="sr-minutos/debrucado.png" alt="Sr. Minutos debruçado na borda da tabela, olhando as linhas"></div>
+            <table class="tabela">
+              <thead><tr><th>Evento</th><th>Tarefa</th><th>Escalado</th><th>Quem fez</th><th>Tempo</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr><td>Premier League · sáb 04/10</td><td>Materiais</td><td><span class="quem"><i>JU</i>Juliana</span></td><td><span class="quem"><i>JU</i>Juliana <span style="color:var(--verde)">+ Lucas</span></span></td><td class="num">01:12</td><td><span class="tag ok"><img src="sr-minutos/rosto.png" alt="">Entregue</span></td></tr>
+                <tr><td>Premier League · sáb 04/10</td><td>Sincronização</td><td><span class="quem"><i>BA</i>Bárbara</span></td><td><span class="quem falta"><span class="ponto"><img src="sr-minutos/rosto-ambar.png" alt=""></span><span>sem quem fez</span></span></td><td class="num">00:48</td><td><span class="tag ok"><img src="sr-minutos/rosto.png" alt="">Entregue</span></td></tr>
+                <tr><td>Bundesliga · sáb 04/10</td><td>Roteiro</td><td><span class="quem"><i>LU</i>Lucas</span></td><td><span class="quem"><i>GA</i>Gabriel</span> <span class="ponto" style="color:var(--verde);font-size:11px"><img src="sr-minutos/rosto.png" alt="">desvio</span></td><td class="num">01:05</td><td><span class="tag ok"><img src="sr-minutos/rosto.png" alt="">Entregue</span></td></tr>
+                <tr><td>La Liga · dom 05/10</td><td>Auditoria</td><td><span class="quem"><i>PE</i>Pedro</span></td><td><span class="quem falta"><span class="ponto"><img src="sr-minutos/rosto-ambar.png" alt=""></span><span>sem quem fez</span></span></td><td class="num">—</td><td><span class="tag at"><img src="sr-minutos/rosto-ambar.png" alt="">Fora do prazo</span></td></tr>
+                <tr><td>Ligue 1 · dom 05/10</td><td>Materiais</td><td><span class="quem"><i>JL</i>Julia</span></td><td><span class="quem"><i>JL</i>Julia</span></td><td class="num">00:22</td><td><span class="tag"><img src="sr-minutos/rosto-cinza.png" alt="">Pausada</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAINEL -->
+  <div class="tela" id="t-painel">
+    <div class="tela-cab">
+      <div><h3>Painel</h3><p>Visão do gestor: horas medidas contra previstas, e a pergunta que paga o app. A taxa ainda vale?</p></div>
+      <ul class="notas">
+        <li><span class="n">1</span>Ele está em pé em cima do cartão da taxa que não vale mais, o único âmbar, com o balão. Comenta a taxa, nunca a pessoa.</li>
+        <li><span class="n">2</span>Cada cartão de taxa leva o rosto no canto: verde quando a taxa bate, âmbar quando passa de 15% de diferença.</li>
+        <li><span class="n">3</span>Barra creme é o medido; traço verde é o previsto. Barra passando do traço fica âmbar e o texto diz "taxa defasada".</li>
+      </ul>
+    </div>
+    <div class="quadro">
+      <div class="app" style="min-height:520px">
+        <aside class="sb">
+          <div class="logo"><img src="sr-minutos/rosto.png" alt=""><div><b>Atividades</b><small>OPEC</small></div></div>
+          <nav><span>Minha semana</span><span>Minha frente</span><span>Quadro</span><span class="on">Painel</span><span>Admin</span><span>Como funciona</span></nav>
+          <div class="eu"><i>YU</i><div>Yuri<small>Gestor da área</small></div></div>
+        </aside>
+        <div class="main">
+          <div class="cab" style="min-height:92px"><div><h4>Painel · Setembro</h4><p>O que o mapa previu e o que de fato aconteceu</p></div></div>
+          <div class="taxa">
+            <div class="c"><span class="ponto" style="position:absolute;top:10px;right:10px"><img src="sr-minutos/rosto.png" alt="" style="width:18px;height:18px"></span><small>Materiais · 1h30</small><b>1h27</b><span>média em 48 entregas</span></div>
+            <div class="c ok"><span class="ponto" style="position:absolute;top:10px;right:10px"><img src="sr-minutos/rosto.png" alt="" style="width:18px;height:18px"></span><small>Sincronização · 1h30</small><b>1h21</b><span>média em 44 entregas</span></div>
+            <div class="c"><span class="ponto" style="position:absolute;top:10px;right:10px"><img src="sr-minutos/rosto.png" alt="" style="width:18px;height:18px"></span><small>Roteiro · 1h00</small><b>1h04</b><span>média em 40 entregas</span></div>
+            <div class="c alerta">
+              <div class="livre" style="right:8px;bottom:calc(100% - 6px);--h:130px"><img src="sr-minutos/apontando.png" alt="Sr. Minutos em pé em cima do cartão da taxa de auditoria"><div class="balao">Auditoria tá 24% acima da taxa. Hora de rever.</div></div>
+              <span class="ponto" style="position:absolute;top:10px;right:10px"><img src="sr-minutos/rosto-ambar.png" alt="" style="width:18px;height:18px"></span><small>Auditoria · 2h00</small><b>2h29</b><span>média em 31 entregas · taxa defasada</span></div>
+          </div>
+          <div class="card">
+            <h6>Horas por pessoa</h6>
+            <div class="hbar"><b>Juliana</b><span class="barra"><b style="width:58%"></b><u style="left:62%"></u></span><span class="num">41h10 de 44h</span></div>
+            <div class="hbar"><b>Bárbara</b><span class="barra"><b style="width:66%"></b><u style="left:62%"></u></span><span class="num">46h30 de 44h</span></div>
+            <div class="hbar"><b>Julia</b><span class="barra"><b style="width:55%"></b><u style="left:62%"></u></span><span class="num">38h45 de 44h</span></div>
+            <div class="hbar"><b>Lucas</b><span class="barra estoura"><b style="width:78%"></b><u style="left:62%"></u></span><span class="num">55h00 de 44h</span></div>
+            <div class="hbar"><b>Gabriel</b><span class="barra"><b style="width:44%"></b><u style="left:47%"></u></span><span class="num">31h20 de 33h</span></div>
+            <div class="hbar"><b>Pedro</b><span class="barra"><b style="width:40%"></b><u style="left:47%"></u></span><span class="num">28h05 de 33h</span></div>
+            <p style="color:var(--tinta3);font-size:12px;border-top:1px dashed var(--linha);padding-top:10px">Barra passando do traço quer dizer que a taxa está defasada, não que a pessoa é lenta. Quem muda é a taxa.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMO FUNCIONA -->
+  <div class="tela" id="t-como">
+    <div class="tela-cab">
+      <div><h3>Como funciona</h3><p>A página de confiança do piloto, com o mesmo texto do código. Ele narra.</p></div>
+      <ul class="notas">
+        <li><span class="n">1</span>É aqui que o personagem ganha a confiança do time: ele é quem diz o que o app não faz. Fica do lado de fora dos cartões, em pé, acompanhando a rolagem.</li>
+        <li><span class="n">2</span>O vídeo de 7 segundos (apontando, depois bravo) pode abrir esta página na primeira visita. Sem som.</li>
+      </ul>
+    </div>
+    <div class="quadro" style="padding:28px">
+      <div class="cf">
+        <div class="narra">
+          <img src="sr-minutos/apontando.png" alt="">
+          <p class="fala">"Eu conto minutos. Não leio tela, não vejo aba, não sei se você levantou."</p>
+        </div>
+        <div class="lista">
+          <div class="card"><h6>O que fica registrado</h6><ul><li>A hora em que você inicia, pausa e entrega cada tarefa. Cada trecho é uma sessão; o total é a soma.</li><li>Ajustes de tempo, sempre com motivo, guardados separados do que o cronômetro mediu.</li><li>Quem fez cada tarefa: quem o mapa escalou, ou quem você disser na hora de entregar.</li></ul></div>
+          <div class="card"><h6>Quem vê o quê</h6><ul><li>Você vê as suas tarefas e as que puxou para ajudar alguém.</li><li>O líder da frente vê a semana inteira da frente: escalado ao lado de quem fez.</li><li>Yuri e Daniel veem tudo, por pessoa e por frente. Nada é escondido da gestão.</li></ul></div>
+          <div class="card" style="border-color:var(--verde-borda)"><h6>O que o app não faz</h6><ul><li>Não detecta inatividade nem ausência. Cronômetro parado é só cronômetro parado.</li><li>Não lê tela, teclado, abas nem programas abertos. Em nenhuma fase.</li><li>Não registra nada sozinho. Só existe o que você iniciar, pausar, entregar ou ajustar.</li><li>Não vira ranking. Alguém acima da taxa não é alguém lento: é uma taxa que provavelmente está errada.</li></ul></div>
+          <div class="card"><h6>De onde vêm as tarefas</h6><ul><li>Dos eventos da Escala com entrega comercial, cruzados com o mapa do mês aprovado pelo Yuri e com as taxas medidas em julho.</li><li>Se uma tarefa aparecer e não fizer sentido, marque não necessária. Preferimos uma a mais do que uma faltando.</li></ul></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="pecas">
+  <div class="cabeca">
+    <span class="rot">Ícones e convite</span>
+    <h2>O app com a cara dele</h2>
+    <p>Saem do rosto e do herói que já existem, sem gerar nada. Com o ícone e o manifesto, o app passa a poder ser instalado no PC e no celular; a prévia é o que aparece quando você mandar o link do piloto no WhatsApp.</p>
+  </div>
+  <div class="pecas">
+    <figure><span class="aba"><img src="sr-minutos/pecas/icon-192.png" alt="" width="16" height="16">OPEC · Atividades</span><figcaption>aba do navegador (favicon)</figcaption></figure>
+    <figure><img src="sr-minutos/pecas/apple-touch-icon.png" alt="" width="90" height="90" style="border-radius:20px"><figcaption>tela inicial do iPhone</figcaption></figure>
+    <figure><img src="sr-minutos/pecas/icon-maskable-512.png" alt="" width="90" height="90" style="border-radius:50%"><figcaption>Android, recorte redondo</figcaption></figure>
+    <figure><img src="sr-minutos/pecas/icon-192.png" alt="" width="90" height="90"><figcaption>instalar no PC (192)</figcaption></figure>
+    <figure><img src="sr-minutos/pecas/icon-512.png" alt="" width="90" height="90"><figcaption>instalar, grande (512)</figcaption></figure>
+    <span></span>
+    <figure class="og"><img src="sr-minutos/pecas/og-1200x630.png" alt="Prévia do link: Planejado contra executado, com o Sr. Minutos apontando"><figcaption>prévia do link, 1200×630</figcaption></figure>
+  </div>
+</section>
+
+<section id="decisoes">
+  <div class="cabeca">
+    <span class="rot">Decidido em 01/10</span>
+    <h2>O que já está decidido</h2>
+    <p>Cinco respostas de 01/10 e a regra de 02/10. O mockup acima reflete todas.</p>
+  </div>
+  <ol class="pend">
+    <li><div><b>Nome: "Sr. Minutos", sempre</b><p>Nunca "Senhor Minutos" na interface. O asset do joinha com o texto antigo fica só nos originais.</p></div></li>
+    <li><div><b>Pose de férias sem o cigarro</b><p>Imagem nova substituída em todas as telas e no seletor de poses. A antiga saiu do repo.</p></div></li>
+    <li><div><b>Bravo e furioso só no dock</b><p>Em Minha semana, prazo vencido é etiqueta âmbar e ele segue apontando. No dock, pequeno e sem frase, o rosto troca: bravo quando vence hoje, furioso quando já venceu.</p></div></li>
+    <li><div><b>Os dois temas ficam</b><p>Noite é o padrão, Mostrador (creme) é a alternativa. A pessoa escolhe no app, como já faz hoje com claro e escuro.</p></div></li>
+    <li><div><b>Selo em toda entrega</b><p>"Valeu cara" sempre. Texto muda quando a entrega foi atrasada, pose não.</p></div></li>
+    <li><div><b>Fora e dentro (02/10)</b><p>Corpo inteiro só fora das caixas, encostado nelas. Dentro, só o rosto, com a cor dizendo o estado. Veio do seu comentário de 02/10 e já está aplicado em todas as telas acima.</p></div></li>
+  </ol>
+</section>
+
+</main>
+
+<script>
+(function(){
+  var poses = {
+    apontando:{img:"sr-minutos/apontando.png",fala:"\"Roteiro da Premier League abre hoje. Bora?\"",quando:"Tem tarefa abrindo ou vencendo hoje. Ele aponta a próxima.",onde:"Minha semana (cartão), Entrar (herói), Como funciona (narrador), Painel (comentando a taxa).",arq:"public/sr-minutos/apontando.png"},
+    joinha:{img:"sr-minutos/joinha.png",fala:"\"Valeu cara. 1h12 de 1h30, dentro da taxa.\"",quando:"Entrega confirmada. Também quando a semana fecha sem atraso.",onde:"Selo do diálogo Entregar. Cartão de Minha semana numa semana limpa.",arq:"public/sr-minutos/joinha.png"},
+    bravo:{img:"sr-minutos/bravo.png",fala:"\"Prazo da auditoria vence hoje às 18h e nada começou.\"",quando:"Prazo vence hoje e a tarefa ainda não tem sessão. Bravo com o relógio, não com a pessoa.",onde:"Dock, pequeno. Decidido em 01/10: em Minha semana a linha fica só com a etiqueta âmbar.",arq:"public/sr-minutos/bravo.png"},
+    furioso:{img:"sr-minutos/furioso.png",fala:"\"Poxa amiguinho, prefere vir fazer o ATP 01am amanhã?\"",quando:"Prazo venceu e a tarefa continua sem sessão. O grau acima do bravo.",onde:"Dock, pequeno. O vídeo apontando-para-bravo é a transição até aqui.",arq:"public/sr-minutos/furioso.png"},
+    triste:{img:"sr-minutos/triste.png",fala:"\"Ninguém ligou o cronômetro essa semana. Sem número eu não sirvo pra nada.\"",quando:"Semana sem nenhuma sessão registrada. Também na tela fora do time.",onde:"Estado vazio de Minha semana. Fora do time. Vídeo triste-andando em loop.",arq:"public/sr-minutos/triste.png"},
+    ferias:{img:"sr-minutos/ferias.png",fala:"\"Hoje não tem nada aberto. Vai viver.\"",quando:"Dia sem tarefa aberta: fim de semana, folga, descanso pós-plantão.",onde:"Estado vazio de Minha semana e do dock.",arq:"public/sr-minutos/ferias.png"}
+  };
+  var botoes = document.querySelectorAll('#poses .pose');
+  botoes.forEach(function(b){
+    b.addEventListener('click',function(){
+      botoes.forEach(function(x){x.setAttribute('aria-pressed','false')});
+      b.setAttribute('aria-pressed','true');
+      var p = poses[b.dataset.pose];
+      var img = document.getElementById('pd-img'); img.src = p.img; 
+      document.getElementById('pd-fala').textContent = p.fala;
+      document.getElementById('pd-quando').textContent = p.quando;
+      document.getElementById('pd-onde').textContent = p.onde;
+      document.getElementById('pd-arq').textContent = p.arq;
+    });
+  });
+
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) { document.querySelectorAll("video").forEach(function(v){ v.removeAttribute("autoplay"); v.pause(); }); }
+  // notch: tempo corre de verdade enquanto "rodando"
+  (function(){
+    var nt = document.getElementById('nt'); if (!nt) return;
+    var seg = 2472, previsto = 5400, entregue = false;
+    var aro = document.getElementById('nt-aro'), barra = document.getElementById('nt-barra');
+    var t1 = document.getElementById('nt-tempo'), t2 = document.getElementById('nt-tempo2');
+    var tag = document.getElementById('nt-tag'), pausa = document.getElementById('nt-pausa');
+    
+    var rotulos = {rodando:'Em andamento', pausado:'Pausada', vencido:'Prazo venceu'};
+    function hms(s){ var h=Math.floor(s/3600), m=Math.floor(s%3600/60), x=s%60; return [h,m,x].map(function(n){return String(n).padStart(2,'0')}).join(':'); }
+    function desenha(){
+      var pct = entregue ? 100 : Math.min(100, seg / previsto * 100);
+      aro.style.strokeDasharray = pct.toFixed(1) + ' 100';
+      barra.style.width = pct.toFixed(1) + '%';
+      t1.textContent = hms(seg); t2.textContent = hms(seg);
+      var e0 = nt.dataset.estado, frac = entregue ? 1 : seg / previsto;
+      // bigode: o ponteiro que anda sai da esquerda e varre o arco ate a direita (180 graus = previsto);
+      // fora do prazo os dois murcham
+      var gb = Math.min(frac, 1) * 180, ga = 0;
+      if (e0 === 'vencido' && !entregue) { gb = 196; ga = -16; }
+      nt.style.setProperty('--gb', gb.toFixed(1) + 'deg');
+      nt.style.setProperty('--ga', ga + 'deg');
+      var e = nt.dataset.estado;
+      tag.textContent = entregue ? 'Entregue · Valeu cara!' : rotulos[e];
+      pausa.textContent = e === 'rodando' ? 'Pausar' : (e === 'vencido' ? 'Iniciar' : 'Retomar');
+      nt.setAttribute('aria-label', 'Sr. Minutos: ' + tag.textContent + ', ' + hms(seg) + ' de 01:30. Clique para abrir');
+    }
+    function estado(e){
+      entregue = false; nt.dataset.estado = e;
+      document.querySelectorAll('[data-estado]').forEach(function(b){ if (b !== nt) b.setAttribute('aria-pressed', String(b.dataset.estado === e)); });
+      desenha();
+    }
+    document.querySelectorAll('.nt-ctrl [data-estado]').forEach(function(b){ b.addEventListener('click', function(){ estado(b.dataset.estado); }); });
+    document.querySelectorAll('.nt-ctrl [data-canto]').forEach(function(b){ b.addEventListener('click', function(){
+      nt.dataset.canto = b.dataset.canto;
+      document.querySelectorAll('.nt-ctrl [data-canto]').forEach(function(x){ x.setAttribute('aria-pressed', String(x === b)); });
+    }); });
+    pausa.addEventListener('click', function(ev){ ev.stopPropagation(); estado(nt.dataset.estado === 'rodando' ? 'pausado' : 'rodando'); });
+    document.getElementById('nt-entrega').addEventListener('click', function(ev){ ev.stopPropagation(); entregue = true; nt.dataset.estado = 'rodando'; desenha(); setTimeout(function(){ entregue = false; seg = 0; estado('pausado'); }, 3000); });
+    nt.querySelector('.nt-cab').addEventListener('click', function(){ nt.classList.toggle('aberto'); });
+    nt.addEventListener('keydown', function(ev){ if (ev.key === 'Enter' && ev.target === nt) nt.classList.toggle('aberto'); if (ev.key === 'Escape') nt.classList.remove('aberto'); });
+    document.getElementById('nt-fecha').addEventListener('click', function(ev){ ev.stopPropagation(); nt.classList.remove('aberto'); });
+    document.addEventListener('click', function(ev){ if (!nt.contains(ev.target)) nt.classList.remove('aberto'); });
+    setInterval(function(){ if (nt.dataset.estado === 'rodando' && !entregue) { seg++; desenha(); } }, 1000);
+    desenha();
+  })();
+
+  var selo = document.getElementById("selo"), timer;
+  document.getElementById('btn-entregar').addEventListener('click',function(){
+    selo.classList.add('on'); clearTimeout(timer);
+    timer = setTimeout(function(){selo.classList.remove('on')},3000);
+  });
+  selo.addEventListener('click',function(){selo.classList.remove('on')});
+
+  var root = document.documentElement, bN = document.getElementById('t-noite'), bM = document.getElementById('t-mostrador');
+  function aplicar(t){
+    root.setAttribute('data-theme', t==='light' ? 'light' : 'dark');
+    bN.setAttribute('aria-pressed', String(t!=='light')); bM.setAttribute('aria-pressed', String(t==='light'));
+    try{localStorage.setItem('srm-tema',t)}catch(e){}
+  }
+  bN.addEventListener('click',function(){aplicar('dark')});
+  bM.addEventListener('click',function(){aplicar('light')});
+  var salvo = null; try{salvo = localStorage.getItem('srm-tema')}catch(e){}
+  if(salvo){aplicar(salvo)} else if(root.getAttribute('data-theme')==='light'){bN.setAttribute('aria-pressed','false');bM.setAttribute('aria-pressed','true')}
+})();
+</script>
+

@@ -1,9 +1,15 @@
 # Sr. Minutos e a nova cara do app
 
-Conceito, 01/10/2026, com as cinco pendências decididas pelo Daniel na mesma noite. Nada disto está no código ainda. O mockup pra comentar
+Conceito, 01/10/2026, com as cinco pendências decididas pelo Daniel na mesma noite. O mockup
 está em https://claude.ai/artifact/64gePQg56GTD4BSVvgSBfo (mesma estrutura deste doc, com as telas). Os assets estão em
 `public/sr-minutos/` (tratados, fundo transparente) e `public/sr-minutos/originais/`
-(JPG e MP4 como vieram do gerador).
+(JPG e MP4 como vieram do gerador, fora do git).
+
+> **02/10/2026: mockup v5.1 APROVADO pelo Daniel ("tá tudo aprovado").** Libera D2 e D3.
+> Fonte do mockup em `docs/mockup-sr-minutos-v5.html` (os caminhos `sr-minutos/...` dele
+> apontam pros arquivos de `public/sr-minutos/`). O que mudou em 02/10 está em
+> "Atualização de 02/10", no fim: 6 poses novas, animações sem fundo, ícones, o **notch**
+> e a regra nova de cores, que substitui a tabela de rostos abaixo.
 
 ## O que muda
 
@@ -66,9 +72,9 @@ status, dock recolhido, logo, avatar. A cor do aro é o estado:
 | Arquivo | Cor | Significado |
 |---|---|---|
 | `rosto.png` | verde | em andamento, entregue, normal |
-| `rosto-ambar.png` | âmbar | fora do prazo |
-| `rosto-rosa.png` | rosa | bloqueado |
-| `rosto-cinza.png` | cinza | pausado, inativo |
+| `rosto-ambar.png` | âmbar | pausado (regra de 02/10; antes era fora do prazo) |
+| `rosto-rosa.png` | rosa | fora do prazo (regra de 02/10; antes era bloqueado) |
+| `rosto-cinza.png` | cinza | não necessária, bloqueado, inativo |
 | `rosto-creme.png` | creme | sem estado: ainda não abriu, não aplicável |
 
 Cor nunca vem sozinha: rosto mais texto. Rosto não fala; balão é só do corpo inteiro.
@@ -129,7 +135,7 @@ mostrador; o preto esverdeado é o que faz o verde vibrar como na CazéTV.
 | Linha | `#26302A` | `#DDD2BB` |
 | Texto | `#F2E8D5` | `#10261A` |
 | Texto secundário | `#8E9A90` | `#5E6B61` |
-| Verde Sr. Minutos (ação, andamento, entregue) | `#3DD15A` | `#1F8F3B` |
+| Verde Sr. Minutos (ação, andamento, entregue) | `#3DD15A` | `#18762F` (o `#1F8F3B` dava 3,5:1 sobre o fundo; trocado no D1) |
 | Âmbar, fora do prazo | `#E0A83A` | `#8A6414` |
 | Rosa, bloqueado | `#F06A7E` | `#B62C4B` |
 
@@ -157,3 +163,73 @@ sobre preto). Quando houver guia oficial, trocar.
    rosto, com a cor dizendo o estado.
 
 Mockup atualizado com tudo isso na v3 do artefato (mesmo link acima).
+
+## Atualização de 02/10/2026 (mockup v5.1, aprovado)
+
+### Regra nova de cores do estado (vale pra rosto, notch, etiqueta e dock)
+
+| Cor | Estado |
+|---|---|
+| verde | em andamento, entregue, abre hoje |
+| âmbar | pausado |
+| rosa (vermelho) | fora do prazo |
+| cinza | não necessária, bloqueado, inativo |
+| creme | ainda não abriu, sem estado |
+
+Pedido do Daniel no notch ("pausado amarelo, fora do prazo vermelho"), estendido ao resto pra
+não ter duas regras. Cor nunca sozinha: sempre com texto.
+
+### O notch (substitui o dock recolhido de 96×30)
+
+Inspirado no Codenotch (github.com/vinzdg/codenotch). Meia cabeça do Sr. Minutos saindo da
+borda da tela, 140×76 px, **os dois olhos de fora e a borda cortando bem no nariz**. Os dois
+ponteiros saem do nariz e são o **bigode**: um fica parado à esquerda; o outro varre o arco de
+180° junto com o aro, que enche da esquerda pra direita = tempo medido ÷ previsto. Bigode
+fechado e reto = previsto atingido. Pausado: tudo âmbar, ponteiro parado, olhar de lado. Fora
+do prazo: tudo rosa, bigode murcha, olhos pra baixo.
+
+- Passar o mouse: resumo da tarefa, relógio ao vivo, barra, botões Pausar/Retomar e Entregar.
+- Clicar: painel completo (tarefas de hoje, vencidas, que abrem, semana).
+- Posição escolhida pela pessoa: embaixo (direita ou esquerda) ou nas laterais (cabeça de lado).
+- Corpo do notch é preto nos dois temas (é "peça de hardware"), o aro usa a cor do estado.
+- **Onde roda:** dentro do app, fixo no canto de todas as telas (dá pra fazer no D3). Por cima de
+  qualquer programa, grudado na borda da tela de verdade, só com app de computador (Tauri, como
+  o Codenotch faz no Windows): decisão do Daniel pra depois. No navegador o meio-termo é a janela
+  picture-in-picture que o dock já usa.
+
+### Poses novas (corpo inteiro encostado nas caixas)
+
+| Arquivo | Onde |
+|---|---|
+| `sentado.png` | quina do cartão "Em andamento" quando nada abre hoje |
+| `debrucado.png` | borda de cima da tabela de Minha frente |
+| `espiando.png` | atrás do diálogo Entregar e do painel do notch |
+| `andando.png` + `anim/andando-sprite.png` | caminhada pela borda (sprite de 12 quadros, 142×160 cada) |
+| `deitado.png` | em cima da caixa "Hoje não tem nada aberto" |
+| `pendurado.png` | embaixo do cartão da taxa que está estourando, no Painel |
+
+`poses-novas.json` tem largura/altura e, quando houver, o ponto de apoio. Geradas no Grok
+Imagine 2.0 (espiando e andando via Higgsfield; as outras na conta xAI do Daniel), recortadas
+por flood fill pelas bordas. Comparação com Nano Banana e GPT Image no mockup: Grok foi o mais
+fiel ao personagem.
+
+### Animações (`public/sr-minutos/anim/`, WebP animado com transparência)
+
+WebP animado em vez de vídeo: entra como `<img>`, funciona no Safari e no artefato, e
+`prefers-reduced-motion` troca pela pose parada. Altura 360 px, 15 fps.
+
+| Arquivo | O que é | Onde |
+|---|---|---|
+| `joinha.webp` | joinha com piscadinha, loop vai-e-volta 1,8 s | selo "Valeu cara" |
+| `acena.webp` | acena e volta a apontar, 3 s, fecha o loop | herói do Entrar |
+| `ferias.webp` | drinque e celular, 6 s | vazio "nada aberto hoje" |
+| `triste.webp` | anda triste, leva susto, 6 s | vazio "ninguém registrou" |
+| `bravo.webp` | aponta e fica bravo, 7 s | Como funciona; notch quando vence |
+
+O removedor de fundo de vídeo do Higgsfield foi testado e descartado (fundo preto, apagou o braço).
+
+### Ícones e prévia do link (`public/sr-minutos/icones/`)
+
+`favicon.ico` (16/32/48), `apple-touch-icon.png` (180), `icon-192.png`, `icon-512.png`,
+`icon-maskable-512.png` (fundo Noite) e `og-1200x630.png` (prévia do convite do piloto). Falta
+ligar no código: `metadata.icons`/`openGraph` no `layout.tsx` e o manifesto do PWA (D2).
