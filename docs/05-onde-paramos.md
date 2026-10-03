@@ -1,5 +1,32 @@
 # Onde paramos — 28/09/2026
 
+## RETOMAR AQUI (fim da janela APP, 03/10/2026)
+
+Tudo commitado e no ar; banco = repo (migrations até `043`, mais `035b`). Feito na janela APP
+em 02/10: D0, Fases A/B/C do `docs/07`, pedidos da TELAS (manifest no middleware, azul fora,
+rosa = fora do prazo), notch nativo do Windows (`desktop/`, Tauri 2, modelo Codenotch:
+pareamento por código em `/notch`, API `/api/notch/[acao]`, migrations `042`/`043`, instalador
+0.2.0 em `/download/AtividadesOPEC-Setup.exe`), "começar do zero" (tarefa `origem='registrada'`,
+sem evento) e velocidade (projeto em `gru1` via `vercel.json`, cada ação do notch = 1 RPC;
+~0,18 s por clique). A TELAS fechou o visual do notch (main `7b44bee`).
+
+**Pendente, em ordem:**
+1. Daniel instalar o notch 0.2.0 por cima e usar no dia a dia (o PC dele já está pareado).
+2. **Decisão aberta:** tarefa começada do zero **sem frente** não aparece em `/frente` nem
+   `/kanban` (só na `/semana` da pessoa, no painel e pro gestor). Manter "Sem frente" ou tornar
+   frente obrigatória no notch?
+3. Conferir na tela como Julia e como Pedro (dupla de FI): os dois veem a tarefa unida, Julia vê
+   o tempo do Pedro.
+4. Teste local da paginação da sync (`ESCALA_PAGINA=100`): precisa de `ESCALA_SUPABASE_URL`,
+   `ESCALA_SERVICE_KEY` e `CRON_SECRET` no `.env.local`.
+5. Páginas além do Organizar ainda usam `ROTULO_ATIVIDADE` fixo; atividade criada pela tela
+   aparece pelo código (usar `rotulosAtividade()` de `src/lib/atividades.ts`).
+6. Avisar o Yuri: mapa de outubro cita `96838ab/entregaveis` (não oficializado em `config/`);
+   nov/dez de FI/OL/PR estão como provisório; pedir a saída do `cenario_sinc_auditoria.py`.
+7. Piloto: chamar as 7 pessoas (Fase 4 do plano antigo).
+
+Pra gerar instalador novo: `desktop/README.md` (Rust em `~/.cargo/bin`, fora do PATH do shell).
+
 02/10 — APP: notch nativo do Windows no ar (desktop/, Tauri 2, modelo Codenotch). Instalador em /download/AtividadesOPEC-Setup.exe, pareamento em /notch, API /api/notch, migration 042. Testado nesta máquina: pareia, recolhe na borda, abre no hover. Ver desktop/README.md
 
 02/10 — TELAS: D3 na main (notch, selo Valeu cara, corpo inteiro nas telas, Entrar com heroi)
