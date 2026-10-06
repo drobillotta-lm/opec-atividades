@@ -1,4 +1,4 @@
-// Notch do Sr. Minutos no Windows (decisao 02/10, modelo do Codenotch).
+// Notch do Sr. Minutos no Windows e no macOS (decisao 02/10, modelo do Codenotch; Mac em 06/10).
 //
 // O app e uma casca: a janela abre /notch-app do site (visual da janela TELAS) e a pagina
 // pede tudo por invoke(). Quem fala com a API e guarda o token e este lado Rust; a pagina
@@ -45,6 +45,19 @@ fn apagar_token() {
     if let Ok(c) = cofre() {
         let _ = c.delete_credential();
     }
+}
+
+/// Nome que aparece em /notch na lista de aparelhos: COMPUTERNAME no Windows, hostname no Mac.
+fn nome_do_aparelho() -> String {
+    if let Ok(n) = std::env::var("COMPUTERNAME") {
+        return n;
+    }
+    std::process::Command::new("hostname")
+        .output()
+        .ok()
+        .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
+        .filter(|n| !n.is_empty())
+        .unwrap_or_else(|| if cfg!(target_os = "macos") { "Mac".into() } else { "Computador".into() })
 }
 
 // --- API -----------------------------------------------------------------------------
@@ -106,7 +119,7 @@ async fn comecar(http: tauri::State<'_, Http>, titulo: String, frente: Option<St
 
 #[tauri::command]
 async fn parear(app: tauri::AppHandle, http: tauri::State<'_, Http>, codigo: String) -> Result<Value, String> {
-    let aparelho = std::env::var("COMPUTERNAME").unwrap_or_else(|_| "Windows".into());
+    let aparelho = nome_do_aparelho();
     let r = http.0
         .post(format!("{}/api/notch/parear", site()))
         .json(&json!({ "codigo": codigo, "aparelho": aparelho }))
@@ -186,6 +199,9 @@ fn main() {
         ))
         .invoke_handler(tauri::generate_handler![estado, parear, iniciar, pausar, entregar, comecar, abrir, tamanho])
         .setup(|app| {
+            // No Mac o app vive só na barra de menus (sem ícone no Dock nem no Cmd+Tab).
+            #[cfg(target_os = "macos")]
+            app.set_activation_policy(tauri::ActivationPolicy::Accessory);
             let url = format!("{}/notch-app", site()).parse().expect("url do notch");
             let janela = WebviewWindowBuilder::new(app, "notch", WebviewUrl::External(url))
                 .title("Atividades OPEC")

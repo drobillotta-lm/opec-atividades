@@ -34,6 +34,22 @@ o [Codenotch](https://github.com/vinzdg/codenotch) (MIT), que o Daniel usa — d
   (a página abre `/semana` no navegador e avisa pra atualizar) e `pausar` ignora o `tarefaId`
   (pausa tudo). Atualize pra ter o comportamento completo.
 
+## Mac (06/10)
+
+O mesmo código roda no macOS (Tauri é multiplataforma): token no Keychain (`keyring` com
+`apple-native`), janela transparente via `macOSPrivateApi`, app só na barra de menus
+(`ActivationPolicy::Accessory`, sem ícone no Dock), início com o sistema por LaunchAgent. O que
+**não** dá é compilar pra Mac a partir do Windows: o `.dmg` tem que ser gerado **num Mac** com
+Xcode Command Line Tools (`xcode-select --install`), Rust (`rustup`) e Node:
+
+```sh
+cd desktop && npm install && npx tauri build   # gera src-tauri/target/release/bundle/dmg/*.dmg
+```
+
+Copie o `.dmg` pra `public/download/AtividadesOPEC.dmg` (o link já existe em `/notch`). O app é
+assinado só ad hoc (`signingIdentity: "-"`): na primeira vez, botão direito → **Abrir**. Pra
+sumir o aviso de vez seria preciso uma conta Apple Developer (US$ 99/ano) e notarização.
+
 ## Instalar
 
 `AtividadesOPEC-Setup.exe` instala só pro usuário, sem administrador, e baixa o WebView2 se

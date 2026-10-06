@@ -43,7 +43,15 @@ export default async function ConectarNotch({ searchParams }: { searchParams: Pr
           Windows pode avisar <i>&quot;O Windows protegeu o computador&quot;</i>: clique em <b>Mais informações</b> e
           depois em <b>Executar assim mesmo</b>.
         </p>
-        <a href="/download/AtividadesOPEC-Setup.exe" className={BOTAO + " w-fit inline-flex items-center"}>Baixar para Windows</a>
+        <div className="flex flex-wrap gap-2">
+          <a href="/download/AtividadesOPEC-Setup.exe" className={BOTAO + " w-fit inline-flex items-center"}>Baixar para Windows</a>
+          <a href="/download/AtividadesOPEC.dmg" className={BOTAO + " w-fit inline-flex items-center"}>Baixar para Mac</a>
+        </div>
+        <p className="text-tinta-4 text-[12px]">
+          No Mac: abra o <b>.dmg</b>, arraste pra Aplicativos e, na primeira vez, clique com o botão direito no app
+          e escolha <b>Abrir</b> (o app não é assinado pela Apple, então o macOS avisa). Ele fica na barra de menus,
+          não no Dock.
+        </p>
       </section>
 
       <section className="rounded-xl bg-superficie border border-linha p-5 flex flex-col gap-3 text-[13px]">

@@ -69,11 +69,16 @@ export const estadoDe = (admin: Admin, pessoaId: string) => rpc(admin, "notch_es
 /** Liga o relógio desta tarefa sem mexer nos outros (044: vários cronômetros por pessoa). */
 export const iniciarComo = (admin: Admin, pessoaId: string, tarefaId: string) =>
   rpc(admin, "notch_iniciar", { p_pessoa: pessoaId, p_tarefa: tarefaId });
-/** Com tarefa: pausa só ela. Sem: pausa tudo (notch 0.2.0 ainda chama assim). */
-export const pausarComo = (admin: Admin, pessoaId: string, tarefaId?: string) =>
-  tarefaId
-    ? rpc(admin, "notch_pausar_tarefa", { p_pessoa: pessoaId, p_tarefa: tarefaId })
-    : rpc(admin, "notch_pausar", { p_pessoa: pessoaId });
+/** Com tarefa: pausa só ela. Sem: pausa tudo (notch 0.2.0 ainda chama assim). Se a 044 ainda
+ * não estiver no banco (função não existe), cai no "pausar tudo" em vez de falhar. */
+export const pausarComo = async (admin: Admin, pessoaId: string, tarefaId?: string) => {
+  if (tarefaId) {
+    const { data, error } = await admin.rpc("notch_pausar_tarefa", { p_pessoa: pessoaId, p_tarefa: tarefaId });
+    if (!error) return data as Record<string, unknown>;
+    if (!/notch_pausar_tarefa|PGRST202/.test(`${error.code} ${error.message}`)) throw new Error(error.message);
+  }
+  return rpc(admin, "notch_pausar", { p_pessoa: pessoaId });
+};
 /** Entrega pelo notch: tempo medido vale como está, sem o ajuste de minutos do site. */
 export const entregarComo = (admin: Admin, pessoaId: string, tarefaId: string, obs: string) =>
   rpc(admin, "notch_entregar", { p_pessoa: pessoaId, p_tarefa: tarefaId, p_obs: obs || null });
