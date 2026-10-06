@@ -52,7 +52,7 @@ fn apagar_token() {
 struct Http(reqwest::Client);
 
 fn nao_pareado() -> Value {
-    json!({ "pareado": false, "pessoa": null, "tarefa": null, "proximas": [] })
+    json!({ "pareado": false, "pessoa": null, "tarefa": null, "correndo": [], "pausadas": [], "proximas": [], "atrasadas": [] })
 }
 
 /// Chama /api/notch/<acao> com o token. 401 = aparelho desconectado no site: esquece o token.
@@ -86,9 +86,16 @@ async fn iniciar(http: tauri::State<'_, Http>, tarefa_id: String) -> Result<Valu
     chamar(&http.0, "iniciar", Some(json!({ "tarefaId": tarefa_id }))).await
 }
 
+/// Com tarefa pausa so ela; sem, pausa tudo (044: varios cronometros por pessoa).
 #[tauri::command]
-async fn pausar(http: tauri::State<'_, Http>) -> Result<Value, String> {
-    chamar(&http.0, "pausar", Some(json!({}))).await
+async fn pausar(http: tauri::State<'_, Http>, tarefa_id: Option<String>) -> Result<Value, String> {
+    chamar(&http.0, "pausar", Some(json!({ "tarefaId": tarefa_id }))).await
+}
+
+/// Entrega pelo notch: o tempo medido vale como esta; o site continua tendo o dialogo completo.
+#[tauri::command]
+async fn entregar(http: tauri::State<'_, Http>, tarefa_id: String, obs: Option<String>) -> Result<Value, String> {
+    chamar(&http.0, "entregar", Some(json!({ "tarefaId": tarefa_id, "obs": obs.unwrap_or_default() }))).await
 }
 
 /// Começa uma atividade que não estava planejada: vira tarefa registrada da pessoa e já roda.
@@ -128,7 +135,9 @@ fn abrir(app: tauri::AppHandle, caminho: String) -> Result<(), String> {
 
 /// Redimensiona e gruda a janela na borda do monitor. Tamanhos em px de CSS; o canto da
 /// janela encostado na borda é o canto da pílula, então ela não pula quando cresce.
-fn posicionar(janela: &WebviewWindow, largura: f64, altura: f64, canto: &str) -> Result<(), String> {
+/// `recuo_x`/`recuo_y` (px de CSS) afastam a janela ao longo da borda: a pessoa escolhe nos
+/// Ajustes do notch e a página guarda; aqui só se aplica. Antes era 96 fixo.
+fn posicionar(janela: &WebviewWindow, largura: f64, altura: f64, canto: &str, recuo_x: f64, recuo_y: f64) -> Result<(), String> {
     let monitor = janela.current_monitor().map_err(|e| e.to_string())?
         .or(janela.primary_monitor().map_err(|e| e.to_string())?)
         .ok_or("sem monitor")?;
@@ -138,12 +147,13 @@ fn posicionar(janela: &WebviewWindow, largura: f64, altura: f64, canto: &str) ->
     let (aw, ah) = (area.size.width as i32, area.size.height as i32);
     let w = (largura.clamp(40.0, 600.0) * escala).round() as i32;
     let h = (altura.clamp(40.0, 700.0) * escala).round() as i32;
-    let recuo = (96.0 * escala).round() as i32;
+    let rx = (recuo_x.clamp(0.0, 1200.0) * escala).round() as i32;
+    let ry = (recuo_y.clamp(0.0, 1200.0) * escala).round() as i32;
     let (x, y) = match canto {
-        "baixo-esq" => (ax + recuo, ay + ah - h),
-        "dir-alto" => (ax + aw - w, ay + recuo),
-        "esq-alto" => (ax, ay + recuo),
-        _ => (ax + aw - w - recuo, ay + ah - h), // baixo-dir
+        "baixo-esq" => (ax + rx, ay + ah - h),
+        "dir-alto" => (ax + aw - w, ay + ry),
+        "esq-alto" => (ax, ay + ry),
+        _ => (ax + aw - w - rx, ay + ah - h), // baixo-dir
     };
     janela.set_size(PhysicalSize::new(w as u32, h as u32)).map_err(|e| e.to_string())?;
     janela.set_position(PhysicalPosition::new(x, y)).map_err(|e| e.to_string())?;
@@ -151,8 +161,8 @@ fn posicionar(janela: &WebviewWindow, largura: f64, altura: f64, canto: &str) ->
 }
 
 #[tauri::command]
-fn tamanho(window: WebviewWindow, largura: f64, altura: f64, canto: String) -> Result<(), String> {
-    posicionar(&window, largura, altura, &canto)
+fn tamanho(window: WebviewWindow, largura: f64, altura: f64, canto: String, recuo_x: Option<f64>, recuo_y: Option<f64>) -> Result<(), String> {
+    posicionar(&window, largura, altura, &canto, recuo_x.unwrap_or(96.0), recuo_y.unwrap_or(96.0))
 }
 
 fn recarregar(app: &tauri::AppHandle) {
@@ -174,7 +184,7 @@ fn main() {
                 .build()
                 .expect("cliente http"),
         ))
-        .invoke_handler(tauri::generate_handler![estado, parear, iniciar, pausar, comecar, abrir, tamanho])
+        .invoke_handler(tauri::generate_handler![estado, parear, iniciar, pausar, entregar, comecar, abrir, tamanho])
         .setup(|app| {
             let url = format!("{}/notch-app", site()).parse().expect("url do notch");
             let janela = WebviewWindowBuilder::new(app, "notch", WebviewUrl::External(url))
@@ -188,7 +198,11 @@ fn main() {
                 .shadow(false)
                 .focused(false)
                 .build()?;
-            let _ = posicionar(&janela, 98.0, 53.0, "baixo-dir");
+            // O WebView2 pinta um fundo opaco ate a pagina carregar: e o "quadrado" que
+            // aparecia atras do notch. Transparente de saida, antes do primeiro frame.
+            let _ = janela.set_background_color(Some(tauri::window::Color(0, 0, 0, 0)));
+            // A pagina pede o tamanho certo (com a margem de sombra) assim que monta.
+            let _ = posicionar(&janela, 146.0, 77.0, "baixo-dir", 96.0, 96.0);
             #[cfg(debug_assertions)]
             janela.open_devtools();
 

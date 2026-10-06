@@ -1,5 +1,44 @@
 # Onde paramos — 28/09/2026
 
+## RETOMAR AQUI (06/10/2026 — revisão depois do teste da Julia no notch)
+
+Primeiro teste do notch com outra pessoa (Julia, 06/10): 5 sessões, todas em tarefas **vencidas**
+de 21/09 e 02/10, porque o notch oferecia as mais antigas primeiro e a `/semana` só mostra a
+semana atual. Daí os 7 pedidos do Daniel, todos codados nesta data (plano em
+`~/.claude/plans/fa-a-um-plano-de-wobbly-flurry.md` da máquina do Desktop):
+
+1. **Vários cronômetros por pessoa** (decisão: tempo cheio em cada um, sem dividir). Migration
+   `044`: índice `sessoes_uma_aberta_por_pessoa_e_tarefa (pessoa_id, tarefa_id) where fim is null`;
+   `notch_estado` v2 devolve `correndo[]`, `pausadas[]`, `proximas[]` (só da semana corrente) e
+   `atrasadas[]`; `notch_pausar_tarefa`, `notch_entregar`. Site: `fecharSessao` por tarefa em
+   `acoes.ts` (**`entregar` fechava TODAS as abertas da pessoa — com paralelo mataria o relógio
+   da outra tarefa**), `pausar(tarefaId)`.
+2. **Notch: Pausar e Entregar por tarefa** direto no hover; badge com a quantidade na cabeça;
+   `⚙ Ajustes` (cantos + afastamento ao longo da borda, 0–400 px); margem transparente de 24 px
+   na janela e sem `drop-shadow` na cabeça (era o "quadrado meio escuro"); fundo transparente
+   por CSS (`html:has([data-notch-janela])`) e `set_background_color` no Rust. App **0.3.0**
+   (`entregar`, `pausar {tarefaId?}`, `tamanho {recuoX, recuoY}`). Com o 0.2.0 ainda instalado,
+   Entregar abre o navegador e Pausar pausa tudo (degradação prevista).
+3. **Notch saiu do site** (`(app)/layout.tsx`): as telas já têm tudo; menu marca a rota atual
+   (`NavItem`). Item do menu virou "Notch (Windows)".
+4. `/semana`: seção "Em andamento" é lista e inclui toda tarefa pendente com sessão minha aberta
+   ou fechada hoje, **mesmo fora da janela**, com etiqueta "de outra semana".
+5. Frente opcional no "começar do zero" (decisão): bloco **"Sem frente"** pro gestor em
+   `/frente` e `/kanban`, com select que chama `definirFrenteDaTarefa`.
+6. `/frente`: setas de semana, seção **Feitas** (tempo medido × previsto) e aba **Histórico**
+   (`?ver=historico`, 50 por página, filtros `pessoa` e `mes`).
+7. Dock: várias abertas viram chips com Pausar; usa `nomeTarefa()` (título das registradas).
+
+**Estado ao fechar a sessão de 06/10:** código commitado; `npm run build` limpo; **migration 044
+NÃO aplicada** (o MCP do Supabase recusou duas vezes no prompt de permissão) e por isso **sem
+push**: aplicar a 044 primeiro (`supabase/migrations/044_…sql`, MCP `apply_migration` ou SQL
+Editor), depois `git push`. **Instalador 0.3.0 não gerado**: esta máquina (Desktop) não tem
+Rust nem Build Tools; gerar no PC com Rust (`desktop/README.md`) e copiar pra `public/download/`.
+
+**Pendente, em ordem:** (1) aplicar 044 + push; (2) gerar e instalar o 0.3.0; (3) testar no
+notch: A e B juntas, pausar só B, entregar A, ver `/semana`; (4) itens 3–7 da lista de 03/10
+abaixo (dupla Julia/Pedro, paginação local, `rotulosAtividade()` nas páginas, Yuri, piloto).
+
 ## RETOMAR AQUI (fim da janela APP, 03/10/2026)
 
 Tudo commitado e no ar; banco = repo (migrations até `043`, mais `035b`). Feito na janela APP

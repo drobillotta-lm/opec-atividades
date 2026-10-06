@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { criarClienteServidor } from "@/lib/supabase/server";
+import { Seta } from "@/componentes/Seta";
 import { semanaDe, deslocarSemana, rotuloSemana, diaCurto, hhmm, tempoLegivel, ROTULO_ATIVIDADE, escaladosDe } from "@/lib/semana";
 import { Relogio, Submit, TempoParado, DialogoEntrega, DialogoDesnecessaria, DialogoAjuste } from "./Cronometro";
 import { DialogoPartes, type Parte } from "./Partes";
@@ -69,7 +69,7 @@ export default async function MinhaSemana({
   // escalado nem responsavel -- sem isto ela nunca aparece de volta aqui. O mesmo vale
   // para quem recebeu uma parte (030) e ainda nem comecou.
   const [{ data: sessoesMinhas }, { data: partesMinhas }] = await Promise.all([
-    supabase.from("sessoes").select("tarefa_id").eq("pessoa_id", pessoa!.id),
+    supabase.from("sessoes").select("tarefa_id, fim").eq("pessoa_id", pessoa!.id),
     supabase.from("subtarefas").select("tarefa_id").eq("pessoa_id", pessoa!.id).eq("status", "pendente"),
   ]);
   const idsComSessao = [...new Set([...(sessoesMinhas ?? []), ...(partesMinhas ?? [])].map((s) => s.tarefa_id))];
@@ -80,7 +80,21 @@ export default async function MinhaSemana({
         .lte("abre_em", fim).gte("prazo_em", `${inicio}T00:00:00Z`).in("id", idsAjudando)
     : { data: [] as typeof minhas };
 
-  const tarefas = [...(minhas ?? []), ...(ajudando ?? [])];
+  // Nada que esteja rodando pode ficar invisível (06/10): a Julia ligou o cronômetro pelo
+  // notch em tarefas vencidas de semanas atrás e a semana atual não mostrava nada. Tarefa
+  // pendente em que EU tenho sessão aberta, ou fechada hoje, entra aqui mesmo fora da janela,
+  // marcada. Amanhã, sem mexer, volta a aparecer só na semana dela.
+  const hojeBRT = new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+  const inicioHoje = new Date(`${hojeBRT}T00:00:00-03:00`).toISOString();
+  const idsTocadasHoje = [...new Set((sessoesMinhas ?? []).filter((s) => !s.fim || s.fim >= inicioHoje).map((s) => s.tarefa_id))];
+  const idsNaTela = new Set([...idsJaTem, ...(ajudando ?? []).map((t) => t.id)]);
+  const idsForaDaJanela = idsTocadasHoje.filter((id) => !idsNaTela.has(id));
+  const { data: foraDaJanela } = idsForaDaJanela.length
+    ? await supabase.from("tarefas").select(CAMPOS_TAREFA).eq("status", "pendente").in("id", idsForaDaJanela)
+    : { data: [] as typeof minhas };
+  const idsFora = new Set((foraDaJanela ?? []).map((t) => t.id));
+
+  const tarefas = [...(minhas ?? []), ...(ajudando ?? []), ...(foraDaJanela ?? [])];
   const ids = tarefas.map((t) => t.id);
 
   const termo = sp.busca?.trim().replace(/[,()]/g, "");
@@ -157,20 +171,23 @@ export default async function MinhaSemana({
       outrosRodando,
       contribuintes,
       partes,
+      foraDaJanela: idsFora.has(t.id),
     };
   });
 
-  const emCurso = comTempo.find((t) => t.correndo);
+  // Vários cronômetros por pessoa (044): "em andamento" é lista, a mais recente primeiro.
+  const emAndamento = comTempo.filter((t) => t.correndo)
+    .sort((a, b) => new Date(b.correndo!).getTime() - new Date(a.correndo!).getTime());
   const paradas = comTempo.filter((t) => t.status === "pendente" && !t.correndo);
   const pausadas = paradas.filter((t) => t.segundos > 0);
   const pendentes = paradas.filter((t) => t.segundos <= 0);
   const entregues = comTempo.filter((t) => t.status === "entregue" || t.status === "fora_do_prazo");
   const naoAplicaveis = comTempo.filter((t) => t.status === "na");
-  const horasPrevistas = comTempo.reduce((s, t) => s + t.estimativa_min, 0);
-  const segundosFeitos = comTempo.reduce((s, t) => s + t.segundos, 0);
+  const daSemana = comTempo.filter((t) => !t.foraDaJanela);
+  const horasPrevistas = daSemana.reduce((s, t) => s + t.estimativa_min, 0);
+  const segundosFeitos = daSemana.reduce((s, t) => s + t.segundos, 0);
   const agora = Date.now();
   // Fala do Sr. Minutos no cartão de andamento: regra fixa (docs/06), sobre a próxima de hoje.
-  const hojeBRT = new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
   const venceHoje = pendentes.find((t) => t.prazo_em.slice(0, 10) === hojeBRT);
   const falaSrMinutos = venceHoje ? `${venceHoje.titulo ?? ROTULO_ATIVIDADE[venceHoje.atividade] ?? venceHoje.atividade} vence hoje.` : undefined;
   const idsExistentes = new Set(ids);
@@ -200,12 +217,13 @@ export default async function MinhaSemana({
         </div>
       </header>
 
-      {emCurso && (
-        <div className="relative mt-[118px] flex items-center gap-5 rounded-xl bg-verde-fundo border border-verde-borda px-5 py-4">
-          <Corpo pose="apontando" altura={116} fala={falaSrMinutos} className="right-10 bottom-[calc(100%-6px)]" />
+      {emAndamento.map((emCurso, i) => (
+        <div key={emCurso.id} className={`relative ${i === 0 ? "mt-[118px]" : ""} flex items-center gap-5 rounded-xl bg-verde-fundo border border-verde-borda px-5 py-4`}>
+          {i === 0 && <Corpo pose="apontando" altura={116} fala={falaSrMinutos} className="right-10 bottom-[calc(100%-6px)]" />}
           <div className="flex flex-col gap-1.5 flex-1 min-w-0">
             <span className="inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.11em] text-verde-claro">
-              <Rosto estado="verde" tamanho={16} />Em andamento
+              <Rosto estado="verde" tamanho={16} />Em andamento{emAndamento.length > 1 ? ` · ${i + 1} de ${emAndamento.length}` : ""}
+              {emCurso.foraDaJanela && <OutraSemana prazo={emCurso.prazo_em} />}
             </span>
             <span className="text-[16px] font-semibold tracking-[-0.01em]">
               {nomeTarefa(emCurso, "nome")}
@@ -227,7 +245,7 @@ export default async function MinhaSemana({
             <span className="num text-[11px] text-tinta-4">de {hhmm(emCurso.estimativa_min)}</span>
           </div>
           <div className="flex gap-2">
-            <form action={pausar}>
+            <form action={pausar.bind(null, emCurso.id)}>
               <Submit ocupado="..." className="flex items-center gap-2 min-h-[42px] px-3.5 rounded-[9px] border border-linha bg-elevado text-[12.5px] font-medium hover:bg-linha transition">
                 Pausar
               </Submit>
@@ -255,7 +273,7 @@ export default async function MinhaSemana({
             />
           </div>
         </div>
-      )}
+      ))}
 
       {pausadas.length > 0 && (
         <Secao titulo="Pausadas" contagem={`${pausadas.length} · ${tempoLegivel(pausadas.reduce((s, t) => s + t.segundos, 0))} ja contados`}>
@@ -268,6 +286,7 @@ export default async function MinhaSemana({
               <div className="flex-1 min-w-0 flex flex-col gap-1">
                 <span className="text-[13.5px] font-medium">
                   {nomeTarefa(t, "nome")}
+                  {t.foraDaJanela && <OutraSemana prazo={t.prazo_em} />}
                 </span>
                 <span className="text-[11.5px] text-tinta-3 truncate">
                   {t.evento?.competicao ?? SEM_EVENTO} · entrega até {diaCurto(t.prazo_em.slice(0, 10))}
@@ -320,7 +339,7 @@ export default async function MinhaSemana({
         </Secao>
       )}
 
-      {!emCurso && segundosFeitos === 0 && pendentes.length > 0 && (
+      {emAndamento.length === 0 && segundosFeitos === 0 && pendentes.length > 0 && (
         <VazioComEle pose="triste" titulo="Ninguém ligou o cronômetro essa semana."
           texto={`Sem número eu não sirvo pra nada. ${pendentes.length === 1 ? "Tem 1 tarefa aberta" : `Tem ${pendentes.length} tarefas abertas`} pra você. Esqueceu de marcar? Ajuste o tempo com o motivo, vale mais do que nada.`} />
       )}
@@ -478,15 +497,6 @@ export default async function MinhaSemana({
   );
 }
 
-function Seta({ href, rotulo, children }: { href: string; rotulo: string; children: React.ReactNode }) {
-  return (
-    <Link href={href} aria-label={rotulo}
-      className="min-h-[36px] min-w-[36px] px-3 grid place-items-center rounded-lg border border-linha bg-superficie text-[12.5px] text-tinta-2 hover:bg-elevado transition">
-      {children}
-    </Link>
-  );
-}
-
 function Secao({ titulo, contagem, children }: { titulo: string; contagem: string; children: React.ReactNode }) {
   return (
     <section className="flex flex-col gap-2">
@@ -506,6 +516,17 @@ function Linha({ children, destaque, apagada, pausada }: { children: React.React
     }`}>
       {children}
     </div>
+  );
+}
+
+/** Tarefa tocada hoje que não é desta semana (prazo já passou ou ainda não abriu). */
+function OutraSemana({ prazo }: { prazo: string }) {
+  const venceu = new Date(prazo).getTime() < Date.now();
+  return (
+    <span className={`ml-2 inline-flex items-center rounded-md border px-2 py-0.5 text-[10.5px] font-medium align-middle ${
+      venceu ? "bg-rosa-fundo border-rosa-borda text-rosa" : "bg-elevado border-linha text-tinta-3"}`}>
+      de outra semana · {venceu ? "prazo venceu" : "prazo"} {diaCurto(prazo.slice(0, 10))}
+    </span>
   );
 }
 

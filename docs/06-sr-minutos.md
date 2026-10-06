@@ -192,10 +192,17 @@ do prazo: tudo rosa, bigode murcha, olhos pra baixo.
 - Clicar: painel completo (tarefas de hoje, vencidas, que abrem, semana).
 - Posição escolhida pela pessoa: embaixo (direita ou esquerda) ou nas laterais (cabeça de lado).
 - Corpo do notch é preto nos dois temas (é "peça de hardware"), o aro usa a cor do estado.
-- **Onde roda:** dentro do app, fixo no canto de todas as telas (dá pra fazer no D3). Por cima de
-  qualquer programa, grudado na borda da tela de verdade, só com app de computador (Tauri, como
-  o Codenotch faz no Windows): decisão do Daniel pra depois. No navegador o meio-termo é a janela
-  picture-in-picture que o dock já usa.
+- **Onde roda (06/10):** só no app nativo do Windows (`desktop/`, Tauri), grudado na borda da tela
+  por cima de qualquer programa. A versão fixa no canto das telas do site existiu de 02 a 06/10 e
+  saiu: as telas já têm tudo. No navegador continua o `/dock` (janela `window.open`).
+- **Várias tarefas (06/10):** o aro e o bigode seguem a tarefa principal (a ligada por último);
+  com mais de um cronômetro ligado, um número no canto da cabeça. No hover, uma linha por tarefa
+  correndo (relógio, Pausar, Entregar) e as pausadas de hoje (Retomar). Entregar é confirmação de
+  dois cliques, sem `window.confirm`.
+- **Ajustes (⚙, 06/10):** no painel aberto, abre uma sub-tela com os quatro cantos e o
+  afastamento ao longo da borda (0–400 px). Guardado no aparelho (`localStorage`).
+- **Sem sombra na cabeça e margem de 24 px** na janela nativa: a sombra cortada reta pela borda da
+  janela era o "quadrado meio escuro" em volta dele.
 
 ### Poses novas (corpo inteiro encostado nas caixas)
 

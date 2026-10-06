@@ -52,6 +52,8 @@ no projeto, em ordem. O modelo e as regras de acesso estão explicados em
 | `040_organizar_funcoes.sql` | Funções do `/admin/organizar` (atividade, taxa, janela, mapa, tarefa a tarefa), só service role. `tarefas.dono_manual` e `tarefas.origem` (`cadeia`/`avulsa`): redirecionada não volta pro mapa e avulsa não é desfeita pela sincronização |
 | `041_v_cadeia_atual.sql` | O que vale hoje por frente: cadeia em vigor, taxa, janela e o mapa do mês |
 | `042_notch_pareamento.sql` | Notch nativo do Windows (`desktop/`): `notch_codigos` (código de uso único, 5 min) e `notch_dispositivos` (token por aparelho, revogável). Só sha256 guardado; escrita só pela service role |
+| `043_notch_rapido_e_comecar_do_zero.sql` | Tarefa `registrada` (sem evento, título livre, frente opcional) e as funções `notch_*`: cada ação do notch numa chamada só |
+| `044_varios_cronometros_e_notch_entrega.sql` | Vários cronômetros por pessoa (índice passa a `(pessoa_id, tarefa_id) where fim is null`), `notch_estado` v2 (listas `correndo`/`pausadas`/`proximas` da semana/`atrasadas`), `notch_pausar_tarefa`, `notch_entregar` |
 
 ## Regras
 

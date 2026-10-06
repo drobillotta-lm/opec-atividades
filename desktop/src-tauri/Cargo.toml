@@ -1,6 +1,6 @@
 [package]
 name = "atividades-opec-notch"
-version = "0.2.0"
+version = "0.3.0"
 description = "Notch do Sr. Minutos: o cronômetro do Atividades OPEC preso na borda da tela"
 edition = "2021"
 

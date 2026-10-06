@@ -62,11 +62,21 @@ async function rpc(admin: Admin, fn: string, args: Record<string, unknown>) {
   return data as Record<string, unknown>;
 }
 
-/** { pareado, pessoa, tarefa, proximas, frentes }: o formato que /notch-app usa. */
+/** { pareado, pessoa, correndo[], pausadas[], proximas[], atrasadas[], frentes, tarefa }:
+ * o formato que /notch-app usa (044). `tarefa` = correndo[0] ?? pausadas[0], compatibilidade
+ * com o notch-app anterior; sai na próxima migration. */
 export const estadoDe = (admin: Admin, pessoaId: string) => rpc(admin, "notch_estado", { p_pessoa: pessoaId });
+/** Liga o relógio desta tarefa sem mexer nos outros (044: vários cronômetros por pessoa). */
 export const iniciarComo = (admin: Admin, pessoaId: string, tarefaId: string) =>
   rpc(admin, "notch_iniciar", { p_pessoa: pessoaId, p_tarefa: tarefaId });
-export const pausarComo = (admin: Admin, pessoaId: string) => rpc(admin, "notch_pausar", { p_pessoa: pessoaId });
+/** Com tarefa: pausa só ela. Sem: pausa tudo (notch 0.2.0 ainda chama assim). */
+export const pausarComo = (admin: Admin, pessoaId: string, tarefaId?: string) =>
+  tarefaId
+    ? rpc(admin, "notch_pausar_tarefa", { p_pessoa: pessoaId, p_tarefa: tarefaId })
+    : rpc(admin, "notch_pausar", { p_pessoa: pessoaId });
+/** Entrega pelo notch: tempo medido vale como está, sem o ajuste de minutos do site. */
+export const entregarComo = (admin: Admin, pessoaId: string, tarefaId: string, obs: string) =>
+  rpc(admin, "notch_entregar", { p_pessoa: pessoaId, p_tarefa: tarefaId, p_obs: obs || null });
 /** Tarefa que não estava planejada: nasce registrada, dona = a pessoa, e já começa a rodar. */
 export const comecarDoZero = (admin: Admin, pessoaId: string, titulo: string, frenteSigla: string) =>
   rpc(admin, "notch_comecar_do_zero", { p_pessoa: pessoaId, p_titulo: titulo, p_frente_sigla: frenteSigla });

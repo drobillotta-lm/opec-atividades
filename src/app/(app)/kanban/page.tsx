@@ -2,6 +2,7 @@ import { criarClienteServidor } from "@/lib/supabase/server";
 import { semanaDe, rotuloSemana, diaCurto, ROTULO_ATIVIDADE, escaladosDe } from "@/lib/semana";
 import { Rosto } from "@/componentes/SrMinutos";
 import { nomeTarefa, SEM_EVENTO } from "@/componentes/nome-tarefa";
+import { SemFrente } from "@/componentes/SemFrente";
 
 export const dynamic = "force-dynamic";
 
@@ -21,15 +22,20 @@ export default async function Kanban() {
   const { data: pessoas } = await supabase.from("pessoas").select("id, nome");
   const nomePor = new Map((pessoas ?? []).map((p) => [p.id, p.nome]));
 
+  // Gestor vê também as tarefas começadas do zero sem frente (044), num bloco à parte
+  // pra encaixar numa frente. Líder continua só com a dele.
+  const idsFrentes = frentes.map((f) => f.id).join(",");
+  const consulta = supabase
+    .from("tarefas")
+    .select(`id, atividade, titulo, status, estimativa_min, prazo_em, escalado_id, dupla_id, responsavel_real_id, frente_id,
+             frentes ( sigla ), eventos ( competicao, data )`)
+    .lte("abre_em", fim)
+    .gte("prazo_em", `${inicio}T00:00:00Z`)
+    .order("prazo_em");
   const { data: brutas } = frentes.length
-    ? await supabase
-        .from("tarefas")
-        .select(`id, atividade, titulo, status, estimativa_min, prazo_em, escalado_id, dupla_id, responsavel_real_id,
-                 frentes ( sigla ), eventos ( competicao, data )`)
-        .in("frente_id", frentes.map((f) => f.id))
-        .lte("abre_em", fim)
-        .gte("prazo_em", `${inicio}T00:00:00Z`)
-        .order("prazo_em")
+    ? await (gestor
+        ? consulta.or(`frente_id.in.(${idsFrentes}),and(frente_id.is.null,origem.eq.registrada)`)
+        : consulta.in("frente_id", frentes.map((f) => f.id)))
     : { data: [] };
 
   const tarefas = (brutas ?? []).map((t) => ({
@@ -61,11 +67,16 @@ export default async function Kanban() {
     rodando: rodandoPorTarefa.get(t.id) ?? [],
   }));
 
-  const pendente = comTempo.filter((t) => t.status === "pendente" && t.segundos <= 0 && t.rodando.length === 0);
-  const fazendo = comTempo.filter((t) => t.status === "pendente" && (t.segundos > 0 || t.rodando.length > 0));
+  const semFrente = comTempo.filter((t) => !t.frente_id);
+  const comFrente = comTempo.filter((t) => !!t.frente_id);
+  const pendente = comFrente.filter((t) => t.status === "pendente" && t.segundos <= 0 && t.rodando.length === 0);
+  const fazendo = comFrente.filter((t) => t.status === "pendente" && (t.segundos > 0 || t.rodando.length > 0));
   // "na" (nao necessaria) entra em Feita: resolvida, so que sem entrega — nao sobra
   // pendurada em Pendente/Fazendo pra sempre.
-  const feita = comTempo.filter((t) => t.status === "entregue" || t.status === "fora_do_prazo" || t.status === "na");
+  const feita = comFrente.filter((t) => t.status === "entregue" || t.status === "fora_do_prazo" || t.status === "na");
+  const { data: frentesAtivas } = gestor && semFrente.length
+    ? await supabase.from("frentes").select("id, nome").eq("ativa", true).order("nome")
+    : { data: [] as { id: string; nome: string }[] };
 
   return (
     <div className="p-6 px-8 flex flex-col gap-5 max-w-[1280px]">
@@ -88,6 +99,16 @@ export default async function Kanban() {
           <Coluna titulo="Fazendo" cor="text-verde-claro" tarefas={fazendo} nomePor={nomePor} />
           <Coluna titulo="Feita" cor="text-verde-claro" tarefas={feita} nomePor={nomePor} />
         </div>
+      )}
+
+      {gestor && semFrente.length > 0 && (
+        <SemFrente
+          tarefas={semFrente.map((t) => ({
+            id: t.id, nome: nomeTarefa(t, "sigla"), status: t.status, segundos: t.segundos,
+            quem: nomePor.get(t.responsavel_real_id ?? t.escalado_id) ?? "—",
+          }))}
+          frentes={frentesAtivas ?? []}
+        />
       )}
     </div>
   );

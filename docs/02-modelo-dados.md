@@ -147,8 +147,10 @@ inicio      timestamptz not null
 fim         timestamptz
 motivo_fim  text   -- 'pausa'|'entrega'|'troca'|'retomada_apos_fechar'
 ```
-Índice único parcial: `create unique index on sessoes (pessoa_id) where fim is null;`
-Uma sessão aberta por pessoa. Trocar de tarefa fecha a atual com `'troca'`.
+Índice único parcial (044, 06/10): `create unique index on sessoes (pessoa_id, tarefa_id) where fim is null;`
+Várias sessões abertas por pessoa (um cronômetro por tarefa, cada um somando tempo cheio), mas
+só uma por (pessoa, tarefa). `'troca'` só acontece ao mudar de parte dentro da mesma tarefa.
+Até a 043 era uma por pessoa e trocar de tarefa fechava a atual.
 
 ### `ajustes_tempo`
 ```

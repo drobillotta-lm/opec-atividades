@@ -1,14 +1,18 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { criarClienteAdmin } from "@/lib/supabase/admin";
-import { comecarDoZero, estadoDe, iniciarComo, parear, pausarComo, pessoaDoAparelho } from "@/lib/notch";
+import { comecarDoZero, entregarComo, estadoDe, iniciarComo, parear, pausarComo, pessoaDoAparelho } from "@/lib/notch";
 
 // API do notch nativo (desktop/). Não usa cookie nem sessão do site: o middleware deixa
 // passar /api/notch e cada chamada se autentica aqui pelo token do aparelho (042).
-//   POST /api/notch/parear   { codigo, aparelho }  -> { token, nome }   (sem token ainda)
-//   GET  /api/notch/estado                           -> { pareado, pessoa, tarefa, proximas, frentes }
-//   POST /api/notch/iniciar  { tarefaId }            -> estado
-//   POST /api/notch/pausar                           -> estado
-//   POST /api/notch/comecar  { titulo, frente? }     -> estado (tarefa nova, já rodando)
+//   POST /api/notch/parear   { codigo, aparelho }   -> { token, nome }   (sem token ainda)
+//   GET  /api/notch/estado                            -> { pareado, pessoa, correndo[], pausadas[], proximas[], atrasadas[], frentes }
+//   POST /api/notch/iniciar  { tarefaId }             -> estado  (também /retomar; não pausa as outras)
+//   POST /api/notch/pausar   { tarefaId? }            -> estado  (sem tarefaId: pausa tudo)
+//   POST /api/notch/entregar { tarefaId, obs? }       -> estado  (044; tempo medido vale como está)
+//   POST /api/notch/comecar  { titulo, frente? }      -> estado  (tarefa nova, já rodando)
+
+const UUID = /^[0-9a-f-]{36}$/;
+const ESTADO_VAZIO = { pareado: false, pessoa: null, tarefa: null, correndo: [], pausadas: [], proximas: [], atrasadas: [], frentes: [] };
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -26,7 +30,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ acao
   if (acao !== "estado") return erro("não encontrado", 404);
   const admin = criarClienteAdmin();
   const pessoaId = await pessoaDoAparelho(admin, req);
-  if (!pessoaId) return NextResponse.json({ pareado: false, pessoa: null, tarefa: null, proximas: [], frentes: [] }, { status: 401 });
+  if (!pessoaId) return NextResponse.json(ESTADO_VAZIO, { status: 401 });
   return NextResponse.json(await estadoDe(admin, pessoaId));
 }
 
@@ -43,12 +47,21 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ aca
   const pessoaId = await pessoaDoAparelho(admin, req);
   if (!pessoaId) return erro("aparelho não pareado ou desconectado", 401);
   try {
-    if (acao === "iniciar") {
+    if (acao === "iniciar" || acao === "retomar") {
       const tarefaId = String(b.tarefaId ?? "");
-      if (!/^[0-9a-f-]{36}$/.test(tarefaId)) return erro("tarefa inválida", 400);
+      if (!UUID.test(tarefaId)) return erro("tarefa inválida", 400);
       return NextResponse.json(await iniciarComo(admin, pessoaId, tarefaId));
     }
-    if (acao === "pausar") return NextResponse.json(await pausarComo(admin, pessoaId));
+    if (acao === "pausar") {
+      const tarefaId = String(b.tarefaId ?? "");
+      if (tarefaId && !UUID.test(tarefaId)) return erro("tarefa inválida", 400);
+      return NextResponse.json(await pausarComo(admin, pessoaId, tarefaId || undefined));
+    }
+    if (acao === "entregar") {
+      const tarefaId = String(b.tarefaId ?? "");
+      if (!UUID.test(tarefaId)) return erro("tarefa inválida", 400);
+      return NextResponse.json(await entregarComo(admin, pessoaId, tarefaId, String(b.obs ?? "").trim().slice(0, 500)));
+    }
     if (acao === "comecar") {
       const titulo = String(b.titulo ?? "").trim();
       if (!titulo) return erro("diga o que você vai fazer", 400);

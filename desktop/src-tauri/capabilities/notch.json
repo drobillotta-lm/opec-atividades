@@ -6,5 +6,5 @@
   "remote": {
     "urls": ["https://opec-atividades.vercel.app/*", "http://localhost:3000/*"]
   },
-  "permissions": ["core:default", "allow-estado", "allow-parear", "allow-iniciar", "allow-pausar", "allow-comecar", "allow-abrir", "allow-tamanho"]
+  "permissions": ["core:default", "allow-estado", "allow-parear", "allow-iniciar", "allow-pausar", "allow-entregar", "allow-comecar", "allow-abrir", "allow-tamanho"]
 }

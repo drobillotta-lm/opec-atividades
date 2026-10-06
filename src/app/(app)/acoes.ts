@@ -14,38 +14,47 @@ async function eu() {
   return { supabase, pessoa };
 }
 
-/** Fecha a sessao aberta da pessoa, se houver. Uma por pessoa, garantido por indice. */
-async function fecharAberta(supabase: Awaited<ReturnType<typeof criarClienteServidor>>, pessoaId: string, motivo: string) {
+type Supabase = Awaited<ReturnType<typeof criarClienteServidor>>;
+
+/** Fecha a minha sessao aberta NESTA tarefa, se houver. Desde a 044 (06/10) a pessoa pode ter
+ * varios cronometros ligados, um por tarefa: fechar "a aberta da pessoa" fecharia os outros. */
+async function fecharSessao(supabase: Supabase, pessoaId: string, tarefaId: string, motivo: string) {
   const { error } = await supabase
     .from("sessoes")
     .update({ fim: new Date().toISOString(), motivo_fim: motivo })
     .eq("pessoa_id", pessoaId)
+    .eq("tarefa_id", tarefaId)
     .is("fim", null);
   if (error) throw new Error(`nao consegui fechar a sessao: ${error.message}`);
 }
 
 export async function iniciar(tarefaId: string) {
   const { supabase, pessoa } = await eu();
-  // Trocar de tarefa encerra a anterior, nunca deixa duas correndo.
-  await fecharAberta(supabase, pessoa.id, "troca");
-  const { error } = await supabase
-    .from("sessoes")
-    .insert({ tarefa_id: tarefaId, pessoa_id: pessoa.id });
-  if (error) throw new Error(error.message);
-  revalidatePath("/semana");
+  // Nao fecha mais as outras: cada tarefa tem o seu relogio. Idempotente: duas abas ou um
+  // clique duplo nao abrem segunda sessao na mesma tarefa (o indice da 044 tambem recusa).
+  const { data: aberta } = await supabase
+    .from("sessoes").select("id").eq("pessoa_id", pessoa.id).eq("tarefa_id", tarefaId).is("fim", null).maybeSingle();
+  if (!aberta) {
+    const { error } = await supabase
+      .from("sessoes")
+      .insert({ tarefa_id: tarefaId, pessoa_id: pessoa.id });
+    if (error && error.code !== "23505") throw new Error(error.message);
+  }
+  revalidarTempo();
 }
 
-export async function pausar() {
+export async function pausar(tarefaId: string) {
   const { supabase, pessoa } = await eu();
-  await fecharAberta(supabase, pessoa.id, "pausa");
-  revalidatePath("/semana");
+  await fecharSessao(supabase, pessoa.id, tarefaId, "pausa");
+  revalidarTempo();
 }
 
 export async function entregar(tarefaId: string, formData: FormData) {
   const { supabase, pessoa } = await eu();
 
-  // Fechar a sessao antes de ler o tempo, senao o ultimo trecho nao conta.
-  await fecharAberta(supabase, pessoa.id, "entrega");
+  // Fechar a sessao desta tarefa antes de ler o tempo, senao o ultimo trecho nao conta.
+  // SO desta: entregar A nao pode parar o relogio de B.
+  await fecharSessao(supabase, pessoa.id, tarefaId, "entrega");
 
   const { data: tarefa } = await supabase
     .from("tarefas").select("prazo_em, escalado_id, dupla_id").eq("id", tarefaId).single();
@@ -131,6 +140,18 @@ export async function classificarCompeticao(nome: string, formData: FormData) {
   if (error) throw new Error(error.message);
   revalidatePath("/admin");
   revalidatePath("/admin/eventos");
+}
+
+/** Tarefa começada do zero pelo notch sem frente (044): o gestor encaixa numa frente pela
+ * tela, no bloco "Sem frente" de Minha frente e do Quadro. */
+export async function definirFrenteDaTarefa(tarefaId: string, formData: FormData) {
+  const { supabase, pessoa } = await eu();
+  if (pessoa.papel !== "gestor") throw new Error("só gestor classifica tarefa sem frente");
+  const frenteId = String(formData.get("frente_id") || "");
+  if (!frenteId) return;
+  const { error } = await supabase.from("tarefas").update({ frente_id: frenteId }).eq("id", tarefaId);
+  if (error) throw new Error(error.message);
+  revalidarTempo();
 }
 
 /** Só um evento específico, não a competição inteira — o caso "esse é diferente dos outros". */
@@ -219,7 +240,12 @@ export async function iniciarSubtarefa(subtarefaId: string) {
   const { supabase, pessoa } = await eu();
   const { data: parte } = await supabase.from("subtarefas").select("tarefa_id").eq("id", subtarefaId).single();
   if (!parte) throw new Error("parte não encontrada");
-  await fecharAberta(supabase, pessoa.id, "troca");
+  // Uma sessao aberta por (pessoa, tarefa): trocar de parte DENTRO da mesma tarefa fecha o
+  // trecho anterior com 'troca'. As outras tarefas seguem correndo.
+  const { data: aberta } = await supabase
+    .from("sessoes").select("id, subtarefa_id").eq("pessoa_id", pessoa.id).eq("tarefa_id", parte.tarefa_id).is("fim", null).maybeSingle();
+  if (aberta?.subtarefa_id === subtarefaId) { revalidarTempo(); return; }
+  if (aberta) await fecharSessao(supabase, pessoa.id, parte.tarefa_id, "troca");
   const { error } = await supabase
     .from("sessoes")
     .insert({ tarefa_id: parte.tarefa_id, pessoa_id: pessoa.id, subtarefa_id: subtarefaId });

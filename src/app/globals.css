@@ -136,6 +136,15 @@ html, body, aside, section, dialog, .vidro {
   transition: background-color .18s ease, color .18s ease, border-color .18s ease;
 }
 
+/* Dentro da janela nativa do notch (/notch-app) a página não tem fundo nem transição de
+   fundo: a janela do Tauri é transparente e qualquer cor aqui vira um retângulo em volta
+   do Sr. Minutos. Regra no stylesheet (não injetada) pra valer antes do primeiro frame. */
+html:has([data-notch-janela]),
+html:has([data-notch-janela]) body {
+  background: transparent !important;
+  transition: none;
+}
+
 /* Titulo de pagina em Barlow Condensed, o eco da tipografia esportiva. Regra global (fora
    de layer, entao vence o font-semibold das paginas) pra nao editar as paginas no D1. */
 h1, .titulo-pagina {

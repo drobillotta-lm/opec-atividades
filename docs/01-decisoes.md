@@ -247,3 +247,23 @@ em `entregaveis/` e `decisoes/log.md`, e oficializar em `mapa_aprovado.csv` é p
   o site gera um código de uso único (5 min), o app troca por um token próprio, revogável, que só
   mexe no cronômetro da própria pessoa. Nada de senha ou sessão Google dentro do app. O visual
   segue as telas já aprovadas da TELAS.
+
+## 06/10/2026 — Depois do primeiro teste do notch com a Julia
+
+- **Vários cronômetros ao mesmo tempo, cada um somando tempo cheio.** O Daniel quer poder ter
+  mais de uma atividade "sendo feita" e ver todas no notch. Alternativas descartadas: dividir o
+  minuto entre as abertas (honesto na soma do dia, mas difícil de explicar) e manter um relógio
+  só com as outras "em andamento" pausadas. Efeito aceito: a soma de `minutos_medidos` de uma
+  pessoa pode passar das horas-relógio do dia. Uma sessão aberta por (pessoa, tarefa) continua
+  valendo: a mesma tarefa duas vezes contaria em dobro.
+- **Entregar pelo notch**, com o tempo medido valendo como está. O diálogo completo (ajuste de
+  minutos, quem fez, comentário) continua sendo o do site.
+- **Nada que esteja rodando pode ficar invisível.** A `/semana` mostra toda tarefa com sessão
+  minha aberta ou fechada hoje, mesmo de outra semana, marcada. O notch só oferece "próximas"
+  da semana corrente; as vencidas de semanas anteriores ficam num grupo recolhido.
+- **Frente continua opcional no "começar do zero"**; o gestor ganha o bloco "Sem frente" em
+  Minha frente e no Quadro pra encaixar depois. (A alternativa era obrigar a frente no notch.)
+- **O notch sai do site.** As telas já têm toda a informação; o notch é o app nativo.
+- **Histórico em Minha frente nos dois formatos**: navegação por semana com a seção Feitas, e a
+  aba Histórico com paginação e filtros.
+- **Ajustes do notch têm botão próprio (⚙)**, com os cantos e o afastamento ao longo da borda.

@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-entregar"
+description = "Enables the entregar command without any pre-configured scope."
+commands.allow = ["entregar"]
+
+[[permission]]
+identifier = "deny-entregar"
+description = "Denies the entregar command without any pre-configured scope."
+commands.deny = ["entregar"]
