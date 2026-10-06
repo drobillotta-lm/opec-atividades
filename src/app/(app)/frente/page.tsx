@@ -7,6 +7,7 @@ import { Corpo } from "@/componentes/SrMinutos";
 import { nomeTarefa, SEM_EVENTO } from "@/componentes/nome-tarefa";
 import { Seta } from "@/componentes/Seta";
 import { SemFrente } from "@/componentes/SemFrente";
+import { Aba } from "@/componentes/Aba";
 
 export const dynamic = "force-dynamic";
 
@@ -319,16 +320,6 @@ function TabelaFeitas({ tarefas, nomePor, mostrarFrente }: { tarefas: Feita[]; n
         );
       })}
     </div>
-  );
-}
-
-function Aba({ href, ativa, children }: { href: string; ativa: boolean; children: React.ReactNode }) {
-  return (
-    <Link href={href} aria-current={ativa ? "page" : undefined}
-      className={`min-h-[30px] px-3 grid place-items-center rounded-[7px] text-[12.5px] font-medium transition ${
-        ativa ? "bg-elevado text-tinta" : "text-tinta-3 hover:text-tinta-2"}`}>
-      {children}
-    </Link>
   );
 }
 

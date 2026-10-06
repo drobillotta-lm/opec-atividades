@@ -1,5 +1,8 @@
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { Seta } from "@/componentes/Seta";
+import { Aba } from "@/componentes/Aba";
+import { QuadroKanban, type TarefaQuadro } from "@/componentes/QuadroKanban";
+import { tarefasDaFrente } from "@/lib/quadro";
 import { semanaDe, deslocarSemana, rotuloSemana, diaCurto, hhmm, tempoLegivel, ROTULO_ATIVIDADE, escaladosDe } from "@/lib/semana";
 import { Relogio, Submit, TempoParado, DialogoEntrega, DialogoDesnecessaria, DialogoAjuste } from "./Cronometro";
 import { DialogoPartes, type Parte } from "./Partes";
@@ -45,17 +48,33 @@ async function buscarTarefas(supabase: Awaited<ReturnType<typeof criarClienteSer
 export default async function MinhaSemana({
   searchParams,
 }: {
-  searchParams: Promise<{ semana?: string; busca?: string }>;
+  searchParams: Promise<{ semana?: string; busca?: string; ver?: string; quem?: string }>;
 }) {
   const sp = await searchParams;
   const { inicio, fim } = sp.semana ? deslocarSemana(sp.semana, 0) : semanaDe();
   const anterior = deslocarSemana(inicio, -1).inicio;
   const proxima = deslocarSemana(inicio, 1).inicio;
+  // Lista (padrão) ou "Quadro kanban" (06/10): as minhas tarefas em colunas; o líder pode
+  // trocar pra toda a frente. Os links guardam a semana e a vista.
+  const vista = sp.ver === "kanban" ? "kanban" : "lista";
+  const link = (p: { semana?: string; ver?: string; quem?: string }) => {
+    const q = new URLSearchParams();
+    const semana = "semana" in p ? p.semana : sp.semana;
+    const ver = "ver" in p ? p.ver : (vista === "kanban" ? "kanban" : undefined);
+    const quem = "quem" in p ? p.quem : sp.quem;
+    if (semana) q.set("semana", semana);
+    if (ver) q.set("ver", ver);
+    if (ver === "kanban" && quem) q.set("quem", quem);
+    const s = q.toString();
+    return s ? `/semana?${s}` : "/semana";
+  };
 
   const supabase = await criarClienteServidor();
   const { data: { user } } = await supabase.auth.getUser();
   const { data: pessoa } = await supabase
-    .from("pessoas").select("id, nome").eq("auth_user_id", user!.id).single();
+    .from("pessoas").select("id, nome, papel").eq("auth_user_id", user!.id).single();
+  const lider = pessoa!.papel === "lider" || pessoa!.papel === "gestor";
+  const quadroDaFrente = vista === "kanban" && lider && sp.quem === "frente";
 
   const { data: minhas } = await supabase
     .from("tarefas")
@@ -199,25 +218,54 @@ export default async function MinhaSemana({
     }))
     .filter((r) => !idsExistentes.has(r.id));
 
+  // Quadro kanban: as minhas tarefas (as mesmas da lista) ou, pro líder, toda a frente.
+  const quadroMinhas: TarefaQuadro[] = comTempo.map((t) => ({
+    id: t.id, titulo: t.titulo, atividade: t.atividade, status: t.status,
+    escalado_id: t.escalado_id, dupla_id: t.dupla_id, responsavel_real_id: t.responsavel_real_id,
+    frente: t.frente ?? null, evento: t.evento ?? null, segundos: t.segundos,
+    rodando: [...(t.correndo ? [pessoa!.nome] : []), ...t.outrosRodando],
+  }));
+  const quadro = vista !== "kanban" ? null
+    : quadroDaFrente ? (await tarefasDaFrente(supabase, pessoa!, inicio, fim, nomePor)) ?? quadroMinhas
+    : quadroMinhas;
+
   return (
-    <div className="p-6 px-8 flex flex-col gap-5 max-w-[1080px]">
+    <div className={`p-6 px-8 flex flex-col gap-5 ${vista === "kanban" ? "max-w-[1280px]" : "max-w-[1080px]"}`}>
       <AutoAtualiza segundos={30} />
       <header className="flex items-end justify-between gap-5">
         <div className="flex flex-col gap-1.5">
           <h1 className="text-[34px]">Minha semana</h1>
           <p className="text-[12.5px] text-tinta-3">
-            {rotuloSemana(inicio, fim)} · {comTempo.length} tarefas · {tempoLegivel(segundosFeitos)} de {hhmm(horasPrevistas)}
+            {rotuloSemana(inicio, fim)} · {quadroDaFrente && quadro
+              ? <>{quadro.length} tarefas da frente</>
+              : <>{comTempo.length} tarefas · {tempoLegivel(segundosFeitos)} de {hhmm(horasPrevistas)}</>}
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <nav className="flex gap-1 rounded-[10px] bg-superficie-2 border border-linha p-1" aria-label="Como ver">
+            <Aba href={link({ ver: undefined })} ativa={vista === "lista"}>Lista</Aba>
+            <Aba href={link({ ver: "kanban" })} ativa={vista === "kanban"}>Quadro kanban</Aba>
+          </nav>
+          {vista === "kanban" && lider && (
+            <nav className="flex gap-1 rounded-[10px] bg-superficie-2 border border-linha p-1" aria-label="De quem">
+              <Aba href={link({ quem: undefined })} ativa={!quadroDaFrente}>Minhas</Aba>
+              <Aba href={link({ quem: "frente" })} ativa={quadroDaFrente}>Toda a frente</Aba>
+            </nav>
+          )}
           <AbrirDock />
-          <Seta href={`/semana?semana=${anterior}`} rotulo="Semana anterior">‹</Seta>
-          <Seta href="/semana" rotulo="Semana atual">hoje</Seta>
-          <Seta href={`/semana?semana=${proxima}`} rotulo="Próxima semana">›</Seta>
+          <Seta href={link({ semana: anterior })} rotulo="Semana anterior">‹</Seta>
+          <Seta href={link({ semana: undefined })} rotulo="Semana atual">hoje</Seta>
+          <Seta href={link({ semana: proxima })} rotulo="Próxima semana">›</Seta>
         </div>
       </header>
 
-      {emAndamento.map((emCurso, i) => (
+      {quadro && (
+        quadro.length === 0
+          ? <Vazio>{quadroDaFrente ? "Nenhuma tarefa da frente nesta semana." : "Nenhuma tarefa sua nesta semana."}</Vazio>
+          : <QuadroKanban tarefas={quadro} nomePor={nomePor} />
+      )}
+
+      {!quadro && emAndamento.map((emCurso, i) => (
         <div key={emCurso.id} className={`relative ${i === 0 ? "mt-[118px]" : ""} flex items-center gap-5 rounded-xl bg-verde-fundo border border-verde-borda px-5 py-4`}>
           {i === 0 && <Corpo pose="apontando" altura={116} fala={falaSrMinutos} className="right-10 bottom-[calc(100%-6px)]" />}
           <div className="flex flex-col gap-1.5 flex-1 min-w-0">
@@ -275,6 +323,7 @@ export default async function MinhaSemana({
         </div>
       ))}
 
+      {!quadro && (<>
       {pausadas.length > 0 && (
         <Secao titulo="Pausadas" contagem={`${pausadas.length} · ${tempoLegivel(pausadas.reduce((s, t) => s + t.segundos, 0))} ja contados`}>
           {pausadas.map((t) => (
@@ -493,6 +542,7 @@ export default async function MinhaSemana({
           </Linha>
         ))}
       </section>
+      </>)}
     </div>
   );
 }

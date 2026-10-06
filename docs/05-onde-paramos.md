@@ -28,6 +28,10 @@ semana atual. Daí os 7 pedidos do Daniel, todos codados nesta data (plano em
 6. `/frente`: setas de semana, seção **Feitas** (tempo medido × previsto) e aba **Histórico**
    (`?ver=historico`, 50 por página, filtros `pessoa` e `mes`).
 7. Dock: várias abertas viram chips com Pausar; usa `nomeTarefa()` (título das registradas).
+8. **Quadro virou vista de Minha semana** ("Lista | Quadro kanban", `?ver=kanban`): as minhas
+   tarefas em colunas; líder/gestor alternam "Minhas | Toda a frente" (`&quem=frente`).
+   `/kanban` redireciona; item "Quadro" saiu do menu. Componente `QuadroKanban`, consulta em
+   `lib/quadro.ts`.
 
 **Estado ao fechar a sessão de 06/10:** código commitado; `npm run build` limpo; **migration 044
 NÃO aplicada** (o MCP do Supabase recusou duas vezes no prompt de permissão) e por isso **sem
