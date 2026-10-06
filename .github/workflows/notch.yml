@@ -1,0 +1,104 @@
+# Compila o notch do Sr. Minutos (desktop/, Tauri 2) num Mac e num Windows da nuvem do GitHub
+# e sobe os instaladores em public/download/ — a Vercel publica no push. Ninguém precisa ter
+# Mac nem Rust instalado. Rodar à mão: Actions › "Notch (instaladores)" › Run workflow.
+#
+# Atenção: a conta do GitHub precisa estar com a cobrança em dia (em 28/09 nenhum job iniciava
+# por pagamento recusado). Repositório privado consome minutos pagos: um build de Mac leva
+# ~10 min e conta 10x; ~R$ 5 por rodada. Só rodar quando o lado Rust (desktop/) mudar.
+name: Notch (instaladores)
+
+on:
+  workflow_dispatch:
+    inputs:
+      alvo:
+        description: "Qual gerar"
+        type: choice
+        default: ambos
+        options: [ambos, mac, windows]
+  push:
+    tags: ["notch-v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            nome: mac
+            alvo: --target universal-apple-darwin
+            saida: desktop/src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg
+            destino: public/download/AtividadesOPEC.dmg
+          - os: windows-latest
+            nome: windows
+            alvo: ""
+            saida: desktop/src-tauri/target/release/bundle/nsis/*-setup.exe
+            destino: public/download/AtividadesOPEC-Setup.exe
+    runs-on: ${{ matrix.os }}
+    if: ${{ github.event_name == 'push' || inputs.alvo == 'ambos' || inputs.alvo == matrix.nome }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.nome == 'mac' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: desktop/src-tauri
+
+      - name: Dependências do Tauri
+        working-directory: desktop
+        run: npm install
+
+      - name: Build
+        working-directory: desktop
+        run: npx tauri build ${{ matrix.alvo }}
+
+      - name: Copiar pra public/download
+        shell: bash
+        run: |
+          set -e
+          arquivo=$(ls ${{ matrix.saida }} | head -n 1)
+          mkdir -p public/download
+          cp "$arquivo" "${{ matrix.destino }}"
+          ls -la public/download
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: notch-${{ matrix.nome }}
+          path: ${{ matrix.destino }}
+
+  publicar:
+    needs: build
+    if: ${{ always() && contains(needs.build.result, 'success') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: artefatos
+          merge-multiple: true
+
+      - name: Commit dos instaladores
+        run: |
+          set -e
+          mkdir -p public/download
+          cp artefatos/* public/download/
+          git config user.name "notch-bot"
+          git config user.email "notch-bot@users.noreply.github.com"
+          git add public/download
+          git diff --cached --quiet && echo "nada mudou" && exit 0
+          versao=$(node -p "require('./desktop/src-tauri/tauri.conf.json').version")
+          git commit -m "Instaladores do notch $versao (build automático)"
+          git push origin main
