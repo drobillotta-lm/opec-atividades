@@ -39,7 +39,12 @@ push**: aplicar a 044 primeiro (`supabase/migrations/044_…sql`, MCP `apply_mig
 Editor), depois `git push`. **Instalador 0.3.0 não gerado**: esta máquina (Desktop) não tem
 Rust nem Build Tools; gerar no PC com Rust (`desktop/README.md`) e copiar pra `public/download/`.
 
-**Pendente, em ordem:** (1) aplicar 044 + push; (2) gerar e instalar o 0.3.0; (3) testar no
+**Instaladores (Win 0.3.0 e Mac .dmg) sem precisar de Mac nem Rust:** `.github/workflows/notch.yml`
+(Actions › "Notch (instaladores)" › Run workflow) compila nos dois sistemas e commita em
+`public/download/`. Em 06/10 o job não inicia: **cobrança do GitHub recusada** ("recent account
+payments have failed"). Arrumar em github.com › Settings › Billing e rodar de novo.
+
+**Pendente, em ordem:** (1) aplicar 044 (`supabase/APLICAR-044.md`); (2) gerar e instalar o 0.3.0; (3) testar no
 notch: A e B juntas, pausar só B, entregar A, ver `/semana`; (4) itens 3–7 da lista de 03/10
 abaixo (dupla Julia/Pedro, paginação local, `rotulosAtividade()` nas páginas, Yuri, piloto).
 
