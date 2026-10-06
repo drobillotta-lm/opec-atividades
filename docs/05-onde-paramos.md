@@ -33,10 +33,8 @@ semana atual. Daí os 7 pedidos do Daniel, todos codados nesta data (plano em
    `/kanban` redireciona; item "Quadro" saiu do menu. Componente `QuadroKanban`, consulta em
    `lib/quadro.ts`.
 
-**Estado ao fechar a sessão de 06/10:** código commitado; `npm run build` limpo; **migration 044
-NÃO aplicada** (o MCP do Supabase recusou duas vezes no prompt de permissão) e por isso **sem
-push**: aplicar a 044 primeiro (`supabase/migrations/044_…sql`, MCP `apply_migration` ou SQL
-Editor), depois `git push`. **Instalador 0.3.0 não gerado**: esta máquina (Desktop) não tem
+**Estado ao fechar a sessão de 06/10:** código commitado e publicado; `npm run build` limpo; migration
+044 aplicada pelo Daniel no SQL Editor (o MCP do Supabase recusou todas as escritas nesta sessão). **Instalador 0.3.0 não gerado**: esta máquina (Desktop) não tem
 Rust nem Build Tools; gerar no PC com Rust (`desktop/README.md`) e copiar pra `public/download/`.
 
 **Instaladores (Win 0.3.0 e Mac .dmg) sem precisar de Mac nem Rust:** `.github/workflows/notch.yml`
@@ -44,7 +42,7 @@ Rust nem Build Tools; gerar no PC com Rust (`desktop/README.md`) e copiar pra `p
 `public/download/`. Em 06/10 o job não inicia: **cobrança do GitHub recusada** ("recent account
 payments have failed"). Arrumar em github.com › Settings › Billing e rodar de novo.
 
-**Pendente, em ordem:** (1) aplicar 044 (`supabase/APLICAR-044.md`); (2) gerar e instalar o 0.3.0; (3) testar no
+**Pendente, em ordem:** (1) ~~aplicar 044~~ — o Daniel aplicou pelo SQL Editor em 06/10 (conferido: índice e funções no banco); (2) gerar e instalar o 0.3.0; (3) testar no
 notch: A e B juntas, pausar só B, entregar A, ver `/semana`; (4) itens 3–7 da lista de 03/10
 abaixo (dupla Julia/Pedro, paginação local, `rotulosAtividade()` nas páginas, Yuri, piloto).
 
