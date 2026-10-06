@@ -9,12 +9,6 @@ name: Notch (instaladores)
 
 on:
   workflow_dispatch:
-    inputs:
-      alvo:
-        description: "Qual gerar"
-        type: choice
-        default: ambos
-        options: [ambos, mac, windows]
   push:
     tags: ["notch-v*"]
 
@@ -38,7 +32,6 @@ jobs:
             saida: desktop/src-tauri/target/release/bundle/nsis/*-setup.exe
             destino: public/download/AtividadesOPEC-Setup.exe
     runs-on: ${{ matrix.os }}
-    if: ${{ github.event_name == 'push' || inputs.alvo == 'ambos' || inputs.alvo == matrix.nome }}
     steps:
       - uses: actions/checkout@v4
 
