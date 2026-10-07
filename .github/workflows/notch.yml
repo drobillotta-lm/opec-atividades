@@ -90,8 +90,10 @@ jobs:
           cp artefatos/* public/download/
           git config user.name "notch-bot"
           git config user.email "notch-bot@users.noreply.github.com"
+          # versao.json é o que o notch instalado lê pra saber se está atrasado (NotchApp.tsx).
+          versao=$(node -p "require('./desktop/src-tauri/tauri.conf.json').version")
+          printf '{ "versao": "%s", "data": "%s" }\n' "$versao" "$(date -u +%F)" > public/download/versao.json
           git add public/download
           git diff --cached --quiet && echo "nada mudou" && exit 0
-          versao=$(node -p "require('./desktop/src-tauri/tauri.conf.json').version")
           git commit -m "Instaladores do notch $versao (build automático)"
           git push origin main

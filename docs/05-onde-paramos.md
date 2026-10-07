@@ -42,6 +42,17 @@ Rust nem Build Tools; gerar no PC com Rust (`desktop/README.md`) e copiar pra `p
 `public/download/`. Em 06/10 o job não inicia: **cobrança do GitHub recusada** ("recent account
 payments have failed"). Arrumar em github.com › Settings › Billing e rodar de novo.
 
+**07/10 — o notch avisa quando está atrasado.** O Gabriel (app 0.2.0) viu "Command entregar not
+allowed by ACL" ao clicar Entregar: o 0.2.0 não tem a permissão `allow-entregar`, e o caminho de
+degradação só reconhecia "not found". Corrigido (`6748c69`). Daí a checagem automática: toda vez
+que o app abre, `NotchApp.tsx` pergunta a versão instalada ao Tauri (`plugin:app|version`, liberado
+pelo `core:default` em qualquer versão) e compara com `public/download/versao.json`; se estiver
+atrasado, mostra "Versão X disponível" com botão Baixar (abre o .exe ou o .dmg no navegador).
+Repete a cada 6 h. O `versao.json` é escrito pelo robô `notch.yml` junto com os instaladores —
+**não editar à mão**; pra lançar versão nova basta subir `version` no `tauri.conf.json` e rodar o
+workflow. Instalar por cima mantém o pareamento. Próximo passo possível: `tauri-plugin-updater`
+(atualização silenciosa), que exige par de chaves de assinatura e um `latest.json`.
+
 **Pendente, em ordem:** (1) ~~aplicar 044~~ — o Daniel aplicou pelo SQL Editor em 06/10 (conferido: índice e funções no banco); (2) gerar e instalar o 0.3.0; (3) testar no
 notch: A e B juntas, pausar só B, entregar A, ver `/semana`; (4) itens 3–7 da lista de 03/10
 abaixo (dupla Julia/Pedro, paginação local, `rotulosAtividade()` nas páginas, Yuri, piloto).

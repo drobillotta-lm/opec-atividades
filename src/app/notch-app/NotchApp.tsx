@@ -53,6 +53,18 @@ const comoEstado = (r: unknown): Estado | null => {
   };
 };
 
+/** "0.3.0" vs "0.10.1": compara número a número, não como texto. */
+const versaoMenor = (a: string, b: string) => {
+  const pa = a.split(".").map((n) => parseInt(n, 10) || 0);
+  const pb = b.split(".").map((n) => parseInt(n, 10) || 0);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    if ((pa[i] ?? 0) !== (pb[i] ?? 0)) return (pa[i] ?? 0) < (pb[i] ?? 0);
+  }
+  return false;
+};
+const INSTALADOR = /Mac/i.test(typeof navigator === "undefined" ? "" : navigator.userAgent)
+  ? "/download/AtividadesOPEC.dmg" : "/download/AtividadesOPEC-Setup.exe";
+
 const fimDoDia = () => { const d = new Date(); d.setHours(23, 59, 0, 0); return d.toISOString(); };
 const congelar = (t: TarefaNotch): TarefaNotch => ({
   ...t,
@@ -75,10 +87,34 @@ export function NotchApp() {
   const [novaFrente, setNovaFrente] = useState("");
   const [falha, setFalha] = useState<string | null>(null);
   const [valeu, setValeu] = useState<{ atrasada: boolean } | null>(null);
+  const [atualizacao, setAtualizacao] = useState<{ instalada: string; nova: string } | null>(null);
 
   const mudar = useCallback((e: Estado | null) => { estadoRef.current = e; setEstado(e); }, []);
 
   useEffect(() => { setTauri(!!window.__TAURI__); }, []);
+
+  // Toda vez que o app abre ele carrega esta página: aqui se confere se o instalado está
+  // atrasado. A versão instalada vem do próprio Tauri (`core:default` libera `plugin:app|version`
+  // em qualquer versão do app); a mais nova é o versao.json que o robô dos instaladores escreve.
+  // Repete a cada 6 h porque o notch fica dias aberto.
+  useEffect(() => {
+    if (!tauri) return;
+    let vivo = true;
+    const conferir = async () => {
+      try {
+        const [instalada, r] = await Promise.all([
+          invoke<string>("plugin:app|version"),
+          fetch("/download/versao.json", { cache: "no-store" }),
+        ]);
+        const { versao: nova } = (await r.json()) as { versao?: string };
+        if (!vivo || !nova || !instalada) return;
+        setAtualizacao(versaoMenor(instalada, nova) ? { instalada, nova } : null);
+      } catch { /* sem rede ou app sem o comando: nada a mostrar */ }
+    };
+    conferir();
+    const t = setInterval(conferir, 6 * 60 * 60 * 1000);
+    return () => { vivo = false; clearInterval(t); };
+  }, [tauri]);
 
   const carregar = useCallback(async () => {
     try { mudar(comoEstado(await invoke<unknown>("estado"))); } catch { /* o relógio local segue; tenta de novo em 15 s */ }
@@ -272,7 +308,19 @@ export function NotchApp() {
               <b className="font-display text-[15px] font-extrabold uppercase text-[var(--notch-verde)]">Valeu cara</b>
               <span className="text-[11px] text-[var(--notch-tinta-2)]">{valeu.atrasada ? "Fechou, mesmo atrasada." : "Entregue."}</span>
             </span>
-          ) : falha ? <span role="alert" className="text-rosa">{falha}</span> : null
+          ) : falha ? <span role="alert" className="text-rosa">{falha}</span>
+          : atualizacao ? (
+            <span className="flex items-center justify-between gap-2 rounded-[10px] border border-[var(--notch-linha)] bg-[var(--notch-botao)] px-2.5 py-1.5">
+              <span className="text-[var(--notch-tinta-2)]">
+                <b className="text-[var(--notch-mostrador)]">Versão {atualizacao.nova} disponível</b>
+                <span className="block text-[10.5px]">Você está na {atualizacao.instalada}. Baixe e instale por cima; o pareamento continua.</span>
+              </span>
+              <button type="button" onClick={() => { invoke("abrir", { caminho: INSTALADOR }).catch(() => {}); }}
+                className="shrink-0 min-h-[28px] rounded-[8px] bg-[var(--notch-verde)] text-[var(--notch-ink)] px-2.5 text-[11.5px] font-bold">
+                Baixar
+              </button>
+            </span>
+          ) : null
         }
         rodapePainel={
           <form onSubmit={comecar} className="flex flex-col gap-1.5">
