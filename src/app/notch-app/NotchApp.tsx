@@ -177,8 +177,9 @@ export function NotchApp() {
     } catch (err) {
       mudar(antes);
       const msg = err instanceof Error ? err.message : String(err ?? "");
-      // App 0.2.0 não tem o comando: entrega pelo site, como antes.
-      if (/not found|unknown command|não encontrado/i.test(msg)) {
+      // App 0.2.0 não tem o comando: o Tauri 2 responde "Command entregar not allowed by ACL"
+      // (a permissão allow-entregar só existe no 0.3.0). Entrega pelo site, como antes.
+      if (/not allowed by ACL|not found|unknown command|não encontrado/i.test(msg)) {
         invoke("abrir", { caminho: "/semana" }).catch(() => {});
         setFalha("Esta versão do app não entrega daqui. Abri Minha semana; atualize o app em Atividades › Notch.");
       } else {
