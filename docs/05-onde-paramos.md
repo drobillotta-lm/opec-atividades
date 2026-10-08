@@ -24,10 +24,9 @@ de outra sessão (07/10) — o push foi feito por um worktree limpo; reconciliar
 **Lado Atividades — NO AR (push `4ee999a`), migrations 045 e 046 aplicadas em 08/10.** O MCP do
 Supabase recusou `apply_migration` e qualquer `execute_sql` com `delete from` ou `drop`; o
 resto do DDL passou pelo `execute_sql` em pedaços (por isso o `gerar_tarefas` v6 filtra a
-janela no próprio select em vez do `delete from _cand` da v5). **Sobrou para o Daniel colar no
-SQL Editor:** `drop function alterar_janela(text, text, integer, integer);` — a versão antiga de
-4 parâmetros ficou ao lado da nova de 5 (o PostgREST acha a certa pelos nomes, mas a 044 já
-mostrou que sobrecarga é armadilha).
+janela no próprio select em vez do `delete from _cand` da v5). O `drop function
+alterar_janela(text, text, integer, integer)` o Daniel colou no SQL Editor em 08/10 (conferido:
+só a versão de 5 parâmetros no banco). Banco = repo até a 046.
 Regeneração feita à mão depois das migrations (mesmos passos da sync): `gerar_tarefas` criou
 **336** partes, `desfazer_tarefas_fora_da_cadeia` apagou **178** combinadas de eventos ≥ 09/10
 (nenhuma tinha tempo), `sem_escalado` = 3 (Kings sem mapa, como antes). Conferido no banco:
