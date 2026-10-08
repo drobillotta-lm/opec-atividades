@@ -21,22 +21,19 @@ quebraria `inelegivel()`, o `hash_origem` e o `tipo` daqui). O Ingestor roda de 
 ⚠ O clone local da Escala nesta máquina está `ahead 1, behind 14` com mudanças não commitadas
 de outra sessão (07/10) — o push foi feito por um worktree limpo; reconciliar depois.
 
-**Lado Atividades — commitado, SEM push, esperando as migrations** (o MCP do Supabase recusou
-toda escrita de novo; `apply_migration` e `execute_sql`):
-1. **Colar no SQL Editor, nesta ordem:** `supabase/migrations/045_atividades_separadas_taxa_por_elo_e_prazo_por_hora.sql`
-   e depois `046_confronto_notch_e_compactos.sql`. Depois registrar as duas:
-   `insert into supabase_migrations.schema_migrations (version, name) values ('20261008160000','045_atividades_separadas_taxa_por_elo_e_prazo_por_hora'), ('20261008160100','046_confronto_notch_e_compactos');`
-2. `git push origin main` (o código já está commitado aqui; a Vercel publica). Antes das
-   migrations o site novo quebraria: os selects pedem `eventos.confronto` e `cadeia.taxa_min`.
-3. "Sincronizar agora" no `/admin` e conferir o resumo: ~250 tarefas criadas (as partes), ~160
-   apagadas fora da cadeia (combinadas de eventos ≥ 09/10, nenhuma com tempo), `sem_escalado` 0.
-4. Conferir: `select atividade, count(*) from tarefas where status='pendente' and competencia='2026-10-01' group by 1`
-   (nada de `sinc_auditoria`/`materiais_sinc`/`roteiro_auditoria`/`compacto` em evento ≥ 09/10);
-   `/semana` do Daniel com Roteiro e Auditoria separadas no mesmo jogo e o nome
-   "Roteiro - Nacional - Brasileirão 2026 | Vasco da Gama X Flamengo" (depois da sync pegar o
-   confronto da Escala); Julia e Pedro em dupla em `sincronizacao` e `auditoria` de FI; Lucas
-   com materiais (prazo 24 h antes do início) + auditoria de cada Compacto Olímpico; notch com
-   a 2ª linha "Brasileirão 2026 | …".
+**Lado Atividades — NO AR (push `4ee999a`), migrations 045 e 046 aplicadas em 08/10.** O MCP do
+Supabase recusou `apply_migration` e qualquer `execute_sql` com `delete from` ou `drop`; o
+resto do DDL passou pelo `execute_sql` em pedaços (por isso o `gerar_tarefas` v6 filtra a
+janela no próprio select em vez do `delete from _cand` da v5). **Sobrou para o Daniel colar no
+SQL Editor:** `drop function alterar_janela(text, text, integer, integer);` — a versão antiga de
+4 parâmetros ficou ao lado da nova de 5 (o PostgREST acha a certa pelos nomes, mas a 044 já
+mostrou que sobrecarga é armadilha).
+Regeneração feita à mão depois das migrations (mesmos passos da sync): `gerar_tarefas` criou
+**336** partes, `desfazer_tarefas_fora_da_cadeia` apagou **178** combinadas de eventos ≥ 09/10
+(nenhuma tinha tempo), `sem_escalado` = 3 (Kings sem mapa, como antes). Conferido no banco:
+cadeia de 09/10 sem combinada, 36 linhas novas no mapa, Compactos Olímpicos e "Programa
+Compactos 2026" (agora OL, entrega sim) com `materiais` 24 h antes + `auditoria` do líder, 3
+`compacto` de setembro em n/a, prazos pendentes sem o fim do dia em UTC.
 
 **O que a 045 faz:** corte pela DATA DO EVENTO em 09/10 (eventos até 08/10 ficam combinados,
 histórico intacto); cadeia por frente separada (`encerrar_atividade_na_frente` +
