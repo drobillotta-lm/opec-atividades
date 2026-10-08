@@ -105,7 +105,7 @@ export function DialogoEntrega({
             <label htmlFor="minutos" className="text-[12.5px] font-medium text-tinta-2">Tempo gasto</label>
             <div className="flex items-center gap-2">
               <input
-                id="minutos" name="minutos" type="number" min={0} step={5} required
+                id="minutos" name="minutos" type="number" min={0} step={1} required
                 value={minutos}
                 onChange={(e) => setMinutos(Number(e.target.value))}
                 className="num w-28 min-h-10 px-3 rounded-lg border border-linha bg-superficie-2 text-[14px]"
@@ -185,7 +185,7 @@ export function DialogoAjuste({
           <div className="flex flex-col gap-2">
             <label htmlFor="minutos-ajuste" className="text-[12.5px] font-medium text-tinta-2">Minutos</label>
             <input
-              id="minutos-ajuste" name="minutos" type="number" step={5} required
+              id="minutos-ajuste" name="minutos" type="number" step={1} required
               placeholder="ex.: 20 ou -20"
               className="num w-32 min-h-10 px-3 rounded-lg border border-linha bg-superficie-2 text-[14px]"
             />

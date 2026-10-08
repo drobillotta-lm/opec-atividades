@@ -10,10 +10,14 @@ type Tema = "claro" | "escuro";
  * errado antes do React assumir. Vai inline no <head>, de proposito.
  * Sem escolha registrada vale Noite (decisao do Daniel, 01/10): nao segue o sistema.
  * Os valores guardados continuam "escuro" (Noite) e "claro" (Mostrador).
+ * Aproveita a mesma passada para o menu lateral (MenuLateral.tsx): `opec-menu` = "recolhido"
+ * vira `data-menu="recolhido"` no <html>; sem escolha, no celular (< 768 px) começa recolhido.
  */
 export const scriptAntiPisca = `(function(){try{
 var t=localStorage.getItem('${CHAVE}');
 document.documentElement.setAttribute('data-tema',t==='claro'?'claro':'escuro');
+var m=localStorage.getItem('opec-menu');
+if(m==='recolhido'||(m===null&&window.innerWidth<768))document.documentElement.setAttribute('data-menu','recolhido');
 }catch(e){}})();`;
 
 export function BotaoTema({ compacto = false }: { compacto?: boolean }) {

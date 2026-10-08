@@ -177,3 +177,11 @@ h1, .titulo-pagina {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
 }
+
+/* Menu lateral recolhido (Daniel, 08/10). A preferência vive em localStorage ("opec-menu") e é
+   aplicada no <html> antes da pintura pelo script anti-pisca (Tema.tsx); MenuLateral.tsx alterna.
+   .so-aberto / .so-recolhido escolhem o que cada estado mostra. */
+html[data-menu="recolhido"] [data-menu-lateral] { width: 56px; padding-left: 8px; padding-right: 8px; }
+html[data-menu="recolhido"] [data-menu-lateral] .so-aberto { display: none; }
+html:not([data-menu="recolhido"]) [data-menu-lateral] .so-recolhido { display: none; }
+html[data-menu="recolhido"] [data-menu-lateral] nav a { padding-left: 0; padding-right: 0; justify-content: center; }
