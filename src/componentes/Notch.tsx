@@ -20,12 +20,14 @@ export type TarefaNotch = {
   id: string;
   titulo: string;
   sub: string;
+  competicao?: string | null;
+  confronto?: string | null;
   prazoEm: string;
   estimativaMin: number;
   segundos: number;
   correndoDesde: string | null;
 };
-export type ProximaNotch = { id: string; titulo: string; sub: string; prazoEm: string };
+export type ProximaNotch = { id: string; titulo: string; sub: string; competicao?: string | null; confronto?: string | null; prazoEm: string };
 
 export type Canto = "baixo-dir" | "baixo-esq" | "dir-alto" | "esq-alto";
 export type Ajustes = { canto: Canto; recuoX: number; recuoY: number };

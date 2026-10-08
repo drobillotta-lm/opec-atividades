@@ -1,6 +1,6 @@
-import { diaCurto, ROTULO_ATIVIDADE, escaladosDe } from "@/lib/semana";
+import { diaCurto, escaladosDe } from "@/lib/semana";
 import { Rosto } from "@/componentes/SrMinutos";
-import { SEM_EVENTO } from "@/componentes/nome-tarefa";
+import { SEM_EVENTO, nomeTarefa } from "@/componentes/nome-tarefa";
 
 /**
  * Quadro kanban (06/10): antes era a página /kanban do líder; virou uma forma de ver as
@@ -17,7 +17,7 @@ export type TarefaQuadro = {
   dupla_id: string | null;
   responsavel_real_id: string | null;
   frente: { sigla: string } | null;
-  evento: { competicao: string; data: string } | null;
+  evento: { competicao: string; data: string; evento_id_origem?: string | null; confronto?: string | null } | null;
   segundos: number;
   rodando: string[];
 };
@@ -56,12 +56,12 @@ function Coluna({ titulo, cor, tarefas, nomePor }: { titulo: string; cor: string
             <div key={t.id} className={`rounded-[10px] bg-superficie border border-linha p-3 flex flex-col gap-1.5 ${naoNecessaria ? "opacity-60" : ""}`}>
               <div className="flex items-center justify-between gap-2">
                 <span className={`text-[12.5px] font-medium ${naoNecessaria ? "line-through decoration-tinta-4" : ""}`}>
-                  {t.titulo ?? ROTULO_ATIVIDADE[t.atividade] ?? t.atividade}
+                  {nomeTarefa({ titulo: t.titulo, atividade: t.atividade, frente: null, evento: t.evento })}
                 </span>
                 <span className="text-[10.5px] text-tinta-4 shrink-0">{t.frente?.sigla ?? "sem frente"}</span>
               </div>
               <span className="text-[11px] text-tinta-4 truncate">
-                {t.evento ? <>{t.evento.competicao} · {diaCurto(t.evento.data)}</> : SEM_EVENTO}
+                {t.evento ? <>evento {diaCurto(t.evento.data)}</> : SEM_EVENTO}
               </span>
               <div className="flex items-center justify-between gap-2 pt-0.5">
                 <span className="text-[11.5px] text-tinta-3">

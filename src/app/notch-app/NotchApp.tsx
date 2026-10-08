@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Notch, AJUSTES_PADRAO, MARGEM, type Ajustes, type ProximaNotch, type TarefaNotch } from "@/componentes/Notch";
 import { Rosto } from "@/componentes/SrMinutos";
+import { nomeEvento } from "@/componentes/nome-tarefa";
 
 /**
  * O notch dentro do app nativo (Tauri, contrato com a janela APP em 02/10; listas em 06/10).
@@ -39,8 +40,12 @@ const comoEstado = (r: unknown): Estado | null => {
     else if ("estado" in r) e = (r as { estado: Record<string, unknown> }).estado;
   }
   if (!e) return null;
-  const lista = <T,>(v: unknown): T[] => (Array.isArray(v) ? (v as T[]) : []);
-  const tarefa = e.tarefa as TarefaNotch | null | undefined;
+  // A 2ª linha ganha o confronto quando o banco manda (046): "Brasileirão 2026 | Vasco X Flamengo".
+  const comSub = <T extends { sub: string; competicao?: string | null; confronto?: string | null }>(x: T): T =>
+    x.confronto ? { ...x, sub: nomeEvento(x.competicao ?? x.sub, x.confronto) } : x;
+  const lista = <T extends { sub: string; competicao?: string | null; confronto?: string | null }>(v: unknown): T[] =>
+    (Array.isArray(v) ? (v as T[]).map(comSub) : []);
+  const tarefa = e.tarefa ? comSub(e.tarefa as TarefaNotch) : null;
   const correndo = "correndo" in e ? lista<TarefaNotch>(e.correndo) : tarefa?.correndoDesde ? [tarefa] : [];
   const pausadas = "pausadas" in e ? lista<TarefaNotch>(e.pausadas) : tarefa && !tarefa.correndoDesde ? [tarefa] : [];
   return {
@@ -49,7 +54,7 @@ const comoEstado = (r: unknown): Estado | null => {
     correndo, pausadas,
     proximas: lista<ProximaNotch>(e.proximas),
     atrasadas: lista<ProximaNotch>(e.atrasadas),
-    frentes: lista<Frente>(e.frentes),
+    frentes: Array.isArray(e.frentes) ? (e.frentes as Frente[]) : [],
   };
 };
 

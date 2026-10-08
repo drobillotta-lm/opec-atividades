@@ -12,7 +12,7 @@ import { Aba } from "@/componentes/Aba";
 export const dynamic = "force-dynamic";
 
 const CAMPOS = `id, atividade, titulo, status, estimativa_min, prazo_em, concluida_em, escalado_id, dupla_id, responsavel_real_id,
-                excecao_desc, frente_id, origem, frentes ( sigla, nome ), eventos ( competicao, data )`;
+                excecao_desc, frente_id, origem, frentes ( sigla, nome ), eventos ( competicao, data, evento_id_origem, confronto )`;
 const FEITOS = ["entregue", "fora_do_prazo", "na"];
 const POR_PAGINA = 50;
 const GRADE = "grid grid-cols-[1.9fr_0.8fr_1.5fr_0.9fr] gap-3";
@@ -197,7 +197,7 @@ export default async function MinhaFrente({ searchParams }: {
                 <div className="flex flex-col gap-0.5 min-w-0">
                   <span className="text-[13px] font-medium">{nomeTarefa(t, "sigla")}</span>
                   <span className="text-[11px] text-tinta-4 truncate">
-                    {t.evento ? <>{t.evento.competicao} · {diaCurto(t.evento.data)}</> : SEM_EVENTO}
+                    {t.evento ? <>evento {diaCurto(t.evento.data)}</> : SEM_EVENTO}
                     {t.segundos > 0 && <> · {tempoLegivel(t.segundos)} medidos</>}
                   </span>
                 </div>
@@ -268,7 +268,8 @@ type Linha = {
   concluida_em: string | null; escalado_id: string; dupla_id: string | null; responsavel_real_id: string | null;
   excecao_desc: string | null; frente_id: string | null; origem: string;
   frentes: { sigla: string; nome: string } | { sigla: string; nome: string }[] | null;
-  eventos: { competicao: string; data: string } | { competicao: string; data: string }[] | null;
+  eventos: { competicao: string; data: string; evento_id_origem?: string | null; confronto?: string | null }
+         | { competicao: string; data: string; evento_id_origem?: string | null; confronto?: string | null }[] | null;
 };
 
 /** Junta o tempo medido (v_tempo_tarefa) e achata frente/evento. */
@@ -306,7 +307,7 @@ function TabelaFeitas({ tarefas, nomePor, mostrarFrente }: { tarefas: Feita[]; n
                 {nomeTarefa(t, "sigla")}{mostrarFrente && !t.frente ? " · sem frente" : ""}
               </span>
               <span className="text-[11px] text-tinta-4 truncate">
-                {t.evento ? <>{t.evento.competicao} · {diaCurto(t.evento.data)}</> : SEM_EVENTO}
+                {t.evento ? <>evento {diaCurto(t.evento.data)}</> : SEM_EVENTO}
                 {fora && <span className="text-rosa"> · fora do prazo</span>}
                 {t.status === "na" && <> · {ROTULO_STATUS.na.toLowerCase()}{t.excecao_desc ? `: ${t.excecao_desc}` : ""}</>}
               </span>

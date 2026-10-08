@@ -1,5 +1,69 @@
 # Onde paramos — 28/09/2026
 
+## RETOMAR AQUI (08/10/2026 — atividades únicas, nome com o jogo, compactos, menu, tempo livre)
+
+Plano aprovado pelo Daniel em 08/10 (`~/.claude/plans/tive-umas-ideias-de-robust-unicorn.md` no
+Desktop). Quatro pedidos de 07/10:
+
+**Já no ar (push `c1b8f97`):** (3) menu da esquerda recolhe (botão ‹ no topo; preferência em
+`localStorage` `opec-menu`, aplicada antes da pintura pelo script do tema; celular começa
+recolhido) e (4) o tempo da atividade aceita qualquer minuto (`step={1}` no Entregar e no
+Ajustar — o `step={5}` recusava o envio porque o medido quase nunca é múltiplo de 5).
+
+**Lado Escala, no ar (push `45ca5ee` na `master`, migration 067 aplicada):** o confronto
+("Vasco da Gama X Flamengo") agora vem do Airtable ("Auxiliar Partida Só Times") para a coluna
+nova `escala.eventos.confronto`. Causa de nunca ter vindo: o nó Code "Empacota para o Ingestor"
+do n8n (`u1kLZsq9DcBcNeV8`) só repassava uma lista fixa de campos — acrescentado lá pela API,
+cópia em `n8n/workflows/ingestor_empacota.js`. O `jogo` voltou a ser só o "Nome do Evento"
+(o fallback de 23/09, se rodasse, tiraria "[SEM NARRAÇÃO]"/"Reprise"/"Compacto" do nome e
+quebraria `inelegivel()`, o `hash_origem` e o `tipo` daqui). O Ingestor roda de hora em hora
+(min 05): conferir `select jogo, confronto from escala.eventos where data >= current_date limit 5`.
+⚠ O clone local da Escala nesta máquina está `ahead 1, behind 14` com mudanças não commitadas
+de outra sessão (07/10) — o push foi feito por um worktree limpo; reconciliar depois.
+
+**Lado Atividades — commitado, SEM push, esperando as migrations** (o MCP do Supabase recusou
+toda escrita de novo; `apply_migration` e `execute_sql`):
+1. **Colar no SQL Editor, nesta ordem:** `supabase/migrations/045_atividades_separadas_taxa_por_elo_e_prazo_por_hora.sql`
+   e depois `046_confronto_notch_e_compactos.sql`. Depois registrar as duas:
+   `insert into supabase_migrations.schema_migrations (version, name) values ('20261008160000','045_atividades_separadas_taxa_por_elo_e_prazo_por_hora'), ('20261008160100','046_confronto_notch_e_compactos');`
+2. `git push origin main` (o código já está commitado aqui; a Vercel publica). Antes das
+   migrations o site novo quebraria: os selects pedem `eventos.confronto` e `cadeia.taxa_min`.
+3. "Sincronizar agora" no `/admin` e conferir o resumo: ~250 tarefas criadas (as partes), ~160
+   apagadas fora da cadeia (combinadas de eventos ≥ 09/10, nenhuma com tempo), `sem_escalado` 0.
+4. Conferir: `select atividade, count(*) from tarefas where status='pendente' and competencia='2026-10-01' group by 1`
+   (nada de `sinc_auditoria`/`materiais_sinc`/`roteiro_auditoria`/`compacto` em evento ≥ 09/10);
+   `/semana` do Daniel com Roteiro e Auditoria separadas no mesmo jogo e o nome
+   "Roteiro - Nacional - Brasileirão 2026 | Vasco da Gama X Flamengo" (depois da sync pegar o
+   confronto da Escala); Julia e Pedro em dupla em `sincronizacao` e `auditoria` de FI; Lucas
+   com materiais (prazo 24 h antes do início) + auditoria de cada Compacto Olímpico; notch com
+   a 2ª linha "Brasileirão 2026 | …".
+
+**O que a 045 faz:** corte pela DATA DO EVENTO em 09/10 (eventos até 08/10 ficam combinados,
+histórico intacto); cadeia por frente separada (`encerrar_atividade_na_frente` +
+`reabrir_atividade_na_frente` em FI/OL/PR/CP; NA e KG ganham as partes direto, janelas da 016);
+mapa copia pessoa+dupla da combinada para as partes (out/nov/dez); `cadeia.taxa_min` (override
+por elo: sincronizacao 72 + auditoria 96 em FI/OL/PR/CP = os 168 do Yuri, decisão do Daniel);
+`cadeia.prazo_horas_antes` + `gerar_tarefas` v6 + `alterar_janela` v2 (campo "h antes do
+início" na tela Organizar); `private.fim_do_dia_brt` (o prazo caía às 20:59 BRT; pendentes
+ganharam +3 h); combinadas `ativa=false`; `v_cadeia_atual` com a taxa efetiva.
+**O que a 046 faz:** `eventos.confronto`; `notch_estado` v3 devolve `competicao` e `confronto`
+(a página monta a 2ª linha; `sub` segue igual para o app antigo); `garantir_cadeia_compactos()`
+(toda competição "Compacto…" com frente ganha `materiais` 24 h antes + `auditoria` 0/+2, as
+MESMAS atividades dos jogos, escalado = líder — decisões do Daniel; a sync chama toda hora);
+"Programa Compactos 2026" → Olímpicos + Tênis com entrega `sim` (a Escala não tem essa
+competição em `escala.competicoes`, então não sobrescreve); `compacto` inativo; as 3 `compacto`
+de setembro viram n/a.
+
+**Nome das tarefas:** `nomeTarefa()` → `Atividade - Frente - Competição | Confronto`
+(`src/componentes/nome-tarefa.ts`, `nomeEvento()` deriva do "Nome do Evento" quando não há
+confronto: tira "Compacto |", "Pré Jogo |", "[SEM NARRAÇÃO]" e o pedaço que repete a
+competição). Linhas secundárias das telas viraram só "evento dd/mm". Casos testados em
+`scratchpad/checa-nome-evento.ts` (13 ok).
+
+**Avisar o Yuri:** o app separou as combinadas (mesma pessoa, duas tarefas), guardou os 168 por
+elo, e os compactos têm regra provisória fora do modelo dele. Pendências antigas seguem: dupla
+Julia/Pedro na tela, paginação local, `rotulosAtividade()` nas páginas, piloto com as 7 pessoas.
+
 ## RETOMAR AQUI (06/10/2026 — revisão depois do teste da Julia no notch)
 
 Primeiro teste do notch com outra pessoa (Julia, 06/10): 5 sessões, todas em tarefas **vencidas**

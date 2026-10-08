@@ -3,6 +3,7 @@ import { criarClienteServidor } from "@/lib/supabase/server";
 import { diaCurto, ROTULO_ATIVIDADE, ROTULO_STATUS, escaladosDe } from "@/lib/semana";
 import { classificarCompeticao, classificarEvento, criarFrenteEClassificar } from "../../acoes";
 import { ClassificarEvento } from "./ClassificarEvento";
+import { nomeEvento } from "@/componentes/nome-tarefa";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +23,7 @@ export default async function GestaoEventos() {
 
   const { data: eventosBrutos } = await supabase
     .from("eventos")
-    .select(`id, evento_id_origem, competicao, data, entrega, entrega_origem, frentes ( sigla )`)
+    .select(`id, evento_id_origem, confronto, competicao, data, entrega, entrega_origem, frentes ( sigla )`)
     .gte("data", de).lte("data", ate)
     .order("data");
 
@@ -82,9 +83,9 @@ export default async function GestaoEventos() {
             <div key={e.id} className="rounded-xl bg-superficie border border-linha p-4 flex flex-col gap-2.5">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex flex-col gap-0.5 min-w-0">
-                  <span className="text-[13.5px] font-medium truncate">{e.evento_id_origem}</span>
-                  <span className="text-[11.5px] text-tinta-4 truncate">
-                    {diaCurto(e.data)} · {e.competicao} {e.frente ? `· ${e.frente.sigla}` : "· sem frente"}
+                  <span className="text-[13.5px] font-medium truncate">{nomeEvento(e.competicao, e.confronto, e.evento_id_origem)}</span>
+                  <span className="text-[11.5px] text-tinta-4 truncate" title={e.evento_id_origem}>
+                    {diaCurto(e.data)} {e.frente ? `· ${e.frente.sigla}` : "· sem frente"}
                   </span>
                 </div>
                 <EntregaBadge entrega={e.entrega} origem={e.entrega_origem} />

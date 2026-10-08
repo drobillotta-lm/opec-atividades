@@ -86,12 +86,19 @@ vigente_ate        date                                 -- null = em vigor dali 
 A linha com `competicao_id` vence a linha genérica da frente. A cadeia de um evento é a que
 está em vigor **na data do evento**: `private.cadeia_vigente(frente, competicao, data)`. Desde
 01/10, FI, OL, PR e CP trocam `sincronizacao` + `auditoria` por `sinc_auditoria` (168 min,
-janela −1 a +2); setembro segue com a cadeia antiga.
+janela −1 a +2); setembro segue com a cadeia antiga. **A partir dos eventos de 09/10 (045) não
+há mais combinada:** `sincronizacao` e `auditoria` voltam separadas em FI/OL/PR/CP com
+`cadeia.taxa_min` 72 e 96 (os 168 do Yuri, por elo); NA e KG ganham `materiais`,
+`sincronizacao`, `roteiro`, `auditoria`. `cadeia.prazo_horas_antes` faz o prazo ser
+`inicio_brt − N h` (compactos: materiais 24 h antes); senão é o fim do dia em Brasília
+(`private.fim_do_dia_brt`). Competição "Compacto…" tem cadeia própria garantida pela sync
+(`garantir_cadeia_compactos`, 046): `materiais` + `auditoria`, do líder.
 
 ### `eventos`
 Vem da varredura do Airtable. Um evento é competição mais data, não jogo individual.
 ```
-evento_id_origem    text not null        -- rótulo legível, com índice não único (010)
+evento_id_origem    text not null        -- rótulo legível ("Nome do Evento" da Escala), índice não único (010)
+confronto           text                 -- "Vasco da Gama X Flamengo", cru da Escala (046); só para exibir
 airtable_record_id  text                 -- a chave de verdade: o record id do Airtable
 competicao          text not null
 competicao_id       uuid references competicoes

@@ -1,5 +1,5 @@
 import { criarClienteServidor } from "@/lib/supabase/server";
-import { hhmm, tempoLegivel } from "@/lib/semana";
+import { hhmm, tempoLegivel, diaCurto } from "@/lib/semana";
 import { iniciar, pausar } from "../(app)/acoes";
 import { Relogio, Submit } from "../(app)/semana/Cronometro";
 import { BotaoTema } from "@/componentes/Tema";
@@ -18,7 +18,7 @@ export default async function Dock() {
 
   const CAMPOS = `id, atividade, titulo, estimativa_min, prazo_em, abre_em,
              escalado_id, dupla_id, responsavel_real_id,
-             frentes ( nome ), eventos ( competicao )`;
+             frentes ( nome ), eventos ( competicao, data, evento_id_origem, confronto )`;
 
   // Sem filtro por abre_em: /semana deixa iniciar uma tarefa antes da janela abrir
   // (nada trava isso lá), e o dock precisa achar a sessao aberta mesmo assim -- e
@@ -113,7 +113,7 @@ export default async function Dock() {
                   {nomeTarefa(atual, "nome")}
                 </span>
                 <span className="text-[11px] text-tinta-4 truncate">
-                  {atual.parte ? `parte: ${atual.parte} · ` : ""}{atual.evento?.competicao ?? "Começada do zero"}
+                  {atual.parte ? `parte: ${atual.parte} · ` : ""}{atual.evento ? `evento ${diaCurto(atual.evento.data)}` : "Começada do zero"}
                 </span>
               </div>
               <BotaoTema compacto />

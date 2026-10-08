@@ -194,10 +194,16 @@ export async function alterarJanela(codigo: string, sigla: string, formData: For
   await fazer(formData, async () => {
     const { admin } = await gestor();
     const abre = inteiro(formData, "abre"), prazo = inteiro(formData, "prazo");
+    const horasAntes = inteiro(formData, "horas_antes");
     if (abre === null || prazo === null) throw new Error("preencha abre e prazo (dias relativos ao evento)");
     if (prazo < abre) throw new Error("o prazo não pode vir antes da abertura");
-    const n = ok(await admin.rpc("alterar_janela", { p_codigo: codigo, p_sigla: sigla, p_abre_offset: abre, p_prazo_offset: prazo }), "alterar janela") as number;
-    return `Janela de ${codigo} em ${sigla}: ${abre} a ${prazo} dias. ${n} tarefas pendentes reposicionadas.`;
+    // Prazo em horas antes do inicio do evento (045): vazio ou 0 = fim do dia de `prazo`.
+    const n = ok(await admin.rpc("alterar_janela", {
+      p_codigo: codigo, p_sigla: sigla, p_abre_offset: abre, p_prazo_offset: prazo,
+      p_prazo_horas_antes: horasAntes && horasAntes > 0 ? horasAntes : null,
+    }), "alterar janela") as number;
+    const prazoTxt = horasAntes && horasAntes > 0 ? `${horasAntes} h antes do início` : `${prazo} dias`;
+    return `Janela de ${codigo} em ${sigla}: abre ${abre}, prazo ${prazoTxt}. ${n} tarefas pendentes reposicionadas.`;
   });
 }
 

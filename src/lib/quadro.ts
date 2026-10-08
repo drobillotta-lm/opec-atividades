@@ -27,7 +27,7 @@ export async function tarefasDaFrente(
   const base = supabase
     .from("tarefas")
     .select(`id, atividade, titulo, status, estimativa_min, prazo_em, escalado_id, dupla_id, responsavel_real_id, frente_id,
-             frentes ( sigla ), eventos ( competicao, data )`)
+             frentes ( sigla ), eventos ( competicao, data, evento_id_origem, confronto )`)
     .lte("abre_em", fim)
     .gte("prazo_em", `${inicio}T00:00:00Z`)
     .order("prazo_em");

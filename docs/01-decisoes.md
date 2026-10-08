@@ -267,3 +267,30 @@ em `entregaveis/` e `decisoes/log.md`, e oficializar em `mapa_aprovado.csv` é p
 - **Histórico em Minha frente nos dois formatos**: navegação por semana com a seção Feitas, e a
   aba Histórico com paginação e filtros.
 - **Ajustes do notch têm botão próprio (⚙)**, com os cantos e o afastamento ao longo da borda.
+
+## 08/10/2026 — cada atividade é uma tarefa; o nome traz o jogo; compactos
+
+Pedidos do Daniel em 07/10, decisões em 08/10 (migrations 045 e 046):
+
+- **As combinadas acabam.** `roteiro_auditoria`, `materiais_sinc` e `sinc_auditoria` viram
+  duas tarefas do mesmo evento, da mesma pessoa (e da mesma dupla). A combinação do Yuri só
+  dizia "a mesma pessoa faz as duas". Corte pela **data do evento, 09/10**: o que já existia
+  até 08/10 fica como está (3 entregues, 1 n/a, 2 com tempo do Daniel). Alternativa
+  descartada: cortar em 01/10 e renomear/fabricar tarefas de outubro.
+- **Os 168 min do Yuri ficam, por elo.** `cadeia.taxa_min` sobrepõe a taxa global só em
+  FI/OL/PR/CP (sincronizacao 72 + auditoria 96). Em NA e KG as partes já somam igual às
+  combinadas (60+120, 90+90). Alternativa descartada: aceitar 210 e deixar o cronômetro dizer.
+- **O confronto vem em coluna própria**, na Escala (067) e aqui (`eventos.confronto`), e não
+  trocando o `jogo`: do "Nome do Evento" saem a elegibilidade na Escala, o `hash_origem`, a
+  adoção da planilha e o `tipo` do evento aqui. Nome da tarefa:
+  `Atividade - Frente - Competição | Confronto`.
+- **Compactos geram `materiais` (prazo 24 h antes do início) e `auditoria` (0/+2)** — as mesmas
+  atividades dos jogos, escalado = líder da frente (Lucas em OL), regra provisória até o Yuri
+  modelar. Consequência aceita: ~36 compactos/mês × 210 min no previsto do líder e
+  `v_taxa_real` de materiais/auditoria misturando jogo e compacto. `garantir_cadeia_compactos()`
+  roda na sync: competição nova "Compacto…" entra sozinha. "Programa Compactos 2026" (Copa Davis,
+  Ligue 1, Brasileirão…) vai para Olímpicos + Tênis com entrega `sim`.
+- **Prazo em horas antes do início** (`cadeia.prazo_horas_antes`, usa `eventos.inicio_brt`) e
+  **fim do dia em Brasília** (`private.fim_do_dia_brt`; antes vencia às 20:59 BRT).
+- **Menu da esquerda recolhe** (preferência local, celular começa recolhido) e **o tempo da
+  atividade aceita qualquer minuto** (o passo de 5 recusava o envio).

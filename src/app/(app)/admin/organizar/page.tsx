@@ -2,6 +2,7 @@ import Link from "next/link";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { semanaDe, deslocarSemana, diaCurto, hhmm, escaladosDe, ROTULO_STATUS } from "@/lib/semana";
 import { rotulosAtividade } from "@/lib/atividades";
+import { nomeTarefa } from "@/componentes/nome-tarefa";
 import { Submit } from "../../semana/Cronometro";
 import {
   salvarMapa, copiarMesAnterior, reaplicarAgora,
@@ -203,7 +204,7 @@ async function AbaAtividades({ volta, frentes, rotulos }: { volta: string; frent
   const comp = `${hoje.slice(0, 7)}-01`;
   const [{ data: cadeia }, { data: taxas }, { data: real }, { data: atividades }] = await Promise.all([
     supabase.from("cadeia")
-      .select("id, frente_id, atividade, ordem, escalado_regra, abre_offset_dias, prazo_offset_dias, vigente_de, vigente_ate, competicoes ( nome )")
+      .select("id, frente_id, atividade, ordem, escalado_regra, abre_offset_dias, prazo_offset_dias, prazo_horas_antes, taxa_min, vigente_de, vigente_ate, competicoes ( nome )")
       .order("ordem").order("vigente_de"),
     supabase.from("taxas").select("atividade, minutos, vigente_de, fonte").order("vigente_de", { ascending: false }),
     supabase.from("v_taxa_real").select("atividade, amostras, media_medida_min, desvio_pct").eq("competencia", comp),
@@ -263,8 +264,8 @@ async function AbaAtividades({ volta, frentes, rotulos }: { volta: string; frent
                     </span>
                     <span className="text-tinta-3">
                       {futura ? `começa ${dataBR(c.vigente_de)}` : c.vigente_ate ? `${emVigor ? "vai" : "foi"} até ${dataBR(c.vigente_ate)}` : `desde ${dataBR(c.vigente_de)}`}
-                      {" · "}taxa {tx ? hhmm(tx.minutos) : "—"}
-                      {" · "}janela {sinal(c.abre_offset_dias)} a {sinal(c.prazo_offset_dias)} dias
+                      {" · "}taxa {c.taxa_min ? <>{hhmm(c.taxa_min)} <span className="text-tinta-4">(só neste elo; padrão {tx ? hhmm(tx.minutos) : "—"})</span></> : tx ? hhmm(tx.minutos) : "—"}
+                      {" · "}janela {sinal(c.abre_offset_dias)} a {c.prazo_horas_antes ? `${c.prazo_horas_antes} h antes do início` : `${sinal(c.prazo_offset_dias)} dias`}
                       {r && r.amostras > 0 && <> · medido {hhmm(r.media_medida_min)} em {r.amostras} ({r.desvio_pct > 0 ? "+" : ""}{r.desvio_pct}%)</>}
                     </span>
                   </div>
@@ -277,6 +278,7 @@ async function AbaAtividades({ volta, frentes, rotulos }: { volta: string; frent
                             <input type="hidden" name="volta" value={volta} />
                             <Campo rotulo="Abre"><input name="abre" type="number" defaultValue={c.abre_offset_dias} className={CAMPO + " w-16"} /></Campo>
                             <Campo rotulo="Prazo"><input name="prazo" type="number" defaultValue={c.prazo_offset_dias} className={CAMPO + " w-16"} /></Campo>
+                            <Campo rotulo="ou h antes do início"><input name="horas_antes" type="number" min={0} defaultValue={c.prazo_horas_antes ?? ""} placeholder="—" className={CAMPO + " w-20"} /></Campo>
                             <Submit ocupado="..." className={BOTAO}>Alterar janela</Submit>
                           </form>
                         )}
@@ -340,7 +342,7 @@ async function AbaTarefas({ sp, volta, frentes, time, nomePor, rotulos }: {
 
   let q = supabase.from("tarefas")
     .select(`id, atividade, status, estimativa_min, prazo_em, escalado_id, dupla_id, responsavel_real_id,
-             origem, dono_manual, obs, evento_id, frentes ( sigla ), eventos!inner ( competicao, data, evento_id_origem )`)
+             origem, dono_manual, obs, evento_id, frentes ( sigla ), eventos!inner ( competicao, data, evento_id_origem, confronto )`)
     .lte("abre_em", fim).gte("prazo_em", `${inicio}T00:00:00Z`);
   if (frente) q = q.eq("frente_id", frente.id);
   if (sp.pessoa && /^[0-9a-f-]{36}$/.test(sp.pessoa)) q = q.or(`escalado_id.eq.${sp.pessoa},dupla_id.eq.${sp.pessoa}`);
@@ -382,7 +384,7 @@ async function AbaTarefas({ sp, volta, frentes, time, nomePor, rotulos }: {
         <div key={t.id} className="flex flex-col gap-1.5 py-2.5 border-t border-linha-2 text-[12.5px]">
           <div className="flex items-baseline justify-between gap-3 flex-wrap">
             <span className="font-medium">
-              {rotulos[t.atividade] ?? t.atividade} · {t.frente?.sigla}
+              {nomeTarefa(t, "sigla", rotulos)}
               {t.origem === "avulsa" && <span className="text-tinta-4 font-normal"> · avulsa</span>}
               {t.dono_manual && <span className="text-tinta-4 font-normal"> · dono fixado à mão</span>}
             </span>
@@ -391,7 +393,7 @@ async function AbaTarefas({ sp, volta, frentes, time, nomePor, rotulos }: {
               <span className={t.status === "fora_do_prazo" ? "text-rosa" : t.status === "na" ? "text-tinta-4" : ""}>{ROTULO_STATUS[t.status] ?? t.status}</span>
             </span>
           </div>
-          <span className="text-[11.5px] text-tinta-4 truncate">{t.evento?.competicao} · {t.evento && diaCurto(t.evento.data)} · {t.evento?.evento_id_origem}</span>
+          <span className="text-[11.5px] text-tinta-4 truncate" title={t.evento?.evento_id_origem}>evento {t.evento && diaCurto(t.evento.data)}</span>
           {t.obs && <span className="text-[11px] text-tinta-4 whitespace-pre-line">{t.obs}</span>}
 
           <details>

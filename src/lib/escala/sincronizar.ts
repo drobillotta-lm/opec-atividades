@@ -19,6 +19,7 @@ type EventoEscala = {
   hora_inicio: string | null;
   competicao: string | null;
   jogo: string | null;
+  confronto: string | null; // "Vasco da Gama X Flamengo" (Escala 067); null quando a Matriz não diz
   frente: string | null; // na Escala isso é o Detentor (fórmula), não a frente daqui
   tem_entrega: "sim" | "nao" | "indefinido" | null;
   status_airtable: string | null;
@@ -43,6 +44,7 @@ export type ResumoSincronizacao = {
   entrega_aplicada: { marcadas_sim: number; marcadas_nao: number; voltaram_indefinido: number } | null;
   competicoes_novas: number;
   competicoes_classificadas: number;
+  cadeias_compactos: number;
   lideres_atualizados: number;
   plantoes: number;
   plantao_sem_pessoa: string[];
@@ -123,7 +125,7 @@ async function executar(): Promise<Omit<ResumoSincronizacao, "duracao_ms">> {
   // --- leitura da Escala, tudo de uma vez, paginada ----------------------------------
   const [eventos, competicoesEscala, frentesEscala, listaPessoas, alocacoes] = await Promise.all([
     tudo<EventoEscala>("ler eventos da Escala", (de, ate) => escala.from("eventos")
-      .select("id, airtable_id, data, hora_inicio, competicao, jogo, frente, tem_entrega, status_airtable, excluido_em")
+      .select("id, airtable_id, data, hora_inicio, competicao, jogo, frente, tem_entrega, status_airtable, excluido_em, confronto")
       .gte("data", PISO).order("data").order("id").range(de, ate)),
     tudo<CompeticaoEscala>("ler competições da Escala", (de, ate) => escala.from("competicoes")
       .select("competicao, frente_codigo, entrega_padrao, entrega_termos_sim").order("id").range(de, ate)),
@@ -175,6 +177,12 @@ async function executar(): Promise<Omit<ResumoSincronizacao, "duracao_ms">> {
   }
   const idCompeticaoPorNome = new Map(competicoesLocais.map((c) => [c.nome, c.id]));
 
+  //    Toda competicao "Compacto..." com frente ganha cadeia propria (materiais 24 h antes do
+  //    inicio + auditoria, do lider) -- regra provisoria do Daniel (046) ate o Yuri modelar.
+  const rCompactos = await admin.rpc("garantir_cadeia_compactos", { p_vigente_de: new Date().toISOString().slice(0, 10) });
+  falha("garantir_cadeia_compactos", rCompactos.error);
+  const cadeiasCompactos = (rCompactos.data as number | null) ?? 0;
+
   //    O padrao de entrega e o oficial da Escala (escala.competicoes.entrega_padrao).
   //    Competicao com termos de 'sim' (a Escala decide pelo texto do jogo) fica
   //    'lider_decide' aqui: a decisao vem por evento, no passo 4.
@@ -208,6 +216,7 @@ async function executar(): Promise<Omit<ResumoSincronizacao, "duracao_ms">> {
   const linhasEvento = eventos.map((e) => ({
     airtable_record_id: chaveDoEvento(e),
     evento_id_origem: e.jogo || chaveDoEvento(e),
+    confronto: e.confronto || null,
     competicao: e.competicao || "",
     competicao_id: e.competicao ? idCompeticaoPorNome.get(e.competicao) ?? null : null,
     data: e.data,
@@ -297,6 +306,7 @@ async function executar(): Promise<Omit<ResumoSincronizacao, "duracao_ms">> {
     entrega_aplicada: (rEntrega.data as ResumoSincronizacao["entrega_aplicada"][])?.[0] ?? null,
     competicoes_novas: competicoesNovas,
     competicoes_classificadas: competicoesClassificadas,
+    cadeias_compactos: cadeiasCompactos,
     lideres_atualizados: lideresAtualizados,
     plantoes: linhasPlantao.length,
     plantao_sem_pessoa: [...semPessoa],
