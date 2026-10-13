@@ -24,6 +24,8 @@ type EventoEscala = {
   tem_entrega: "sim" | "nao" | "indefinido" | null;
   status_airtable: string | null;
   excluido_em: string | null;
+  // false = fora da view "Geral - CazéTV" da Escala (detentor de terceiro, cancelado...).
+  elegivel: boolean | null;
 };
 type CompeticaoEscala = {
   competicao: string;
@@ -66,6 +68,34 @@ function classificarTipo(jogo: string | null): string {
   if (/\[sem narra/i.test(j)) return "sem_narracao";
   if (/pré jogo/i.test(j)) return "pre_jogo";
   return "normal";
+}
+
+// O Brasileirão vem em duas linhas na Matriz: a da CazéTV e a das outras emissoras (Daniel,
+// 13/10). Mesmo dia + mesma competição + mesmo confronto = um evento só; fica a linha cujo
+// detentor é só a CazéTV (ou a que tem a CazéTV com menos emissoras) e a outra vira
+// 'duplicado', que não gera cadeia e desfaz o que tinha (047). Mesma regra da 047, passo 6.
+type LinhaEvento = { airtable_record_id: string; competicao: string; confronto: string | null;
+                     data: string; detentor: string | null; tipo: string };
+function marcarDuplicados(linhas: LinhaEvento[]) {
+  const grupos = new Map<string, LinhaEvento[]>();
+  for (const l of linhas) {
+    if (l.tipo !== "normal" || !l.confronto || !/^brasileirão/i.test(l.competicao)) continue;
+    const chave = `${l.data}|${l.competicao}|${l.confronto.toLowerCase()}`;
+    grupos.set(chave, [...(grupos.get(chave) ?? []), l]);
+  }
+  const peso = (l: LinhaEvento) => {
+    const d = (l.detentor ?? "").trim();
+    return [d === "CazéTV" ? 0 : 1, /cazétv/i.test(d) ? 0 : 1, d.length];
+  };
+  for (const g of grupos.values()) {
+    if (g.length < 2) continue;
+    g.sort((a, b) => {
+      const pa = peso(a), pb = peso(b);
+      for (let i = 0; i < pa.length; i++) if (pa[i] !== pb[i]) return pa[i] - pb[i];
+      return a.airtable_record_id.localeCompare(b.airtable_record_id);
+    });
+    for (const l of g.slice(1)) l.tipo = "duplicado";
+  }
 }
 
 function diaUtilOuFds(data: string): "du" | "fds" {
@@ -125,7 +155,7 @@ async function executar(): Promise<Omit<ResumoSincronizacao, "duracao_ms">> {
   // --- leitura da Escala, tudo de uma vez, paginada ----------------------------------
   const [eventos, competicoesEscala, frentesEscala, listaPessoas, alocacoes] = await Promise.all([
     tudo<EventoEscala>("ler eventos da Escala", (de, ate) => escala.from("eventos")
-      .select("id, airtable_id, data, hora_inicio, competicao, jogo, frente, tem_entrega, status_airtable, excluido_em, confronto")
+      .select("id, airtable_id, data, hora_inicio, competicao, jogo, frente, tem_entrega, status_airtable, excluido_em, confronto, elegivel")
       .gte("data", PISO).order("data").order("id").range(de, ate)),
     tudo<CompeticaoEscala>("ler competições da Escala", (de, ate) => escala.from("competicoes")
       .select("competicao, frente_codigo, entrega_padrao, entrega_termos_sim").order("id").range(de, ate)),
@@ -224,9 +254,12 @@ async function executar(): Promise<Omit<ResumoSincronizacao, "duracao_ms">> {
     tipo: classificarTipo(e.jogo),
     status_origem: e.excluido_em ? "Cancelado" : e.status_airtable ?? "Manual",
     detentor: e.frente,
-    entrega_escala: e.tem_entrega ?? "indefinido",
+    // Só o que a Escala considera da CazéTV e marcou com entrega comercial vira atividade
+    // (Daniel, 13/10): evento fora da view dela conta como "não", diga o que disser a coluna.
+    entrega_escala: e.elegivel === false ? "nao" : e.tem_entrega ?? "indefinido",
     sincronizado_em: new Date().toISOString(),
   }));
+  marcarDuplicados(linhasEvento);
   for (let i = 0; i < linhasEvento.length; i += LOTE_UPSERT) {
     const { error } = await admin.from("eventos")
       .upsert(linhasEvento.slice(i, i + LOTE_UPSERT), { onConflict: "airtable_record_id" });
@@ -240,7 +273,8 @@ async function executar(): Promise<Omit<ResumoSincronizacao, "duracao_ms">> {
   const rEntrega = await admin.rpc("aplicar_entrega_da_escala");
   falha("aplicar_entrega_da_escala", rEntrega.error);
 
-  // 5) o que ninguém decidiu ainda cai no padrão da competição (mesma regra da 014)
+  // 5) desde a 047 a previsão daqui está desligada: o que a Escala não marcou "sim" fica sem
+  //    entrega (a função só limpa o 'previsto' antigo). A Escala já sugere o padrão sozinha.
   falha("aplicar_previsao_entrega", (await admin.rpc("aplicar_previsao_entrega")).error);
 
   // 6) plantão dos fixos — um registro por pessoa e dia (é o que a unique garante):
