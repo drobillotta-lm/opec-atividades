@@ -19,10 +19,10 @@ export function Relogio({ desde, baseSeg }: { desde: string; baseSeg: number }) 
 const calc = (desde: string, baseSeg: number) =>
   baseSeg + (Date.now() - new Date(desde).getTime()) / 1000;
 
-export function Submit({ children, ocupado, className }: { children: React.ReactNode; ocupado: string; className: string }) {
+export function Submit({ children, ocupado, className, disabled }: { children: React.ReactNode; ocupado: string; className: string; disabled?: boolean }) {
   const { pending } = useFormStatus();
   return (
-    <button type="submit" disabled={pending} className={`${className} disabled:opacity-50`}>
+    <button type="submit" disabled={pending || disabled} className={`${className} disabled:opacity-50`}>
       {pending ? ocupado : children}
     </button>
   );

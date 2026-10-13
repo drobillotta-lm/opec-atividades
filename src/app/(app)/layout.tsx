@@ -34,7 +34,7 @@ export default async function LayoutApp({ children }: { children: React.ReactNod
         pessoa={{ nome: pessoa.nome, iniciais, rotuloPapel }}
         nav={
           <>
-            <NavItem href="/semana" curto="Se">Minha semana</NavItem>
+            <NavItem href="/semana" curto="At">Minhas atividades</NavItem>
             {lider && <NavItem href="/frente" curto="Fr">Minha frente</NavItem>}
             {lider && <NavItem href="/painel" curto="Pa">Painel</NavItem>}
             {gestor && <NavItem href="/admin" curto="Ad">Admin</NavItem>}

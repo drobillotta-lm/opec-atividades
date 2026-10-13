@@ -25,6 +25,18 @@ export function deslocarSemana(inicioISO: string, semanas: number) {
 
 export const iso = (d: Date) => d.toLocaleDateString("en-CA");
 
+/** Hoje em Brasilia, "2026-10-13". */
+export const hojeISO = () => iso(hojeBRT());
+
+/** Dia em Brasilia de um timestamptz: "2026-10-10T02:59:59+00:00" -> "2026-10-09". */
+export const diaBRT = (ts: string) => new Date(ts).toLocaleDateString("en-CA", { timeZone: FUSO });
+
+export function somarDias(dataISO: string, dias: number) {
+  const d = new Date(dataISO + "T00:00:00");
+  d.setDate(d.getDate() + dias);
+  return iso(d);
+}
+
 export function rotuloSemana(inicio: string, fim: string) {
   const a = new Date(inicio + "T00:00:00");
   const b = new Date(fim + "T00:00:00");

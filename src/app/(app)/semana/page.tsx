@@ -1,9 +1,8 @@
+import Link from "next/link";
 import { criarClienteServidor } from "@/lib/supabase/server";
-import { Seta } from "@/componentes/Seta";
 import { Aba } from "@/componentes/Aba";
 import { QuadroKanban, type TarefaQuadro } from "@/componentes/QuadroKanban";
-import { tarefasDaFrente } from "@/lib/quadro";
-import { semanaDe, deslocarSemana, rotuloSemana, diaCurto, hhmm, tempoLegivel, ROTULO_ATIVIDADE, escaladosDe } from "@/lib/semana";
+import { semanaDe, deslocarSemana, diaCurto, hhmm, tempoLegivel, ROTULO_ATIVIDADE, escaladosDe, hojeISO, diaBRT, somarDias } from "@/lib/semana";
 import { Relogio, Submit, TempoParado, DialogoEntrega, DialogoDesnecessaria, DialogoAjuste } from "./Cronometro";
 import { DialogoPartes, type Parte } from "./Partes";
 import {
@@ -18,10 +17,45 @@ import { nomeTarefa, SEM_EVENTO } from "@/componentes/nome-tarefa";
 
 export const dynamic = "force-dynamic";
 
+// "Minhas atividades" (13/10, mockup aprovado pelo Daniel): não existe mais semana. Sem filtro
+// aparece tudo que está aberto, por prazo, com as atrasadas sempre no topo -- tarefa vencida
+// sumia quando a semana virava. Filtros por evento, tipo, entrega prevista e status, todos na
+// URL; valem para a Lista e para o Kanban, nas minhas ou (líder) na frente inteira.
+
 const CAMPOS_TAREFA = `id, atividade, titulo, status, estimativa_min, abre_em, prazo_em, concluida_em,
              escalado_id, dupla_id, responsavel_real_id, excecao_desc,
              frentes ( sigla, nome ),
              eventos ( competicao, data, evento_id_origem, confronto )`;
+
+const TIPOS = ["materiais", "sincronizacao", "roteiro", "auditoria"] as const;
+const PRAZOS = [
+  ["atrasadas", "Atrasadas"], ["hoje", "Hoje"], ["2d", "Próx. 2 dias"], ["3d", "Próx. 3 dias"],
+  ["semana", "Esta semana"], ["prox", "Próxima semana"],
+] as const;
+const ESTADOS = [["pendente", "Pendente"], ["fazendo", "Fazendo"], ["feita", "Feita"]] as const;
+const ESTADOS_PADRAO = ["pendente", "fazendo"];
+
+type Params = {
+  evento?: string; tipo?: string; prazo?: string; de?: string; ate?: string; status?: string;
+  ver?: string; quem?: string; busca?: string;
+};
+
+const lista = (csv?: string) => (csv ? csv.split(",").filter(Boolean) : []);
+const alternar = (itens: string[], v: string) => (itens.includes(v) ? itens.filter((x) => x !== v) : [...itens, v]);
+
+/** Janela de entrega prevista [de, até] em dias de Brasília, ou null (sem filtro de data). */
+function janelaDe(sp: Params, hoje: string): [string, string] | null {
+  const semana = semanaDe();
+  switch (sp.prazo) {
+    case "hoje": return [hoje, hoje];
+    case "2d": return [hoje, somarDias(hoje, 2)];
+    case "3d": return [hoje, somarDias(hoje, 3)];
+    case "semana": return [semana.inicio, semana.fim];
+    case "prox": { const p = deslocarSemana(semana.inicio, 1); return [p.inicio, p.fim]; }
+  }
+  if (sp.de || sp.ate) return [sp.de || "0000-01-01", sp.ate || "9999-12-31"];
+  return null;
+}
 
 /** Acha tarefa de qualquer pessoa, pelo nome do jogo/competição ou pelo nome de quem
  * está escalado — pra alguém puxar pra si ou ajudar em conjunto (022 liberou a leitura). */
@@ -33,6 +67,7 @@ async function buscarTarefas(supabase: Awaited<ReturnType<typeof criarClienteSer
     idsPessoas.length ? `dupla_id.in.(${idsPessoas.join(",")})` : null,
     `eventos.evento_id_origem.ilike.%${termo}%`,
     `eventos.competicao.ilike.%${termo}%`,
+    `eventos.confronto.ilike.%${termo}%`,
   ].filter(Boolean).join(",");
 
   return supabase
@@ -45,26 +80,21 @@ async function buscarTarefas(supabase: Awaited<ReturnType<typeof criarClienteSer
     .limit(25);
 }
 
-export default async function MinhaSemana({
-  searchParams,
-}: {
-  searchParams: Promise<{ semana?: string; busca?: string; ver?: string; quem?: string }>;
-}) {
+export default async function MinhasAtividades({ searchParams }: { searchParams: Promise<Params> }) {
   const sp = await searchParams;
-  const { inicio, fim } = sp.semana ? deslocarSemana(sp.semana, 0) : semanaDe();
-  const anterior = deslocarSemana(inicio, -1).inicio;
-  const proxima = deslocarSemana(inicio, 1).inicio;
-  // Lista (padrão) ou "Quadro kanban" (06/10): as minhas tarefas em colunas; o líder pode
-  // trocar pra toda a frente. Os links guardam a semana e a vista.
+  const hoje = hojeISO();
   const vista = sp.ver === "kanban" ? "kanban" : "lista";
-  const link = (p: { semana?: string; ver?: string; quem?: string }) => {
+  const tipos = lista(sp.tipo);
+  const estados = sp.status !== undefined ? lista(sp.status) : ESTADOS_PADRAO;
+  const janela = janelaDe(sp, hoje);
+  const termoEvento = sp.evento?.trim().toLowerCase() ?? "";
+  const temFiltro = Boolean(termoEvento || tipos.length || sp.prazo || sp.de || sp.ate || sp.status !== undefined);
+
+  // Links: muda só o que foi pedido e guarda o resto. Valor vazio tira o parâmetro.
+  const link = (mudar: Partial<Params>) => {
     const q = new URLSearchParams();
-    const semana = "semana" in p ? p.semana : sp.semana;
-    const ver = "ver" in p ? p.ver : (vista === "kanban" ? "kanban" : undefined);
-    const quem = "quem" in p ? p.quem : sp.quem;
-    if (semana) q.set("semana", semana);
-    if (ver) q.set("ver", ver);
-    if (ver === "kanban" && quem) q.set("quem", quem);
+    const final: Params = { ...sp, ...mudar };
+    for (const [k, v] of Object.entries(final)) if (v) q.set(k, v);
     const s = q.toString();
     return s ? `/semana?${s}` : "/semana";
   };
@@ -73,47 +103,54 @@ export default async function MinhaSemana({
   const { data: { user } } = await supabase.auth.getUser();
   const { data: pessoa } = await supabase
     .from("pessoas").select("id, nome, papel").eq("auth_user_id", user!.id).single();
-  const lider = pessoa!.papel === "lider" || pessoa!.papel === "gestor";
-  const quadroDaFrente = vista === "kanban" && lider && sp.quem === "frente";
+  const gestor = pessoa!.papel === "gestor";
+  const lider = pessoa!.papel === "lider" || gestor;
+  const daFrente = lider && sp.quem === "frente";
 
-  const { data: minhas } = await supabase
-    .from("tarefas")
-    .select(CAMPOS_TAREFA)
-    .lte("abre_em", fim)
-    .gte("prazo_em", `${inicio}T00:00:00Z`)
-    .or(`escalado_id.eq.${pessoa!.id},dupla_id.eq.${pessoa!.id},responsavel_real_id.eq.${pessoa!.id}`)
-    .order("prazo_em");
+  // Escopo: as minhas (escalado, dupla ou quem entregou) ou, pro líder, as frentes dele
+  // (gestor: todas as ativas mais as começadas do zero sem frente).
+  const { data: minhasFrentes } = daFrente
+    ? await (gestor ? supabase.from("frentes").select("id").eq("ativa", true)
+                    : supabase.from("frentes").select("id").eq("lider_id", pessoa!.id))
+    : { data: [] as { id: string }[] };
+  const idsFrentes = (minhasFrentes ?? []).map((f) => f.id);
+  const filtroEscopo = !daFrente
+    ? `escalado_id.eq.${pessoa!.id},dupla_id.eq.${pessoa!.id},responsavel_real_id.eq.${pessoa!.id}`
+    : gestor
+      ? `frente_id.in.(${idsFrentes.join(",")}),and(frente_id.is.null,origem.eq.registrada)`
+      : `frente_id.in.(${idsFrentes.join(",")})`;
+  const escopoVazio = daFrente && idsFrentes.length === 0 && !gestor;
 
-  // Quem ajuda a tarefa de outra pessoa (puxou pela busca) tem sessao mas nao e
-  // escalado nem responsavel -- sem isto ela nunca aparece de volta aqui. O mesmo vale
-  // para quem recebeu uma parte (030) e ainda nem comecou.
+  // Abertas: todas, sem janela (é isso que impede a vencida de sumir). Feitas só quando o
+  // filtro pede, e aí dentro da janela -- ou dos últimos 30 dias, sem janela.
+  const querFeitas = estados.includes("feita");
+  const [{ data: abertas }, { data: feitas }] = escopoVazio
+    ? [{ data: [] }, { data: [] }]
+    : await Promise.all([
+      supabase.from("tarefas").select(CAMPOS_TAREFA).eq("status", "pendente").or(filtroEscopo).order("prazo_em").limit(600),
+      querFeitas
+        ? supabase.from("tarefas").select(CAMPOS_TAREFA).in("status", ["entregue", "fora_do_prazo", "na"]).or(filtroEscopo)
+            .gte("prazo_em", `${janela ? janela[0] : somarDias(hoje, -30)}T00:00:00-03:00`)
+            .lte("prazo_em", `${janela ? janela[1] : somarDias(hoje, 1)}T23:59:59-03:00`)
+            .order("prazo_em").limit(300)
+        : Promise.resolve({ data: [] }),
+    ]);
+
+  // Quem ajuda a tarefa de outra pessoa (puxou pela busca) tem sessão mas não é escalado nem
+  // responsável -- sem isto ela nunca aparece de volta aqui. O mesmo vale para quem recebeu
+  // uma parte (030) e ainda nem começou.
   const [{ data: sessoesMinhas }, { data: partesMinhas }] = await Promise.all([
-    supabase.from("sessoes").select("tarefa_id, fim").eq("pessoa_id", pessoa!.id),
+    supabase.from("sessoes").select("tarefa_id").eq("pessoa_id", pessoa!.id),
     supabase.from("subtarefas").select("tarefa_id").eq("pessoa_id", pessoa!.id).eq("status", "pendente"),
   ]);
-  const idsComSessao = [...new Set([...(sessoesMinhas ?? []), ...(partesMinhas ?? [])].map((s) => s.tarefa_id))];
-  const idsJaTem = new Set((minhas ?? []).map((t) => t.id));
-  const idsAjudando = idsComSessao.filter((id) => !idsJaTem.has(id));
-  const { data: ajudando } = idsAjudando.length
-    ? await supabase.from("tarefas").select(CAMPOS_TAREFA)
-        .lte("abre_em", fim).gte("prazo_em", `${inicio}T00:00:00Z`).in("id", idsAjudando)
-    : { data: [] as typeof minhas };
+  const idsJaTem = new Set([...(abertas ?? []), ...(feitas ?? [])].map((t) => t.id));
+  const idsAjudando = [...new Set([...(sessoesMinhas ?? []), ...(partesMinhas ?? [])].map((s) => s.tarefa_id))]
+    .filter((id) => !idsJaTem.has(id));
+  const { data: ajudando } = !daFrente && idsAjudando.length
+    ? await supabase.from("tarefas").select(CAMPOS_TAREFA).eq("status", "pendente").in("id", idsAjudando)
+    : { data: [] as typeof abertas };
 
-  // Nada que esteja rodando pode ficar invisível (06/10): a Julia ligou o cronômetro pelo
-  // notch em tarefas vencidas de semanas atrás e a semana atual não mostrava nada. Tarefa
-  // pendente em que EU tenho sessão aberta, ou fechada hoje, entra aqui mesmo fora da janela,
-  // marcada. Amanhã, sem mexer, volta a aparecer só na semana dela.
-  const hojeBRT = new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
-  const inicioHoje = new Date(`${hojeBRT}T00:00:00-03:00`).toISOString();
-  const idsTocadasHoje = [...new Set((sessoesMinhas ?? []).filter((s) => !s.fim || s.fim >= inicioHoje).map((s) => s.tarefa_id))];
-  const idsNaTela = new Set([...idsJaTem, ...(ajudando ?? []).map((t) => t.id)]);
-  const idsForaDaJanela = idsTocadasHoje.filter((id) => !idsNaTela.has(id));
-  const { data: foraDaJanela } = idsForaDaJanela.length
-    ? await supabase.from("tarefas").select(CAMPOS_TAREFA).eq("status", "pendente").in("id", idsForaDaJanela)
-    : { data: [] as typeof minhas };
-  const idsFora = new Set((foraDaJanela ?? []).map((t) => t.id));
-
-  const tarefas = [...(minhas ?? []), ...(ajudando ?? []), ...(foraDaJanela ?? [])];
+  const tarefas = [...(abertas ?? []), ...(ajudando ?? []), ...(feitas ?? [])];
   const ids = tarefas.map((t) => t.id);
 
   const termo = sp.busca?.trim().replace(/[,()]/g, "");
@@ -123,9 +160,9 @@ export default async function MinhaSemana({
     ? await supabase.from("v_tempo_tarefa").select("*").in("tarefa_id", ids)
     : { data: [] as { tarefa_id: string; segundos_total: number; sessao_aberta_desde: string | null }[] };
 
-  // O relogio agregado (v_tempo_tarefa) e por tarefa, nao por pessoa -- correto pro
-  // total (varias pessoas cronometram a mesma tarefa), errado pro botao: "Pausar" tem
-  // que fechar A MINHA sessao, nao mostrar rodando so porque outra pessoa esta nela.
+  // O relógio agregado (v_tempo_tarefa) é por tarefa, não por pessoa -- correto pro total
+  // (várias pessoas cronometram a mesma tarefa), errado pro botão: "Pausar" tem que fechar
+  // A MINHA sessão, não mostrar rodando só porque outra pessoa está nela.
   const { data: sessoesDaTarefa } = ids.length
     ? await supabase.from("sessoes").select("tarefa_id, pessoa_id, inicio, fim, subtarefa_id").in("tarefa_id", ids)
     : { data: [] as { tarefa_id: string; pessoa_id: string; inicio: string; fim: string | null; subtarefa_id: string | null }[] };
@@ -146,11 +183,12 @@ export default async function MinhaSemana({
   const porId = new Map((tempos ?? []).map((t) => [t.tarefa_id, t]));
   const sessoesPorTarefa = new Map<string, typeof sessoesDaTarefa>();
   (sessoesDaTarefa ?? []).forEach((s) => {
-    const lista = sessoesPorTarefa.get(s.tarefa_id) ?? [];
-    lista.push(s);
-    sessoesPorTarefa.set(s.tarefa_id, lista);
+    const l = sessoesPorTarefa.get(s.tarefa_id) ?? [];
+    l.push(s);
+    sessoesPorTarefa.set(s.tarefa_id, l);
   });
 
+  const agora = Date.now();
   const comTempo = tarefas.map((t) => {
     const sessoes = sessoesPorTarefa.get(t.id) ?? [];
     const minhaAberta = sessoes.find((s) => s.pessoa_id === pessoa!.id && !s.fim);
@@ -180,34 +218,53 @@ export default async function MinhaSemana({
         minha: minhaAberta?.subtarefa_id === s.id,
       }));
 
+    const correndo = minhaAberta?.inicio ?? null;
+    const aberta = t.status === "pendente";
     return {
       ...t,
       frente: Array.isArray(t.frentes) ? t.frentes[0] : t.frentes,
       evento: Array.isArray(t.eventos) ? t.eventos[0] : t.eventos,
       segundos: Number(porId.get(t.id)?.segundos_total ?? 0),
-      correndo: minhaAberta?.inicio ?? null,
+      correndo,
       minhaParte: minhaAberta?.subtarefa_id ? tituloParte.get(minhaAberta.subtarefa_id) ?? null : null,
       outrosRodando,
       contribuintes,
       partes,
-      foraDaJanela: idsFora.has(t.id),
+      diaPrazo: diaBRT(t.prazo_em),
+      atrasada: aberta && new Date(t.prazo_em).getTime() < agora,
+      fechada: aberta && t.abre_em > hoje,
+      estado: !aberta ? "feita" : correndo || (daFrente && outrosRodando.length > 0) ? "fazendo" : "pendente",
     };
   });
 
+  type Tarefa = (typeof comTempo)[number];
+  const textoDe = (t: Tarefa) =>
+    [t.titulo, t.evento?.confronto, t.evento?.competicao, t.evento?.evento_id_origem].filter(Boolean).join(" ").toLowerCase();
+  const visiveis = comTempo.filter((t) => {
+    if (!estados.includes(t.estado)) return false;
+    if (tipos.length && !tipos.includes(t.atividade)) return false;
+    if (termoEvento && !textoDe(t).includes(termoEvento)) return false;
+    if (sp.prazo === "atrasadas") return t.atrasada;
+    // Atrasada aparece sempre, qualquer que seja a janela (decisão do Daniel, 13/10).
+    if (janela && !t.atrasada && (t.diaPrazo < janela[0] || t.diaPrazo > janela[1])) return false;
+    return true;
+  });
+
   // Vários cronômetros por pessoa (044): "em andamento" é lista, a mais recente primeiro.
-  const emAndamento = comTempo.filter((t) => t.correndo)
+  const emAndamento = visiveis.filter((t) => t.correndo)
     .sort((a, b) => new Date(b.correndo!).getTime() - new Date(a.correndo!).getTime());
-  const paradas = comTempo.filter((t) => t.status === "pendente" && !t.correndo);
-  const pausadas = paradas.filter((t) => t.segundos > 0);
-  const pendentes = paradas.filter((t) => t.segundos <= 0);
-  const entregues = comTempo.filter((t) => t.status === "entregue" || t.status === "fora_do_prazo");
-  const naoAplicaveis = comTempo.filter((t) => t.status === "na");
-  const daSemana = comTempo.filter((t) => !t.foraDaJanela);
-  const horasPrevistas = daSemana.reduce((s, t) => s + t.estimativa_min, 0);
-  const segundosFeitos = daSemana.reduce((s, t) => s + t.segundos, 0);
-  const agora = Date.now();
+  const abertasVisiveis = visiveis.filter((t) => t.status === "pendente" && !t.correndo);
+  const atrasadas = abertasVisiveis.filter((t) => t.atrasada);
+  const porDia = new Map<string, Tarefa[]>();
+  abertasVisiveis.filter((t) => !t.atrasada).forEach((t) => porDia.set(t.diaPrazo, [...(porDia.get(t.diaPrazo) ?? []), t]));
+  const dias = [...porDia.keys()].sort();
+  const entregues = visiveis.filter((t) => t.status === "entregue" || t.status === "fora_do_prazo");
+  const naoAplicaveis = visiveis.filter((t) => t.status === "na");
+  const nAtrasadas = visiveis.filter((t) => t.atrasada).length;
+  const minutosPrevistos = visiveis.filter((t) => t.status === "pendente").reduce((s, t) => s + t.estimativa_min, 0);
+
   // Fala do Sr. Minutos no cartão de andamento: regra fixa (docs/06), sobre a próxima de hoje.
-  const venceHoje = pendentes.find((t) => t.prazo_em.slice(0, 10) === hojeBRT);
+  const venceHoje = porDia.get(hoje)?.[0];
   const falaSrMinutos = venceHoje ? `${venceHoje.titulo ?? ROTULO_ATIVIDADE[venceHoje.atividade] ?? venceHoje.atividade} vence hoje.` : undefined;
   const idsExistentes = new Set(ids);
   const resultados = (resultadosBusca ?? [])
@@ -218,50 +275,90 @@ export default async function MinhaSemana({
     }))
     .filter((r) => !idsExistentes.has(r.id));
 
-  // Quadro kanban: as minhas tarefas (as mesmas da lista) ou, pro líder, toda a frente.
-  const quadroMinhas: TarefaQuadro[] = comTempo.map((t) => ({
+  const quadro: TarefaQuadro[] | null = vista !== "kanban" ? null : visiveis.map((t) => ({
     id: t.id, titulo: t.titulo, atividade: t.atividade, status: t.status,
     escalado_id: t.escalado_id, dupla_id: t.dupla_id, responsavel_real_id: t.responsavel_real_id,
     frente: t.frente ?? null, evento: t.evento ?? null, segundos: t.segundos,
     rodando: [...(t.correndo ? [pessoa!.nome] : []), ...t.outrosRodando],
   }));
-  const quadro = vista !== "kanban" ? null
-    : quadroDaFrente ? (await tarefasDaFrente(supabase, pessoa!, inicio, fim, nomePor)) ?? quadroMinhas
-    : quadroMinhas;
+
+  const linha = (t: Tarefa) => (
+    <LinhaAberta key={t.id} t={t} euId={pessoa!.id} time={time ?? []} daFrente={daFrente} nomePor={nomePor} />
+  );
 
   return (
     <div className={`p-6 px-8 flex flex-col gap-5 ${vista === "kanban" ? "max-w-[1280px]" : "max-w-[1080px]"}`}>
       <AutoAtualiza segundos={30} />
-      <header className="flex items-end justify-between gap-5">
+      <header className="flex flex-wrap items-end justify-between gap-5">
         <div className="flex flex-col gap-1.5">
-          <h1 className="text-[34px]">Minha semana</h1>
+          <h1 className="text-[34px]">{daFrente ? "Atividades da frente" : "Minhas atividades"}</h1>
           <p className="text-[12.5px] text-tinta-3">
-            {rotuloSemana(inicio, fim)} · {quadroDaFrente && quadro
-              ? <>{quadro.length} tarefas da frente</>
-              : <>{comTempo.length} tarefas · {tempoLegivel(segundosFeitos)} de {hhmm(horasPrevistas)}</>}
+            <span className="num">{visiveis.length}</span> atividades{temFiltro ? " no filtro" : ""}
+            {" · "}<span className={nAtrasadas ? "text-rosa font-medium" : ""}><span className="num">{nAtrasadas}</span> atrasadas</span>
+            {" · "}<span className="num">{hhmm(minutosPrevistos)}</span> previstas em aberto
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <nav className="flex gap-1 rounded-[10px] bg-superficie-2 border border-linha p-1" aria-label="Como ver">
             <Aba href={link({ ver: undefined })} ativa={vista === "lista"}>Lista</Aba>
             <Aba href={link({ ver: "kanban" })} ativa={vista === "kanban"}>Quadro kanban</Aba>
           </nav>
-          {vista === "kanban" && lider && (
+          {lider && (
             <nav className="flex gap-1 rounded-[10px] bg-superficie-2 border border-linha p-1" aria-label="De quem">
-              <Aba href={link({ quem: undefined })} ativa={!quadroDaFrente}>Minhas</Aba>
-              <Aba href={link({ quem: "frente" })} ativa={quadroDaFrente}>Toda a frente</Aba>
+              <Aba href={link({ quem: undefined })} ativa={!daFrente}>Minhas</Aba>
+              <Aba href={link({ quem: "frente" })} ativa={daFrente}>Toda a frente</Aba>
             </nav>
           )}
           <AbrirDock />
-          <Seta href={link({ semana: anterior })} rotulo="Semana anterior">‹</Seta>
-          <Seta href={link({ semana: undefined })} rotulo="Semana atual">hoje</Seta>
-          <Seta href={link({ semana: proxima })} rotulo="Próxima semana">›</Seta>
         </div>
       </header>
 
+      <section aria-label="Filtros" className="flex flex-col gap-3 rounded-[14px] bg-superficie border border-linha p-4">
+        <form method="GET" className="flex flex-wrap items-center gap-2">
+          {Object.entries(sp).filter(([k, v]) => v && !["evento", "de", "ate", "prazo"].includes(k))
+            .map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />)}
+          <label htmlFor="f-evento" className={ROTULO}>Evento</label>
+          <input id="f-evento" type="search" name="evento" defaultValue={sp.evento ?? ""}
+            placeholder="Jogo ou competição, ex.: Corinthians"
+            className="flex-1 min-w-[200px] min-h-9 px-3 rounded-[9px] border border-linha bg-fundo text-[12.5px]" />
+          <span className="text-[12px] text-tinta-3">entrega de</span>
+          <input type="date" name="de" defaultValue={sp.de ?? ""} aria-label="Entrega a partir de"
+            className="min-h-9 px-2 rounded-[9px] border border-linha bg-fundo text-[12.5px]" />
+          <span className="text-[12px] text-tinta-3">até</span>
+          <input type="date" name="ate" defaultValue={sp.ate ?? ""} aria-label="Entrega até"
+            className="min-h-9 px-2 rounded-[9px] border border-linha bg-fundo text-[12.5px]" />
+          <button type="submit" className="min-h-9 px-3.5 rounded-[9px] border border-linha bg-elevado text-[12.5px] font-medium hover:bg-linha transition">
+            Filtrar
+          </button>
+        </form>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className={ROTULO}>Tipo</span>
+          {TIPOS.map((v) => (
+            <Chip key={v} href={link({ tipo: alternar(tipos, v).join(",") })} ativo={tipos.includes(v)}>{ROTULO_ATIVIDADE[v]}</Chip>
+          ))}
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className={ROTULO}>Entrega prevista</span>
+          {PRAZOS.map(([v, r]) => (
+            <Chip key={v} href={link({ prazo: sp.prazo === v ? undefined : v, de: undefined, ate: undefined })}
+              ativo={sp.prazo === v} rosa={v === "atrasadas"}>{r}</Chip>
+          ))}
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className={ROTULO}>Status</span>
+          {ESTADOS.map(([v, r]) => (
+            <Chip key={v} href={link({ status: alternar(estados, v).join(",") || "nenhum" })} ativo={estados.includes(v)}>{r}</Chip>
+          ))}
+          {temFiltro && (
+            <Link href={link({ evento: undefined, tipo: undefined, prazo: undefined, de: undefined, ate: undefined, status: undefined })}
+              className="ml-auto text-[12px] text-tinta-3 underline hover:text-tinta-2">Limpar filtros</Link>
+          )}
+        </div>
+      </section>
+
       {quadro && (
         quadro.length === 0
-          ? <Vazio>{quadroDaFrente ? "Nenhuma tarefa da frente nesta semana." : "Nenhuma tarefa sua nesta semana."}</Vazio>
+          ? <Vazio>Nenhuma atividade com esses filtros.</Vazio>
           : <QuadroKanban tarefas={quadro} nomePor={nomePor} />
       )}
 
@@ -271,13 +368,13 @@ export default async function MinhaSemana({
           <div className="flex flex-col gap-1.5 flex-1 min-w-0">
             <span className="inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.11em] text-verde-claro">
               <Rosto estado="verde" tamanho={16} />Em andamento{emAndamento.length > 1 ? ` · ${i + 1} de ${emAndamento.length}` : ""}
-              {emCurso.foraDaJanela && <OutraSemana prazo={emCurso.prazo_em} />}
+              {emCurso.atrasada && <PrazoVenceu dia={emCurso.diaPrazo} />}
             </span>
             <span className="text-[16px] font-semibold tracking-[-0.01em]">
               {nomeTarefa(emCurso, "nome")}
             </span>
             <span className="text-[12px] text-tinta-3 truncate">
-              {emCurso.evento ? <>evento {diaCurto(emCurso.evento.data)}</> : SEM_EVENTO}
+              {emCurso.evento ? <>evento {diaCurto(emCurso.evento.data)}</> : SEM_EVENTO} · entrega até {diaCurto(emCurso.diaPrazo)}
             </span>
             {emCurso.minhaParte && (
               <span className="text-[12px] text-verde-claro truncate">parte: {emCurso.minhaParte}</span>
@@ -309,7 +406,7 @@ export default async function MinhaSemana({
               euId={pessoa!.id}
               time={time ?? []}
               contribuintes={emCurso.contribuintes}
-              atrasada={new Date(emCurso.prazo_em).getTime() < agora}
+              atrasada={emCurso.atrasada}
               rotuloBotao="Entregar"
               classeBotao="flex items-center gap-2 min-h-[42px] px-3.5 rounded-[9px] bg-verde text-verde-ink text-[12.5px] font-semibold hover:brightness-110 transition"
             />
@@ -324,140 +421,23 @@ export default async function MinhaSemana({
       ))}
 
       {!quadro && (<>
-      {pausadas.length > 0 && (
-        <Secao titulo="Pausadas" contagem={`${pausadas.length} · ${tempoLegivel(pausadas.reduce((s, t) => s + t.segundos, 0))} ja contados`}>
-          {pausadas.map((t) => (
-            <Linha key={t.id} pausada>
-              <span className="inline-flex items-center gap-1.5 rounded-md bg-ambar-fundo border border-ambar-borda px-2.5 py-1 text-[11px] font-medium text-ambar shrink-0">
-                <Rosto estado="ambar" />
-                Pausada
-              </span>
-              <div className="flex-1 min-w-0 flex flex-col gap-1">
-                <span className="text-[13.5px] font-medium">
-                  {nomeTarefa(t, "nome")}
-                  {t.foraDaJanela && <OutraSemana prazo={t.prazo_em} />}
-                </span>
-                <span className="text-[11.5px] text-tinta-3 truncate">
-                  {t.evento ? `evento ${diaCurto(t.evento.data)}` : SEM_EVENTO} · entrega até {diaCurto(t.prazo_em.slice(0, 10))}
-                </span>
-                {t.outrosRodando.length > 0 && (
-                  <span className="text-[11px] text-verde-claro truncate">
-                    {t.outrosRodando.join(", ")} também {t.outrosRodando.length > 1 ? "estão" : "está"} nisso agora
-                  </span>
-                )}
-              </div>
-              <TempoParado segundos={t.segundos} estimativaMin={t.estimativa_min} />
-              <div className="flex gap-2 shrink-0">
-                <form action={iniciar.bind(null, t.id)}>
-                  <Submit ocupado="..." className="flex items-center gap-2 min-h-[38px] px-3.5 rounded-[9px] border border-verde-borda bg-verde-fundo text-verde-claro text-[12.5px] font-medium hover:brightness-125 transition">
-                    Retomar
-                  </Submit>
-                </form>
-                <DialogoEntrega
-                  acao={entregar.bind(null, t.id)}
-                  titulo={`${nomeTarefa(t)}`}
-                  subtitulo={t.evento ? `evento ${diaCurto(t.evento.data)}` : SEM_EVENTO}
-                  segundosMedidos={t.segundos}
-                  estimativaMin={t.estimativa_min}
-                  escaladoId={t.escalado_id}
-                  duplaId={t.dupla_id}
-                  euId={pessoa!.id}
-                  time={time ?? []}
-                  contribuintes={t.contribuintes}
-                  atrasada={new Date(t.prazo_em).getTime() < agora}
-                  rotuloBotao="Entregar"
-                  classeBotao="min-h-[38px] px-3.5 rounded-[9px] bg-verde text-verde-ink text-[12.5px] font-semibold hover:brightness-110 transition"
-                />
-                <DialogoDesnecessaria
-                  acao={marcarDesnecessaria.bind(null, t.id)}
-                  titulo={`${nomeTarefa(t)}`}
-                />
-                <DialogoAjuste
-                  acao={ajustarTempo.bind(null, t.id)}
-                  titulo={`${nomeTarefa(t)}`}
-                />
-                <DialogoPartes
-                  titulo={`${nomeTarefa(t)}`}
-                  partes={t.partes} time={time ?? []} euId={pessoa!.id}
-                  criar={criarSubtarefa.bind(null, t.id)}
-                  iniciar={iniciarSubtarefa} concluir={concluirSubtarefa} reabrir={reabrirSubtarefa} apagar={apagarSubtarefa}
-                />
-              </div>
-            </Linha>
-          ))}
+      {visiveis.length === 0 && (temFiltro
+        ? <Vazio>Nenhuma atividade com esses filtros. Use “Limpar filtros” para voltar a ver tudo.</Vazio>
+        : <VazioComEle pose="ferias" titulo="Hoje não tem nada aberto." texto="Nenhuma atividade pendente. Vai viver." />)}
+
+      {atrasadas.length > 0 && (
+        <Secao titulo="Atrasadas" contagem={`${atrasadas.length}`} rosa>{atrasadas.map(linha)}</Secao>
+      )}
+
+      {dias.map((dia) => (
+        <Secao key={dia} contagem={`${porDia.get(dia)!.length}`}
+          titulo={dia === hoje ? "Vence hoje" : dia === somarDias(hoje, 1) ? `Amanhã · ${diaCurto(dia)}` : `Vence ${diaCurto(dia)}`}>
+          {porDia.get(dia)!.map(linha)}
         </Secao>
-      )}
-
-      {emAndamento.length === 0 && segundosFeitos === 0 && pendentes.length > 0 && (
-        <VazioComEle pose="triste" titulo="Ninguém ligou o cronômetro essa semana."
-          texto={`Sem número eu não sirvo pra nada. ${pendentes.length === 1 ? "Tem 1 tarefa aberta" : `Tem ${pendentes.length} tarefas abertas`} pra você. Esqueceu de marcar? Ajuste o tempo com o motivo, vale mais do que nada.`} />
-      )}
-
-      <Secao titulo="Pendentes" contagem={`${pendentes.length}`}>
-        {pendentes.length === 0 && <VazioComEle pose="ferias" titulo="Hoje não tem nada aberto." texto="Nada pendente nesta semana. Vai viver." />}
-        {pendentes.map((t) => {
-          const atrasada = new Date(t.prazo_em).getTime() < agora;
-          return (
-            <Linha key={t.id} destaque={atrasada}>
-              <Etiqueta atrasada={atrasada} />
-              <div className="flex-1 min-w-0 flex flex-col gap-1">
-                <span className="text-[13.5px] font-medium">
-                  {nomeTarefa(t, "nome")}
-                </span>
-                <span className="text-[11.5px] text-tinta-3 truncate">
-                  {t.evento ? <>evento {diaCurto(t.evento.data)}</> : SEM_EVENTO} ·{" "}
-                  {atrasada ? "prazo venceu" : "entrega até"} {diaCurto(t.prazo_em.slice(0, 10))}
-                </span>
-                {t.outrosRodando.length > 0 && (
-                  <span className="text-[11px] text-verde-claro truncate">
-                    {t.outrosRodando.join(", ")} também {t.outrosRodando.length > 1 ? "estão" : "está"} nisso agora
-                  </span>
-                )}
-              </div>
-              <TempoParado segundos={t.segundos} estimativaMin={t.estimativa_min} />
-              <div className="flex gap-2 shrink-0">
-                <form action={iniciar.bind(null, t.id)}>
-                  <Submit ocupado="..." className="flex items-center gap-2 min-h-[38px] px-3.5 rounded-[9px] border border-linha bg-elevado text-[12.5px] font-medium hover:bg-linha transition">
-                    Iniciar
-                  </Submit>
-                </form>
-                <DialogoEntrega
-                  acao={entregar.bind(null, t.id)}
-                  titulo={`${nomeTarefa(t)}`}
-                  subtitulo={t.evento ? `evento ${diaCurto(t.evento.data)}` : SEM_EVENTO}
-                  segundosMedidos={t.segundos}
-                  estimativaMin={t.estimativa_min}
-                  escaladoId={t.escalado_id}
-                  duplaId={t.dupla_id}
-                  euId={pessoa!.id}
-                  time={time ?? []}
-                  contribuintes={t.contribuintes}
-                  atrasada={atrasada}
-                  rotuloBotao="Entregar"
-                  classeBotao="min-h-[38px] px-3 rounded-[9px] border border-linha bg-superficie-2 text-[12.5px] text-tinta-3 hover:text-tinta-2 transition"
-                />
-                <DialogoDesnecessaria
-                  acao={marcarDesnecessaria.bind(null, t.id)}
-                  titulo={`${nomeTarefa(t)}`}
-                />
-                <DialogoAjuste
-                  acao={ajustarTempo.bind(null, t.id)}
-                  titulo={`${nomeTarefa(t)}`}
-                />
-                <DialogoPartes
-                  titulo={`${nomeTarefa(t)}`}
-                  partes={t.partes} time={time ?? []} euId={pessoa!.id}
-                  criar={criarSubtarefa.bind(null, t.id)}
-                  iniciar={iniciarSubtarefa} concluir={concluirSubtarefa} reabrir={reabrirSubtarefa} apagar={apagarSubtarefa}
-                />
-              </div>
-            </Linha>
-          );
-        })}
-      </Secao>
+      ))}
 
       {entregues.length > 0 && (
-        <Secao titulo="Entregues" contagem={`${entregues.length} · ${hhmm(entregues.reduce((s, t) => s + t.segundos, 0))}`}>
+        <Secao titulo="Entregues" contagem={`${entregues.length} · ${tempoLegivel(entregues.reduce((s, t) => s + t.segundos, 0))}`}>
           {entregues.map((t) => (
             <Linha key={t.id} apagada>
               <span className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-[11px] font-medium shrink-0 ${
@@ -469,7 +449,10 @@ export default async function MinhaSemana({
                 <span className="text-[13.5px] text-tinta-2">
                   {nomeTarefa(t, "nome")}
                 </span>
-                <span className="text-[11.5px] text-tinta-4 truncate">{t.evento ? `evento ${diaCurto(t.evento.data)}` : SEM_EVENTO}</span>
+                <span className="text-[11.5px] text-tinta-4 truncate">
+                  {t.evento ? `evento ${diaCurto(t.evento.data)}` : SEM_EVENTO}
+                  {daFrente ? ` · ${escaladosDe(nomePor, t.escalado_id, t.dupla_id)}` : ""}
+                </span>
               </div>
               <TempoParado segundos={t.segundos} estimativaMin={t.estimativa_min} />
               <DialogoAjuste
@@ -510,7 +493,8 @@ export default async function MinhaSemana({
       <section className="flex flex-col gap-2 pt-2">
         <h2 className="text-[11.5px] font-semibold uppercase tracking-[0.1em] text-tinta-3">Ajudar alguém</h2>
         <form method="GET" className="flex gap-2">
-          {sp.semana && <input type="hidden" name="semana" value={sp.semana} />}
+          {Object.entries(sp).filter(([k, v]) => v && k !== "busca")
+            .map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />)}
           <input
             type="text" name="busca" defaultValue={sp.busca ?? ""} placeholder="nome do jogo, da competição ou de alguém do time"
             className="flex-1 min-h-9 px-3 rounded-[9px] border border-linha bg-superficie text-[12.5px]"
@@ -547,11 +531,96 @@ export default async function MinhaSemana({
   );
 }
 
-function Secao({ titulo, contagem, children }: { titulo: string; contagem: string; children: React.ReactNode }) {
+const ROTULO = "min-w-[120px] text-[10.5px] font-semibold uppercase tracking-[0.1em] text-tinta-3";
+
+/** Tarefa aberta (pausada ou não começada) na lista: mesma linha em qualquer grupo. */
+function LinhaAberta({ t, euId, time, daFrente, nomePor }: {
+  t: {
+    id: string; atividade: string; titulo: string | null; status: string; estimativa_min: number;
+    escalado_id: string; dupla_id: string | null; abre_em: string; diaPrazo: string;
+    atrasada: boolean; fechada: boolean; segundos: number; outrosRodando: string[];
+    contribuintes: { nome: string; segundos: number }[]; partes: Parte[];
+    frente?: { sigla: string; nome?: string } | null;
+    evento?: { competicao: string; data: string; evento_id_origem: string | null; confronto: string | null } | null;
+  };
+  euId: string; time: { id: string; nome: string }[]; daFrente: boolean; nomePor: Map<string, string>;
+}) {
+  const pausada = t.segundos > 0;
+  return (
+    <Linha pausada={pausada && !t.atrasada} destaque={t.atrasada}>
+      {pausada ? (
+        <span className="inline-flex items-center gap-1.5 rounded-md bg-ambar-fundo border border-ambar-borda px-2.5 py-1 text-[11px] font-medium text-ambar shrink-0">
+          <Rosto estado="ambar" />Pausada
+        </span>
+      ) : <Etiqueta atrasada={t.atrasada} fechada={t.fechada} abre={t.abre_em} />}
+      <div className="flex-1 min-w-0 flex flex-col gap-1">
+        <span className="text-[13.5px] font-medium">{nomeTarefa(t, daFrente ? "sigla" : "nome")}</span>
+        <span className="text-[11.5px] text-tinta-3 truncate">
+          {t.evento ? <>evento {diaCurto(t.evento.data)}</> : SEM_EVENTO} ·{" "}
+          {t.atrasada ? "prazo venceu" : "entrega até"} {diaCurto(t.diaPrazo)}
+          {daFrente ? ` · ${escaladosDe(nomePor, t.escalado_id, t.dupla_id)}` : ""}
+        </span>
+        {t.outrosRodando.length > 0 && (
+          <span className="text-[11px] text-verde-claro truncate">
+            {t.outrosRodando.join(", ")} também {t.outrosRodando.length > 1 ? "estão" : "está"} nisso agora
+          </span>
+        )}
+      </div>
+      <TempoParado segundos={t.segundos} estimativaMin={t.estimativa_min} />
+      <div className="flex gap-2 shrink-0">
+        <form action={iniciar.bind(null, t.id)}>
+          <Submit ocupado="..." disabled={t.fechada} className={`flex items-center gap-2 min-h-[38px] px-3.5 rounded-[9px] border text-[12.5px] font-medium transition disabled:cursor-not-allowed ${
+            pausada ? "border-verde-borda bg-verde-fundo text-verde-claro hover:brightness-125" : "border-linha bg-elevado hover:bg-linha"}`}>
+            {pausada ? "Retomar" : "Iniciar"}
+          </Submit>
+        </form>
+        <DialogoEntrega
+          acao={entregar.bind(null, t.id)}
+          titulo={`${nomeTarefa(t)}`}
+          subtitulo={t.evento ? `evento ${diaCurto(t.evento.data)}` : SEM_EVENTO}
+          segundosMedidos={t.segundos}
+          estimativaMin={t.estimativa_min}
+          escaladoId={t.escalado_id}
+          duplaId={t.dupla_id}
+          euId={euId}
+          time={time}
+          contribuintes={t.contribuintes}
+          atrasada={t.atrasada}
+          rotuloBotao="Entregar"
+          classeBotao={pausada
+            ? "min-h-[38px] px-3.5 rounded-[9px] bg-verde text-verde-ink text-[12.5px] font-semibold hover:brightness-110 transition"
+            : "min-h-[38px] px-3 rounded-[9px] border border-linha bg-superficie-2 text-[12.5px] text-tinta-3 hover:text-tinta-2 transition"}
+        />
+        <DialogoDesnecessaria acao={marcarDesnecessaria.bind(null, t.id)} titulo={`${nomeTarefa(t)}`} />
+        <DialogoAjuste acao={ajustarTempo.bind(null, t.id)} titulo={`${nomeTarefa(t)}`} />
+        <DialogoPartes
+          titulo={`${nomeTarefa(t)}`}
+          partes={t.partes} time={time} euId={euId}
+          criar={criarSubtarefa.bind(null, t.id)}
+          iniciar={iniciarSubtarefa} concluir={concluirSubtarefa} reabrir={reabrirSubtarefa} apagar={apagarSubtarefa}
+        />
+      </div>
+    </Linha>
+  );
+}
+
+function Chip({ href, ativo, rosa, children }: { href: string; ativo: boolean; rosa?: boolean; children: React.ReactNode }) {
+  return (
+    <Link href={href} aria-pressed={ativo} scroll={false}
+      className={`rounded-full border px-3 py-1 text-[12.5px] transition ${
+        ativo
+          ? rosa ? "bg-rosa border-rosa text-verde-ink font-semibold" : "bg-verde border-verde text-verde-ink font-semibold"
+          : "bg-fundo border-linha text-tinta-2 hover:border-tinta-4"}`}>
+      {children}
+    </Link>
+  );
+}
+
+function Secao({ titulo, contagem, rosa, children }: { titulo: string; contagem: string; rosa?: boolean; children: React.ReactNode }) {
   return (
     <section className="flex flex-col gap-2">
       <div className="flex items-baseline gap-2.5">
-        <h2 className="text-[11.5px] font-semibold uppercase tracking-[0.1em] text-tinta-3">{titulo}</h2>
+        <h2 className={`text-[11.5px] font-semibold uppercase tracking-[0.1em] ${rosa ? "text-rosa" : "text-tinta-3"}`}>{titulo}</h2>
         <span className="num text-[11.5px] text-tinta-4">{contagem}</span>
       </div>
       {children}
@@ -562,25 +631,29 @@ function Secao({ titulo, contagem, children }: { titulo: string; contagem: strin
 function Linha({ children, destaque, apagada, pausada }: { children: React.ReactNode; destaque?: boolean; apagada?: boolean; pausada?: boolean }) {
   return (
     <div className={`flex items-center gap-3.5 rounded-[10px] px-4 py-3 border ${
-      pausada ? "bg-elevado border-ambar-borda" : destaque ? "bg-superficie border-rosa-borda" : apagada ? "bg-superficie-2 border-linha-2" : "bg-superficie border-linha"
+      pausada ? "bg-elevado border-ambar-borda" : destaque ? "bg-rosa-fundo border-rosa-borda" : apagada ? "bg-superficie-2 border-linha-2" : "bg-superficie border-linha"
     }`}>
       {children}
     </div>
   );
 }
 
-/** Tarefa tocada hoje que não é desta semana (prazo já passou ou ainda não abriu). */
-function OutraSemana({ prazo }: { prazo: string }) {
-  const venceu = new Date(prazo).getTime() < Date.now();
+function PrazoVenceu({ dia }: { dia: string }) {
   return (
-    <span className={`ml-2 inline-flex items-center rounded-md border px-2 py-0.5 text-[10.5px] font-medium align-middle ${
-      venceu ? "bg-rosa-fundo border-rosa-borda text-rosa" : "bg-elevado border-linha text-tinta-3"}`}>
-      de outra semana · {venceu ? "prazo venceu" : "prazo"} {diaCurto(prazo.slice(0, 10))}
+    <span className="ml-2 inline-flex items-center rounded-md border px-2 py-0.5 text-[10.5px] font-medium align-middle bg-rosa-fundo border-rosa-borda text-rosa">
+      prazo venceu {diaCurto(dia)}
     </span>
   );
 }
 
-function Etiqueta({ atrasada }: { atrasada: boolean }) {
+function Etiqueta({ atrasada, fechada, abre }: { atrasada: boolean; fechada: boolean; abre: string }) {
+  if (fechada) {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-md border border-dashed border-linha px-2.5 py-1 text-[11px] font-medium shrink-0 text-tinta-3">
+        <Rosto estado="cinza" />abre {diaCurto(abre)}
+      </span>
+    );
+  }
   return (
     <span className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-[11px] font-medium shrink-0 ${
       atrasada ? "bg-rosa-fundo border-rosa-borda text-rosa" : "bg-elevado border-linha text-tinta-2"}`}>
@@ -593,7 +666,6 @@ function Etiqueta({ atrasada }: { atrasada: boolean }) {
 function Vazio({ children }: { children: React.ReactNode }) {
   return <p className="rounded-[10px] border border-dashed border-linha px-4 py-5 text-[12.5px] text-tinta-4">{children}</p>;
 }
-
 
 function VazioComEle({ pose, titulo, texto }: { pose: "ferias" | "triste"; titulo: string; texto: string }) {
   return (
