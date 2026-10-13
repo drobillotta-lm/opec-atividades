@@ -1,5 +1,27 @@
 # Onde paramos — 28/09/2026
 
+## RETOMAR AQUI (13/10/2026 — entrega só da Escala, dia útil, Minhas atividades)
+
+Disparado pelo Internacional x Corinthians de 07/10, que não aparecia para o Daniel. No ar
+(`59b1fd9` banco/sync, `54c9258` tela), migration **047** aplicada (banco = repo):
+- **Só vira atividade o que a Escala filtrou e marcou "sim"**: a sync manda `elegivel=false`
+  da Escala (fora da view "Geral - CazéTV": Globo, Prime...) como entrega "não", e a previsão
+  pelo padrão da competição foi desligada (`aplicar_previsao_entrega` só limpa o 'previsto').
+  Saíram 382 tarefas pendentes, nenhuma com tempo.
+- **Brasileirão em duas linhas na Matriz**: fica a da CazéTV; a outra vira `tipo='duplicado'`
+  (sync, `marcarDuplicados`) e as tarefas se desfazem como evento cancelado.
+- **Prazo depois do jogo em dia útil** (`feriados`, nacionais 2026–2027, sem Carnaval/Corpus
+  Christi); abertura e prazo antes do jogo seguem em dia corrido. 164 pendentes recalculadas.
+- **Combinadas (roteiro+auditoria etc.) fora de outubro**: corte de 01/10; trava no
+  `gerar_tarefas` impede recriar parte de evento cuja combinada já foi entregue.
+- **/semana virou "Minhas atividades"**: sem semana; abertas todas por prazo, atrasadas sempre
+  no topo; filtros na URL (`evento`, `tipo`, `prazo`, `de`, `ate`, `status`, `ver`, `quem`).
+  Mockup: https://claude.ai/artifact/SzyPeL7MsmLaaYd8YNqRda
+
+**Falta (SQL Editor, o MCP não roda delete):** apagar as 4 linhas `sinc_auditoria` de
+FI/OL/PR/CP na cadeia (SQL comentado no passo 5 da 047) e as sessões de teste das combinadas
+reabertas em 13/10. Ainda com semana: `/frente` e as `proximas[]` do notch.
+
 ## RETOMAR AQUI (08/10/2026 — atividades únicas, nome com o jogo, compactos, menu, tempo livre)
 
 Plano aprovado pelo Daniel em 08/10 (`~/.claude/plans/tive-umas-ideias-de-robust-unicorn.md` no
