@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { criarClienteServidor } from "@/lib/supabase/server";
-import { semanaDe, deslocarSemana, diaCurto, hhmm, escaladosDe, ROTULO_STATUS } from "@/lib/semana";
+import { diaCurto, hhmm, escaladosDe, ROTULO_STATUS } from "@/lib/semana";
 import { rotulosAtividade } from "@/lib/atividades";
 import { nomeTarefa } from "@/componentes/nome-tarefa";
 import { Submit } from "../../semana/Cronometro";
@@ -20,7 +20,7 @@ const PRIMARIO = "min-h-9 px-3.5 rounded-lg border border-verde-borda bg-verde-f
 const PERIGO = "min-h-9 px-3 rounded-lg border border-linha bg-superficie-2 text-rosa text-[12.5px] hover:bg-elevado transition";
 
 type Busca = {
-  aba?: string; mes?: string; semana?: string; frente?: string; pessoa?: string; busca?: string;
+  aba?: string; mes?: string; de?: string; ate?: string; frente?: string; pessoa?: string; busca?: string;
   msg?: string; erro?: string;
 };
 type Pessoa = { id: string; nome: string; papel: string };
@@ -336,18 +336,24 @@ async function AbaTarefas({ sp, volta, frentes, time, nomePor, rotulos }: {
   sp: Busca; volta: string; frentes: Frente[]; time: Pessoa[]; nomePor: Map<string, string>; rotulos: Record<string, string>;
 }) {
   const supabase = await criarClienteServidor();
-  const { inicio, fim } = sp.semana ? deslocarSemana(sp.semana, 0) : semanaDe();
+  // Sem semana (13/10): sem datas mostra todas as pendentes, atrasadas primeiro; com datas,
+  // tudo que tem entrega prevista no intervalo, de qualquer status.
+  const data = (v?: string) => (/^\d{4}-\d{2}-\d{2}$/.test(v ?? "") ? v! : "");
+  const de = data(sp.de), ate = data(sp.ate);
   const frente = frentes.find((f) => f.sigla === sp.frente);
   const termo = sp.busca?.trim().replace(/[,()%]/g, "");
+  const LIMITE = 150;
 
   let q = supabase.from("tarefas")
     .select(`id, atividade, status, estimativa_min, prazo_em, escalado_id, dupla_id, responsavel_real_id,
-             origem, dono_manual, obs, evento_id, frentes ( sigla ), eventos!inner ( competicao, data, evento_id_origem, confronto )`)
-    .lte("abre_em", fim).gte("prazo_em", `${inicio}T00:00:00Z`);
+             origem, dono_manual, obs, evento_id, frentes ( sigla ), eventos!inner ( competicao, data, evento_id_origem, confronto )`);
+  if (!de && !ate) q = q.eq("status", "pendente");
+  if (de) q = q.gte("prazo_em", `${de}T00:00:00-03:00`);
+  if (ate) q = q.lte("prazo_em", `${ate}T23:59:59-03:00`);
   if (frente) q = q.eq("frente_id", frente.id);
   if (sp.pessoa && /^[0-9a-f-]{36}$/.test(sp.pessoa)) q = q.or(`escalado_id.eq.${sp.pessoa},dupla_id.eq.${sp.pessoa}`);
   if (termo) q = q.or(`competicao.ilike.%${termo}%,evento_id_origem.ilike.%${termo}%`, { referencedTable: "eventos" });
-  const { data: brutas } = await q.order("prazo_em").limit(80);
+  const { data: brutas } = await q.order("prazo_em").limit(LIMITE);
   const tarefas = (brutas ?? []).map((t) => ({
     ...t,
     frente: Array.isArray(t.frentes) ? t.frentes[0] : t.frentes,
@@ -360,7 +366,8 @@ async function AbaTarefas({ sp, volta, frentes, time, nomePor, rotulos }: {
     <section className="rounded-xl bg-superficie border border-linha p-5 flex flex-col gap-3">
       <form action="/admin/organizar" className="flex gap-2 items-end flex-wrap">
         <input type="hidden" name="aba" value="tarefas" />
-        <Campo rotulo="Semana de"><input name="semana" type="date" defaultValue={inicio} className={CAMPO} /></Campo>
+        <Campo rotulo="Entrega de"><input name="de" type="date" defaultValue={de} className={CAMPO} /></Campo>
+        <Campo rotulo="até"><input name="ate" type="date" defaultValue={ate} className={CAMPO} /></Campo>
         <Campo rotulo="Frente">
           <select name="frente" defaultValue={sp.frente ?? ""} className={CAMPO}>
             <option value="">todas</option>
@@ -377,7 +384,10 @@ async function AbaTarefas({ sp, volta, frentes, time, nomePor, rotulos }: {
         <button type="submit" className={BOTAO}>Filtrar</button>
       </form>
       <p className="text-[11.5px] text-tinta-4">
-        Tarefas com janela na semana de {diaCurto(inicio)} a {diaCurto(fim)} · {tarefas.length}{tarefas.length === 80 ? "+ (mostrando as 80 primeiras)" : ""}
+        {de || ate
+          ? <>Entrega prevista {de ? `de ${dataBR(de)} ` : ""}{ate ? `até ${dataBR(ate)}` : "em diante"}, qualquer status</>
+          : <>Todas as pendentes, da mais atrasada pra frente</>}
+        {" "}· {tarefas.length}{tarefas.length === LIMITE ? `+ (mostrando as ${LIMITE} primeiras)` : ""}
       </p>
 
       {tarefas.map((t) => (

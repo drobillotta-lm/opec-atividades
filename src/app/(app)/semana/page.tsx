@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { Aba } from "@/componentes/Aba";
+import { Chip } from "@/componentes/Chip";
 import { QuadroKanban, type TarefaQuadro } from "@/componentes/QuadroKanban";
 import { semanaDe, deslocarSemana, diaCurto, hhmm, tempoLegivel, ROTULO_ATIVIDADE, escaladosDe, hojeISO, diaBRT, somarDias } from "@/lib/semana";
 import { Relogio, Submit, TempoParado, DialogoEntrega, DialogoDesnecessaria, DialogoAjuste } from "./Cronometro";
@@ -601,18 +602,6 @@ function LinhaAberta({ t, euId, time, daFrente, nomePor }: {
         />
       </div>
     </Linha>
-  );
-}
-
-function Chip({ href, ativo, rosa, children }: { href: string; ativo: boolean; rosa?: boolean; children: React.ReactNode }) {
-  return (
-    <Link href={href} aria-pressed={ativo} scroll={false}
-      className={`rounded-full border px-3 py-1 text-[12.5px] transition ${
-        ativo
-          ? rosa ? "bg-rosa border-rosa text-verde-ink font-semibold" : "bg-verde border-verde text-verde-ink font-semibold"
-          : "bg-fundo border-linha text-tinta-2 hover:border-tinta-4"}`}>
-      {children}
-    </Link>
   );
 }
 

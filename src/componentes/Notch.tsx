@@ -299,7 +299,7 @@ export function Notch({
               </div>
             ) : (
               <p className="mt-1 text-[12.5px] text-[var(--notch-tinta-2)]">
-                Nenhum cronômetro ligado. {proximas.length > 0 ? "Clique na cabeça pra escolher a próxima." : "Nada aberto na sua semana."}
+                Nenhum cronômetro ligado. {proximas.length + atrasadas.length > 0 ? "Clique na cabeça pra escolher a próxima." : "Nada aberto pra você agora."}
               </p>
             )}
             {aberto && (
