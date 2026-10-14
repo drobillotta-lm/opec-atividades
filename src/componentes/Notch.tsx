@@ -34,9 +34,9 @@ export type Ajustes = { canto: Canto; recuoX: number; recuoY: number };
 export const AJUSTES_PADRAO: Ajustes = { canto: "baixo-dir", recuoX: 96, recuoY: 96 };
 /** Margem transparente entre o conteúdo e a borda da janela nativa (px de CSS). */
 export const MARGEM = 24;
-/** Escala da cabeça quando ninguém está com o mouse em cima (14/10). Mesmo valor nas classes
- * Tailwind abaixo (literal, senão o compilador não gera a classe) e no tamanho da janela mini. */
-export const ESCALA_MINI = 0.62;
+/** Quanto a cabeça afunda na borda em repouso (px de CSS), literal também nas classes
+ * `translate-*-[23px]` lá embaixo (o compilador do Tailwind precisa do valor escrito). */
+export const RECUO_REPOUSO = 23;
 const CHAVE = "opec-notch-ajustes";
 const CHAVE_ANTIGA = "opec-notch-canto";
 const CANTOS: { v: Canto; r: string }[] = [
@@ -154,10 +154,11 @@ export function Notch({
     "dir-alto": "right-0 top-[24px]", "esq-alto": "left-0 top-[24px]",
   }[canto];
   const giroCabeca = canto === "dir-alto" ? "rotate(-90deg)" : canto === "esq-alto" ? "rotate(90deg)" : undefined;
-  // O mini encolhe em direção ao canto onde ele está grudado, pra não sair do lugar.
-  const origemMini = {
-    "baixo-dir": "origin-bottom-right", "baixo-esq": "origin-bottom-left",
-    "dir-alto": "origin-top-right", "esq-alto": "origin-top-left",
+  // Em repouso a cabeça afunda na borda da tela (RECUO_REPOUSO px): sobra só o começo dos
+  // olhos e as horas, como um notch de verdade. Nas laterais afunda pro lado.
+  const afunda = {
+    "baixo-dir": "translate-y-[23px]", "baixo-esq": "translate-y-[23px]",
+    "dir-alto": "translate-x-[23px]", "esq-alto": "-translate-x-[23px]",
   }[canto];
   const caixa = {
     "baixo-dir": "bottom-[62px] right-0 origin-bottom-right", "baixo-esq": "bottom-[62px] left-0 origin-bottom-left",
@@ -212,13 +213,13 @@ export function Notch({
 
   return (
     <div ref={raiz} className={`group fixed z-40 ${posicao}`} style={{ ["--nt" as string]: cor }}>
-      {/* Parado, a cabeça fica no tamanho MINI (62 %), discreta no canto; com o mouse em cima
-          ou aberto, volta ao tamanho cheio e a caixa aparece (Daniel, 14/10). A janela nativa
-          acompanha: NotchApp pede a janela pequena quando recolhido. */}
+      {/* Parado, a cabeça fica afundada na borda (só o começo dos olhos de fora); com o mouse
+          em cima ou aberto, sobe e a caixa aparece (Daniel, 14/10). A parte afundada fica fora
+          da janela nativa, que está grudada na borda do monitor, então não aparece mesmo. */}
       <button type="button" onClick={() => setAberto((a) => !a)}
         aria-label={`Sr. Minutos: ${rotulo}${principal ? `, ${hms(seg)} de ${hms(previsto)}` : ""}. Abrir resumo`}
         aria-expanded={aberto}
-        className={`relative block transition-transform duration-200 ${origemMini} ${aberto ? "scale-100" : "scale-[0.62] group-hover:scale-100 group-focus-within:scale-100"} ${lateral ? "w-[53px] h-[98px]" : "w-[98px] h-[53px]"}`}>
+        className={`relative block transition-transform duration-200 ${aberto ? "translate-x-0 translate-y-0" : `${afunda} group-hover:translate-x-0 group-hover:translate-y-0 group-focus-within:translate-x-0 group-focus-within:translate-y-0`} ${lateral ? "w-[53px] h-[98px]" : "w-[98px] h-[53px]"}`}>
         {/* Sem drop-shadow: a janela nativa tinha o tamanho exato do desenho e a sombra era
             cortada reta pela borda, virando um "quadrado meio escuro" em volta. */}
         <svg viewBox="0 0 140 76" width="98" height="53" aria-hidden
@@ -240,13 +241,13 @@ export function Notch({
             style={{ transformOrigin: "70px 70px", transform: `rotate(${ga}deg)`, transition: "transform .6s" }} />
           <line x1="70" y1="70" x2="38" y2="70" stroke="var(--nt)" strokeWidth="4" strokeLinecap="round"
             style={{ transformOrigin: "70px 70px", transform: `rotate(${gb}deg)`, transition: "transform .6s" }} />
-          {/* Olhos um pouco menores e mais pra dentro (14/10): os de antes encostavam no risco
-              das horas de 45°. */}
-          {[55, 85].map((x) => (
+          {/* Olhos menores e mais pra dentro (14/10): os de antes encostavam no risco das
+              horas de 45°; em repouso só o topo deles fica de fora da borda. */}
+          {[56, 84].map((x) => (
             <g key={x}>
-              <ellipse cx={x} cy="48" rx="7" ry="9" fill="var(--notch-branco)" stroke="var(--notch-tinta)" strokeWidth="2" />
-              <ellipse cx={x + 1.3 - (estado === "pausado" ? 1.3 : 0)} cy={50 + (estado === "vencido" ? 2 : 0)} rx="3.8" ry="5.3" fill="var(--notch-tinta)" />
-              <circle cx={x + 2.6} cy="47.5" r="1.5" fill="var(--notch-branco)" />
+              <ellipse cx={x} cy="49" rx="6" ry="7.5" fill="var(--notch-branco)" stroke="var(--notch-tinta)" strokeWidth="2" />
+              <ellipse cx={x + 1.1 - (estado === "pausado" ? 1.1 : 0)} cy={50.5 + (estado === "vencido" ? 1.8 : 0)} rx="3.2" ry="4.4" fill="var(--notch-tinta)" />
+              <circle cx={x + 2.2} cy="48.5" r="1.3" fill="var(--notch-branco)" />
             </g>
           ))}
           <circle cx="70" cy="70" r="5" fill="var(--nt)" />
