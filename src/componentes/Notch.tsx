@@ -279,13 +279,23 @@ export function Notch({
                 </button>
               ))}
             </div>
-            <label className="flex flex-col gap-1">
-              <span className={ROTULINHO}>{lateral ? "Distância do topo" : "Distância da lateral"} · <span className="num">{lateral ? ajustes.recuoY : ajustes.recuoX} px</span></span>
-              <input type="range" min={0} max={400} step={8}
-                value={lateral ? ajustes.recuoY : ajustes.recuoX}
-                onChange={(e) => mudarAjustes(lateral ? { recuoY: Number(e.target.value) } : { recuoX: Number(e.target.value) })}
-                className="accent-[var(--notch-verde)]" />
-            </label>
+            {/* Número, não barra: arrastar a barra movia a janela embaixo do mouse e o arraste
+                se perdia (Daniel, 14/10). Aplica no Enter ou no botão, não a cada tecla. */}
+            <form className="flex flex-col gap-1"
+              onSubmit={(e) => {
+                e.preventDefault();
+                const v = Math.min(400, Math.max(0, Math.round(Number(new FormData(e.currentTarget).get("recuo")) || 0)));
+                mudarAjustes(lateral ? { recuoY: v } : { recuoX: v });
+              }}>
+              <label htmlFor="recuo" className={ROTULINHO}>{lateral ? "Distância do topo" : "Distância da lateral"} (px, 0 a 400)</label>
+              <div className="flex gap-1.5">
+                <input id="recuo" name="recuo" type="number" min={0} max={400} step={1}
+                  key={`${canto}-${lateral ? ajustes.recuoY : ajustes.recuoX}`}
+                  defaultValue={lateral ? ajustes.recuoY : ajustes.recuoX}
+                  className="num w-24 min-h-[32px] rounded-[8px] border border-[var(--notch-linha)] bg-[var(--notch-botao)] px-2.5 text-[13px] outline-none focus:border-[var(--notch-verde)]" />
+                <button type="submit" className={BOTAO}>aplicar</button>
+              </div>
+            </form>
             <p className="text-[11px] text-[var(--notch-tinta-3)] leading-snug">
               Ele fica sempre rente à borda da tela; isto afasta ao longo dela. Nas laterais a cabeça vira de lado.
             </p>
