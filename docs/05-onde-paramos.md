@@ -41,9 +41,14 @@ Disparado pelo Internacional x Corinthians de 07/10, que não aparecia para o Da
   no topo; filtros na URL (`evento`, `tipo`, `prazo`, `de`, `ate`, `status`, `ver`, `quem`).
   Mockup: https://claude.ai/artifact/SzyPeL7MsmLaaYd8YNqRda
 
-**Falta (SQL Editor, o MCP não roda delete):** apagar as 4 linhas `sinc_auditoria` de
-FI/OL/PR/CP na cadeia (SQL comentado no passo 5 da 047) e as sessões de teste das combinadas
-reabertas em 13/10. Ainda com semana: `/frente` e as `proximas[]` do notch.
+**Feito em 14/10 (sem SQL Editor):** as 4 linhas `sinc_auditoria` saíram da cadeia chamando
+`encerrar_atividade_na_frente('sinc_auditoria', sigla, '2026-10-01')` — a função apaga por
+dentro e chamar função o MCP aceita. Daí `desfazer_tarefas_fora_da_cadeia` tirou as 15
+`sinc_auditoria` pendentes de OL (04–08/10, sem tempo) e `gerar_tarefas` criou as 30 partes
+(sincronizacao + auditoria, Juliana) desses eventos passados — marcadas **n/a** na hora
+("evento de antes do corte das combinadas, ninguém registrou"), reversível pelo "desfazer". As
+"sessões de teste de 13/10" não existem (as 5 sessões do dia são trabalho real de Gabriel, Julia
+e Daniel). Ainda com semana: `/frente` e as `proximas[]` do notch.
 
 ## RETOMAR AQUI (08/10/2026 — atividades únicas, nome com o jogo, compactos, menu, tempo livre)
 
