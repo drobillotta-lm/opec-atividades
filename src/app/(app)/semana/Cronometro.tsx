@@ -216,6 +216,44 @@ export function DialogoAjuste({
  * material novo pra aquela competição; sem isso, nem o líder nem quem for fazer
  * conseguem saber de antemão. Fica pra quem chegou na tarefa decidir, sem virar
  * "entregue" mentindo sobre o que aconteceu. */
+/** Excluir tarefa começada do zero (050): some com o tempo junto, por isso confirma antes. */
+export function DialogoExcluir({ acao, titulo, segundos }: { acao: () => void | Promise<void>; titulo: string; segundos: number }) {
+  const ref = useRef<HTMLDialogElement>(null);
+  return (
+    <>
+      <button type="button" onClick={() => ref.current?.showModal()} title="Excluir esta tarefa"
+        className="min-h-8 px-2.5 rounded-md border border-linha-2 bg-superficie-2 text-[11.5px] text-tinta-4 hover:text-rosa transition">
+        excluir
+      </button>
+      <dialog
+        ref={ref}
+        onClick={(e) => { if (e.target === ref.current) ref.current?.close(); }}
+        className="m-auto w-[min(420px,92vw)] rounded-xl bg-superficie text-tinta border border-linha p-0 backdrop:bg-black/60"
+      >
+        <form action={acao} className="flex flex-col gap-4 p-5">
+          <div className="flex flex-col gap-1">
+            <h2 className="text-[17px] font-semibold tracking-[-0.01em]">Excluir esta tarefa?</h2>
+            <p className="text-[13px] text-tinta-2">{titulo}</p>
+            <p className="text-[11.5px] text-tinta-4">
+              Ela foi começada do zero, então não volta pela sincronização.
+              {segundos > 0 ? " O tempo medido some junto; se quiser guardar, marque como não necessária em vez de excluir." : ""}
+            </p>
+          </div>
+          <div className="flex gap-2 justify-end pt-1">
+            <button type="button" onClick={() => ref.current?.close()}
+              className="min-h-10 px-4 rounded-lg border border-linha bg-superficie-2 text-[13px] text-tinta-3 hover:text-tinta-2">
+              Cancelar
+            </button>
+            <Submit ocupado="..." className="min-h-10 px-4 rounded-lg border border-rosa-borda bg-rosa-fundo text-[13px] font-semibold text-rosa hover:brightness-110">
+              Excluir
+            </Submit>
+          </div>
+        </form>
+      </dialog>
+    </>
+  );
+}
+
 export function DialogoDesnecessaria({
   acao,
   titulo,

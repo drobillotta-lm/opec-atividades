@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Notch, AJUSTES_PADRAO, MARGEM, type Ajustes, type ProximaNotch, type TarefaNotch } from "@/componentes/Notch";
+import { Notch, AJUSTES_PADRAO, MARGEM, ESCALA_MINI, type Ajustes, type ProximaNotch, type TarefaNotch } from "@/componentes/Notch";
 import { Rosto } from "@/componentes/SrMinutos";
 import { nomeEvento } from "@/componentes/nome-tarefa";
 
@@ -156,9 +156,12 @@ export function NotchApp() {
     if (!tauri) return;
     const grande = !pareado || hover || aberto;
     const alturaHover = Math.min(460, 180 + 128 * Math.max(1, nCorrendo) + 104 * nPausadas);
+    // Recolhido: só o mini (ESCALA_MINI da cabeça), mais discreto na tela (14/10). A cabeça
+    // encolhe em direção ao canto, então a janela pequena continua cobrindo o desenho.
+    const miniW = Math.ceil(98 * ESCALA_MINI), miniH = Math.ceil(53 * ESCALA_MINI);
     const [largura, altura] = !pareado ? [300 + 2 * MARGEM, 230 + MARGEM]
       : grande ? [300 + 2 * MARGEM, (aberto ? 620 : alturaHover) + MARGEM]
-      : lateral ? [53 + MARGEM, 98 + 2 * MARGEM] : [98 + 2 * MARGEM, 53 + MARGEM];
+      : lateral ? [miniH + MARGEM, miniW + 2 * MARGEM] : [miniW + 2 * MARGEM, miniH + MARGEM];
     invoke("tamanho", { largura, altura, canto: ajustes.canto, recuoX: ajustes.recuoX, recuoY: ajustes.recuoY }).catch(() => {});
   }, [tauri, pareado, hover, aberto, ajustes, lateral, nCorrendo, nPausadas]);
 

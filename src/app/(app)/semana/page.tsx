@@ -4,10 +4,10 @@ import { Aba } from "@/componentes/Aba";
 import { Chip } from "@/componentes/Chip";
 import { QuadroKanban, type TarefaQuadro } from "@/componentes/QuadroKanban";
 import { semanaDe, deslocarSemana, diaCurto, hhmm, tempoLegivel, ROTULO_ATIVIDADE, escaladosDe, hojeISO, diaBRT, somarDias } from "@/lib/semana";
-import { Relogio, Submit, TempoParado, DialogoEntrega, DialogoDesnecessaria, DialogoAjuste } from "./Cronometro";
+import { Relogio, Submit, TempoParado, DialogoEntrega, DialogoDesnecessaria, DialogoAjuste, DialogoExcluir } from "./Cronometro";
 import { DialogoPartes, type Parte } from "./Partes";
 import {
-  iniciar, pausar, entregar, marcarDesnecessaria, reverterDesnecessaria, ajustarTempo,
+  iniciar, pausar, entregar, marcarDesnecessaria, reverterDesnecessaria, ajustarTempo, excluirTarefaRegistrada,
   criarSubtarefa, iniciarSubtarefa, concluirSubtarefa, reabrirSubtarefa, apagarSubtarefa,
 } from "../acoes";
 import { AbrirDock } from "@/componentes/AbrirDock";
@@ -24,7 +24,7 @@ export const dynamic = "force-dynamic";
 // URL; valem para a Lista e para o Kanban, nas minhas ou (líder) na frente inteira.
 
 const CAMPOS_TAREFA = `id, atividade, titulo, status, estimativa_min, abre_em, prazo_em, concluida_em,
-             escalado_id, dupla_id, responsavel_real_id, excecao_desc,
+             escalado_id, dupla_id, responsavel_real_id, excecao_desc, origem,
              frentes ( sigla, nome ),
              eventos ( competicao, data, evento_id_origem, confronto )`;
 
@@ -577,6 +577,7 @@ function LinhaAberta({ t, euId, time, daFrente, nomePor }: {
     contribuintes: { nome: string; segundos: number }[]; partes: Parte[];
     frente?: { sigla: string; nome?: string } | null;
     evento?: { competicao: string; data: string; evento_id_origem: string | null; confronto: string | null } | null;
+    origem?: string | null;
   };
   euId: string; time: { id: string; nome: string }[]; daFrente: boolean; nomePor: Map<string, string>;
 }) {
@@ -634,6 +635,9 @@ function LinhaAberta({ t, euId, time, daFrente, nomePor }: {
           criar={criarSubtarefa.bind(null, t.id)}
           iniciar={iniciarSubtarefa} concluir={concluirSubtarefa} reabrir={reabrirSubtarefa} apagar={apagarSubtarefa}
         />
+        {t.origem === "registrada" && (t.escalado_id === euId || !daFrente) && (
+          <DialogoExcluir acao={excluirTarefaRegistrada.bind(null, t.id)} titulo={`${nomeTarefa(t)}`} segundos={t.segundos} />
+        )}
       </div>
     </Linha>
   );

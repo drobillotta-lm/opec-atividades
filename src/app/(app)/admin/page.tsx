@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { criarClienteServidor } from "@/lib/supabase/server";
-import { classificarCompeticao, criarFrenteEClassificar, sincronizarAgora } from "../acoes";
+import { classificarCompeticao, criarFrenteEClassificar, sincronizarAgora, descartarCompeticao, reativarCompeticao } from "../acoes";
 import { ClassificarFrente } from "@/componentes/ClassificarFrente";
 import { Submit } from "../semana/Cronometro";
 import type { ResumoSincronizacao } from "@/lib/escala/sincronizar";
@@ -14,7 +14,10 @@ export default async function Admin() {
   const { data: frentes } = await supabase
     .from("frentes").select("id, sigla, nome, regime, ativa, lider_id").order("sigla");
   const { data: semFrente } = await supabase
-    .from("competicoes").select("nome, entrega_padrao").is("frente_id", null).order("nome");
+    .from("competicoes").select("nome, entrega_padrao").is("frente_id", null).eq("ativa", true).order("nome");
+  // Descartadas pelo gestor ("não vale"): ficam num canto, com o caminho de volta.
+  const { data: descartadas } = await supabase
+    .from("competicoes").select("nome").eq("ativa", false).order("nome");
   const { count: indefinidos } = await supabase
     .from("eventos").select("id", { count: "exact", head: true }).is("entrega", null)
     .gte("data", "2026-09-21");
@@ -54,14 +57,37 @@ export default async function Admin() {
                 <span className="truncate">{c.nome}</span>
                 <span className="text-tinta-4 text-[11px]">entrega padrão: {c.entrega_padrao}</span>
               </div>
-              <ClassificarFrente
-                acaoClassificar={classificarCompeticao.bind(null, c.nome)}
-                acaoCriar={criarFrenteEClassificar.bind(null, c.nome)}
-                frentes={frentesAtivas}
-              />
+              <div className="flex items-center gap-2 shrink-0">
+                <ClassificarFrente
+                  acaoClassificar={classificarCompeticao.bind(null, c.nome)}
+                  acaoCriar={criarFrenteEClassificar.bind(null, c.nome)}
+                  frentes={frentesAtivas}
+                />
+                <form action={descartarCompeticao.bind(null, c.nome)}>
+                  <Submit ocupado="..." className="min-h-9 px-2.5 rounded-lg border border-linha-2 bg-superficie-2 text-[11.5px] text-tinta-4 hover:text-rosa transition"
+                    >não vale</Submit>
+                </form>
+              </div>
             </div>
           ))}
         </Cartao>
+      )}
+
+      {(descartadas ?? []).length > 0 && (
+        <details className="rounded-xl bg-superficie border border-linha px-5 py-3">
+          <summary className="cursor-pointer text-[11.5px] font-semibold uppercase tracking-[0.1em] text-tinta-3">
+            Competições descartadas · {(descartadas ?? []).length}
+          </summary>
+          <p className="text-[11.5px] text-tinta-4 pt-1">Marcadas como &quot;não vale&quot;: não aparecem na Gestão de eventos nem geram tarefa. Dá pra voltar.</p>
+          {(descartadas ?? []).map((c) => (
+            <div key={c.nome} className="flex items-center justify-between gap-3 py-2 border-t border-linha-2 text-[12.5px]">
+              <span className="truncate text-tinta-3">{c.nome}</span>
+              <form action={reativarCompeticao.bind(null, c.nome)}>
+                <Submit ocupado="..." className="min-h-8 px-2.5 rounded-lg border border-linha bg-elevado text-[11.5px] hover:bg-linha transition">voltar</Submit>
+              </form>
+            </div>
+          ))}
+        </details>
       )}
 
       {!!indefinidos && indefinidos > 0 && (

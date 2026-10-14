@@ -34,6 +34,9 @@ export type Ajustes = { canto: Canto; recuoX: number; recuoY: number };
 export const AJUSTES_PADRAO: Ajustes = { canto: "baixo-dir", recuoX: 96, recuoY: 96 };
 /** Margem transparente entre o conteúdo e a borda da janela nativa (px de CSS). */
 export const MARGEM = 24;
+/** Escala da cabeça quando ninguém está com o mouse em cima (14/10). Mesmo valor nas classes
+ * Tailwind abaixo (literal, senão o compilador não gera a classe) e no tamanho da janela mini. */
+export const ESCALA_MINI = 0.62;
 const CHAVE = "opec-notch-ajustes";
 const CHAVE_ANTIGA = "opec-notch-canto";
 const CANTOS: { v: Canto; r: string }[] = [
@@ -151,6 +154,11 @@ export function Notch({
     "dir-alto": "right-0 top-[24px]", "esq-alto": "left-0 top-[24px]",
   }[canto];
   const giroCabeca = canto === "dir-alto" ? "rotate(-90deg)" : canto === "esq-alto" ? "rotate(90deg)" : undefined;
+  // O mini encolhe em direção ao canto onde ele está grudado, pra não sair do lugar.
+  const origemMini = {
+    "baixo-dir": "origin-bottom-right", "baixo-esq": "origin-bottom-left",
+    "dir-alto": "origin-top-right", "esq-alto": "origin-top-left",
+  }[canto];
   const caixa = {
     "baixo-dir": "bottom-[62px] right-0 origin-bottom-right", "baixo-esq": "bottom-[62px] left-0 origin-bottom-left",
     "dir-alto": "top-0 right-[62px] origin-top-right", "esq-alto": "top-0 left-[62px] origin-top-left",
@@ -204,10 +212,13 @@ export function Notch({
 
   return (
     <div ref={raiz} className={`group fixed z-40 ${posicao}`} style={{ ["--nt" as string]: cor }}>
+      {/* Parado, a cabeça fica no tamanho MINI (62 %), discreta no canto; com o mouse em cima
+          ou aberto, volta ao tamanho cheio e a caixa aparece (Daniel, 14/10). A janela nativa
+          acompanha: NotchApp pede a janela pequena quando recolhido. */}
       <button type="button" onClick={() => setAberto((a) => !a)}
         aria-label={`Sr. Minutos: ${rotulo}${principal ? `, ${hms(seg)} de ${hms(previsto)}` : ""}. Abrir resumo`}
         aria-expanded={aberto}
-        className={`relative block ${lateral ? "w-[53px] h-[98px]" : "w-[98px] h-[53px]"}`}>
+        className={`relative block transition-transform duration-200 ${origemMini} ${aberto ? "scale-100" : "scale-[0.62] group-hover:scale-100 group-focus-within:scale-100"} ${lateral ? "w-[53px] h-[98px]" : "w-[98px] h-[53px]"}`}>
         {/* Sem drop-shadow: a janela nativa tinha o tamanho exato do desenho e a sombra era
             cortada reta pela borda, virando um "quadrado meio escuro" em volta. */}
         <svg viewBox="0 0 140 76" width="98" height="53" aria-hidden
@@ -229,11 +240,13 @@ export function Notch({
             style={{ transformOrigin: "70px 70px", transform: `rotate(${ga}deg)`, transition: "transform .6s" }} />
           <line x1="70" y1="70" x2="38" y2="70" stroke="var(--nt)" strokeWidth="4" strokeLinecap="round"
             style={{ transformOrigin: "70px 70px", transform: `rotate(${gb}deg)`, transition: "transform .6s" }} />
-          {[54, 86].map((x) => (
+          {/* Olhos um pouco menores e mais pra dentro (14/10): os de antes encostavam no risco
+              das horas de 45°. */}
+          {[55, 85].map((x) => (
             <g key={x}>
-              <ellipse cx={x} cy="47" rx="8" ry="10.5" fill="var(--notch-branco)" stroke="var(--notch-tinta)" strokeWidth="2" />
-              <ellipse cx={x + 1.5 - (estado === "pausado" ? 1.5 : 0)} cy={49.5 + (estado === "vencido" ? 2.5 : 0)} rx="4.4" ry="6.2" fill="var(--notch-tinta)" />
-              <circle cx={x + 3} cy="46.5" r="1.7" fill="var(--notch-branco)" />
+              <ellipse cx={x} cy="48" rx="7" ry="9" fill="var(--notch-branco)" stroke="var(--notch-tinta)" strokeWidth="2" />
+              <ellipse cx={x + 1.3 - (estado === "pausado" ? 1.3 : 0)} cy={50 + (estado === "vencido" ? 2 : 0)} rx="3.8" ry="5.3" fill="var(--notch-tinta)" />
+              <circle cx={x + 2.6} cy="47.5" r="1.5" fill="var(--notch-branco)" />
             </g>
           ))}
           <circle cx="70" cy="70" r="5" fill="var(--nt)" />
@@ -281,10 +294,10 @@ export function Notch({
           <>
             <div className="flex items-center justify-between">
               <span className="block text-[10px] font-bold uppercase tracking-[0.1em]" style={{ color: "var(--nt)" }}>{rotulo}</span>
-              {aberto && (
-                <button type="button" onClick={() => setTela("ajustes")} aria-label="Ajustes do notch" title="Ajustes"
-                  className="w-[26px] h-[26px] grid place-items-center rounded-[8px] border border-[var(--notch-linha)] text-[14px] text-[var(--notch-tinta-2)] hover:bg-[var(--notch-linha)]">⚙</button>
-              )}
+              {/* ⚙ também no hover (antes só depois de clicar na cabeça): abre o painel e vai
+                  direto pros ajustes, assim a caixa não some quando o mouse sai da cabeça. */}
+              <button type="button" onClick={() => { setAberto(true); setTela("ajustes"); }} aria-label="Ajustes do notch" title="Ajustes"
+                className="w-[26px] h-[26px] grid place-items-center rounded-[8px] border border-[var(--notch-linha)] text-[14px] text-[var(--notch-tinta-2)] hover:bg-[var(--notch-linha)]">⚙</button>
             </div>
             {aviso && <div className="mt-1.5 text-[11.5px] leading-snug">{aviso}</div>}
             {correndo.length + pausadas.length > 0 ? (

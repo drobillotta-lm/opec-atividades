@@ -1,5 +1,24 @@
 # Onde paramos — 28/09/2026
 
+## RETOMAR AQUI (14/10/2026, tarde — 5 ajustes: admin de hoje em diante, excluir do zero, competição "não vale", notch mini e olhos)
+
+- **Gestão de eventos** (`/admin/eventos`) mostra de hoje em diante (antes: 7 dias pra trás).
+- **Excluir tarefa pausada**: só a começada do zero (`origem='registrada'`), pelo escalado ou
+  quem assumiu — policy `apaga_tarefa_registrada` (migration **050**, aplicada), ação
+  `excluirTarefaRegistrada`, botão "excluir" com confirmação (`DialogoExcluir`) na linha de
+  Minhas atividades; sessões/ajustes/partes vão junto (cascade). Tarefa de cadeia NÃO se
+  exclui: a sync recria na hora seguinte — o caminho é "não necessária".
+- **Competição sem frente**: botão "não vale" (`descartarCompeticao` → `competicoes.ativa=false`)
+  ao lado de classificar/criar frente; some da lista e os eventos dela somem da Gestão de
+  eventos; bloco "Competições descartadas" com "voltar" (`reativarCompeticao`). Nada é apagado.
+- **Notch**: cabeça fica MINI (62 %) quando ninguém está com o mouse em cima e a janela nativa
+  encolhe junto (`ESCALA_MINI` em Notch.tsx/NotchApp.tsx); no hover volta ao tamanho cheio e a
+  caixa aparece como antes. ⚙ agora aparece também no hover e abre o painel direto nos
+  ajustes (antes só existia depois de clicar na cabeça). Olhos menores e mais pra dentro
+  (não encostam no risco das 45°). **Daniel relatou "botão de ajustes não funciona" — não
+  reproduzi sem o app; se persistir, pedir o que acontece ao clicar (não abre? abre e não
+  move?)** — a página é remota, não precisa instalar nada.
+
 ## RETOMAR AQUI (14/10/2026 — frente Outros, tarefa nasce ao classificar)
 
 Três pedidos do Daniel em 14/10, depois de classificar todas as competições que esperavam

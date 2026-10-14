@@ -157,6 +157,27 @@ export async function classificarCompeticao(nome: string, formData: FormData) {
   revalidatePath("/admin/eventos");
 }
 
+/** Competição que não vale (sem entrega, teste, lixo da Matriz): sai da lista "sem frente" e os
+ * eventos dela somem da Gestão de eventos. Não apaga nada: a sync continua trazendo os eventos
+ * e dá pra voltar atrás com reativarCompeticao. (Daniel, 14/10) */
+export async function descartarCompeticao(nome: string) {
+  const { supabase, pessoa } = await eu();
+  if (pessoa.papel !== "gestor") throw new Error("só gestor descarta competição");
+  const { error } = await supabase.from("competicoes").update({ ativa: false }).eq("nome", nome);
+  if (error) throw new Error(error.message);
+  revalidatePath("/admin");
+  revalidatePath("/admin/eventos");
+}
+
+export async function reativarCompeticao(nome: string) {
+  const { supabase, pessoa } = await eu();
+  if (pessoa.papel !== "gestor") throw new Error("só gestor reativa competição");
+  const { error } = await supabase.from("competicoes").update({ ativa: true }).eq("nome", nome);
+  if (error) throw new Error(error.message);
+  revalidatePath("/admin");
+  revalidatePath("/admin/eventos");
+}
+
 /** Tarefa começada do zero pelo notch sem frente (044): o gestor encaixa numa frente pela
  * tela, no bloco "Sem frente" de Minha frente e do Quadro. */
 export async function definirFrenteDaTarefa(tarefaId: string, formData: FormData) {
@@ -199,6 +220,17 @@ export async function criarFrenteEClassificar(nomeCompeticao: string, formData: 
   await gerarTarefasAgora();
   revalidatePath("/admin");
   revalidatePath("/admin/eventos");
+}
+
+/** Exclui uma tarefa começada do zero (origem 'registrada') — a RLS da 050 só deixa apagar a
+ * própria e só essa origem. Tarefa de cadeia não se apaga: a sync recria; use "não necessária". */
+export async function excluirTarefaRegistrada(tarefaId: string) {
+  const { supabase } = await eu();
+  const { error, count } = await supabase
+    .from("tarefas").delete({ count: "exact" }).eq("id", tarefaId).eq("origem", "registrada");
+  if (error) throw new Error(error.message);
+  if (!count) throw new Error("só dá pra excluir tarefa começada do zero, e só a sua");
+  revalidarTempo();
 }
 
 /** Tarefa que não precisa acontecer (ex.: sem material novo para materiais/sincronização

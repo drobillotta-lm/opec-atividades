@@ -18,19 +18,24 @@ function somarDias(base: string, dias: number) {
 export default async function GestaoEventos() {
   const supabase = await criarClienteServidor();
   const hoje = new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
-  const de = somarDias(hoje, -7);
+  // De hoje em diante (Daniel, 14/10): evento passado não tem o que decidir aqui.
+  const de = hoje;
   const ate = somarDias(hoje, 30);
 
   const { data: eventosBrutos } = await supabase
     .from("eventos")
-    .select(`id, evento_id_origem, confronto, competicao, data, entrega, entrega_origem, frentes ( sigla )`)
+    .select(`id, evento_id_origem, confronto, competicao, data, entrega, entrega_origem, frentes ( sigla ), competicoes ( ativa )`)
     .gte("data", de).lte("data", ate)
     .order("data");
 
-  const eventos = (eventosBrutos ?? []).map((e) => ({
-    ...e,
-    frente: Array.isArray(e.frentes) ? e.frentes[0] : e.frentes,
-  }));
+  // Competição descartada pelo gestor ("não vale", /admin) não tem o que gerir aqui.
+  const eventos = (eventosBrutos ?? [])
+    .map((e) => ({
+      ...e,
+      frente: Array.isArray(e.frentes) ? e.frentes[0] : e.frentes,
+      competicaoRef: Array.isArray(e.competicoes) ? e.competicoes[0] : e.competicoes,
+    }))
+    .filter((e) => e.competicaoRef?.ativa !== false);
   const ids = eventos.map((e) => e.id);
 
   const { data: tarefasBrutas } = ids.length
