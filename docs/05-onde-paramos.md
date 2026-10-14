@@ -14,7 +14,16 @@
 - **Notch**: em repouso a cabeça AFUNDA 23 px na borda (`RECUO_REPOUSO`, classes
   `translate-*-[23px]` em Notch.tsx): só o começo dos olhos e as horas ficam de fora; a janela
   nativa continua do tamanho cheio e é a borda do monitor que esconde o resto. No hover sobe e
-  a caixa aparece como antes. (Primeira versão encolhia a 62 %; o Daniel preferiu afundar.) ⚙ agora aparece também no hover e abre o painel direto nos
+  a caixa aparece como antes. (Primeira versão encolhia a 62 %; o Daniel preferiu afundar.)
+  Ajustes finos do mesmo dia, todos no ar: **distância da lateral virou campo numérico**
+  (a barra movia a janela embaixo do mouse e o arraste se perdia; aplica no Enter/"aplicar");
+  **balão e cartão de pareamento sem sombra** (a janela cortava o desfoque e sobrava um
+  retângulo quase invisível em volta); **balão obedece ao `hover` do NotchApp** (prop `mostrar`,
+  o mesmo sinal que aumenta a janela — o CSS :hover mostrava o balão antes de a janela crescer
+  e virava uma tira de 15 px com barra de rolagem) + `mouseover` de reforço; **sem regra
+  `focus-within`** e `blur()` depois do clique (o botão focado deixava a cabeça levantada e a
+  tira aparecendo sem mouse). Regra geral do notch: nada de sombra, nada de foco, e o que
+  aparece depende do estado que o NotchApp conhece, não de pseudo-classes. ⚙ agora aparece também no hover e abre o painel direto nos
   ajustes (antes só existia depois de clicar na cabeça). Olhos menores e mais pra dentro
   (não encostam no risco das 45°). **Daniel relatou "botão de ajustes não funciona" — não
   reproduzi sem o app; se persistir, pedir o que acontece ao clicar (não abre? abre e não
