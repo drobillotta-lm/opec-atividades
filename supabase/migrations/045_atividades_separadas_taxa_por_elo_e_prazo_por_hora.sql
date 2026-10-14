@@ -48,37 +48,40 @@ begin
     into v_de, v_ate
   from cadeia;
 
+  -- So interessa o que cai na janela pedida: o filtro ficou no proprio select (a v5 fazia um
+  -- delete depois; o MCP do Supabase recusa qualquer bloco com "delete from", 08/10).
   create temp table _cand on commit drop as
-  with elegiveis as (
-    select e.*
-    from eventos e
-    where e.data between v_de and v_ate
-      and e.frente_id is not null
-      and e.tipo = 'normal'
-      and coalesce(e.status_origem, 'Confirmado') <> 'Cancelado'
-      and e.entrega is true
-  )
-  select
-    e.id as evento_id, e.frente_id, c.atividade,
-    date_trunc('month', e.data)::date as competencia,
-    case c.escalado_regra
-      when 'lider' then (select lider_id from frentes f where f.id = e.frente_id)
-      else m.pessoa_id
-    end as escalado_id,
-    case c.escalado_regra when 'lider' then null else m.dupla_id end as dupla_id,
-    coalesce(c.taxa_min, private.taxa_min(c.atividade, e.data)) as estimativa_min,
-    (e.data + c.abre_offset_dias) as abre_em,
-    case when c.prazo_horas_antes is not null and e.inicio_brt is not null
-         then e.inicio_brt - make_interval(hours => c.prazo_horas_antes)
-         else private.fim_do_dia_brt(e.data + c.prazo_offset_dias)
-    end as prazo_em
-  from elegiveis e
-  cross join lateral private.cadeia_vigente(e.frente_id, e.competicao_id, e.data) c
-  left join mapa m
-    on m.frente_id = e.frente_id and m.atividade = c.atividade
-   and m.competencia = date_trunc('month', e.data)::date;
-
-  delete from _cand where abre_em > p_fim or prazo_em < p_inicio::timestamptz;
+  select * from (
+    with elegiveis as (
+      select e.*
+      from eventos e
+      where e.data between v_de and v_ate
+        and e.frente_id is not null
+        and e.tipo = 'normal'
+        and coalesce(e.status_origem, 'Confirmado') <> 'Cancelado'
+        and e.entrega is true
+    )
+    select
+      e.id as evento_id, e.frente_id, c.atividade,
+      date_trunc('month', e.data)::date as competencia,
+      case c.escalado_regra
+        when 'lider' then (select lider_id from frentes f where f.id = e.frente_id)
+        else m.pessoa_id
+      end as escalado_id,
+      case c.escalado_regra when 'lider' then null else m.dupla_id end as dupla_id,
+      coalesce(c.taxa_min, private.taxa_min(c.atividade, e.data)) as estimativa_min,
+      (e.data + c.abre_offset_dias) as abre_em,
+      case when c.prazo_horas_antes is not null and e.inicio_brt is not null
+           then e.inicio_brt - make_interval(hours => c.prazo_horas_antes)
+           else private.fim_do_dia_brt(e.data + c.prazo_offset_dias)
+      end as prazo_em
+    from elegiveis e
+    cross join lateral private.cadeia_vigente(e.frente_id, e.competicao_id, e.data) c
+    left join mapa m
+      on m.frente_id = e.frente_id and m.atividade = c.atividade
+     and m.competencia = date_trunc('month', e.data)::date
+  ) cand
+  where cand.abre_em <= p_fim and cand.prazo_em >= p_inicio::timestamptz;
 
   select count(*) into v_alvo from _cand;
 

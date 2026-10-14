@@ -118,7 +118,7 @@ export default async function GestaoEventos() {
 
               {tarefas.length === 0 && e.entrega === true && (
                 <p className="text-[11.5px] text-ambar-claro pt-1.5 border-t border-linha-2">
-                  Tem entrega mas nenhuma tarefa gerada — confira se a competição já tem frente e cadeia.
+                  Tem entrega mas nenhuma tarefa gerada. Ao classificar a frente as tarefas nascem na hora; se continuar assim, confira se a frente tem cadeia e alguém escalado.
                 </p>
               )}
 

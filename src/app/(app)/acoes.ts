@@ -1,8 +1,22 @@
 "use server";
 
 import { criarClienteServidor } from "@/lib/supabase/server";
+import { criarClienteAdmin } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
-import { sincronizarEscala } from "@/lib/escala/sincronizar";
+import { sincronizarEscala, PISO } from "@/lib/escala/sincronizar";
+
+/** Classificou a frente de uma competição ou de um evento: as tarefas nascem agora, não na sync
+ * da hora seguinte (Daniel viu "tem entrega mas nenhuma tarefa" logo depois de classificar, 14/10).
+ * gerar_tarefas não tem execute para authenticated; vai pela service role, só depois da checagem
+ * de papel que as ações abaixo já fazem via RLS (só gestor altera competicoes/eventos). */
+async function gerarTarefasAgora() {
+  const fim = new Date();
+  fim.setDate(fim.getDate() + 21);
+  const { error } = await criarClienteAdmin().rpc("gerar_tarefas", { p_inicio: PISO, p_fim: fim.toISOString().slice(0, 10) });
+  if (error) throw new Error(`gerar tarefas: ${error.message}`);
+  revalidatePath("/semana");
+  revalidatePath("/frente");
+}
 
 async function eu() {
   const supabase = await criarClienteServidor();
@@ -138,6 +152,7 @@ export async function classificarCompeticao(nome: string, formData: FormData) {
   if (!frenteId) return;
   const { error } = await supabase.from("competicoes").update({ frente_id: frenteId }).eq("nome", nome);
   if (error) throw new Error(error.message);
+  await gerarTarefasAgora();
   revalidatePath("/admin");
   revalidatePath("/admin/eventos");
 }
@@ -161,6 +176,7 @@ export async function classificarEvento(eventoId: string, formData: FormData) {
   if (!frenteId) return;
   const { error } = await supabase.from("eventos").update({ frente_id: frenteId }).eq("id", eventoId);
   if (error) throw new Error(error.message);
+  await gerarTarefasAgora();
   revalidatePath("/admin/eventos");
 }
 
@@ -178,6 +194,9 @@ export async function criarFrenteEClassificar(nomeCompeticao: string, formData: 
 
   const { error } = await supabase.from("competicoes").update({ frente_id: frente.id }).eq("nome", nomeCompeticao);
   if (error) throw new Error(error.message);
+  // Frente recém-criada ainda não tem cadeia nem líder: gerar_tarefas devolve sem_escalado e
+  // nada nasce até o gestor montar a cadeia em /admin/organizar. Chamar mesmo assim não custa.
+  await gerarTarefasAgora();
   revalidatePath("/admin");
   revalidatePath("/admin/eventos");
 }

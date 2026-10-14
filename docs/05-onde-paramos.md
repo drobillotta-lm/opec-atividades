@@ -1,5 +1,28 @@
 # Onde paramos — 28/09/2026
 
+## RETOMAR AQUI (14/10/2026 — frente Outros, tarefa nasce ao classificar)
+
+Três pedidos do Daniel em 14/10, depois de classificar todas as competições que esperavam
+decisão no `/admin` (Libertadores Feminina → Copas FIFA etc.):
+- **"Classifiquei e não gerou tarefa"**: era só o intervalo até a sync da hora seguinte (os jogos
+  de 15/10 já tinham as 4 tarefas quando olhei). Agora `classificarCompeticao`,
+  `classificarEvento` e `criarFrenteEClassificar` (`src/app/(app)/acoes.ts`) chamam
+  `gerar_tarefas` na hora, pela service role. A mensagem do `/admin/eventos` explica isso.
+- **Frente "Outros"** (migration **049**, aplicada): o Daniel criou `OTRS = Outros` pela tela;
+  a 049 põe o Daniel como líder, monta a cadeia padrão (materiais, sincronizacao, roteiro,
+  auditoria, regra `lider`, desde 14/10) e cria `encaixar_sem_frente_em_outros()`: evento **sem
+  competição** (Externa, Kit Mojo, gravação, Copa Acerj...) vai para Outros — 185 encaixados na
+  hora, zero evento futuro sem frente. A sync chama toda hora depois de `herdar_frente`
+  (`sem_frente_em_outros` no resumo). Evento de competição ainda sem frente continua esperando
+  o gestor. Entrega segue sendo só a da Escala (047): hoje nenhum evento de Outros tem entrega,
+  então nenhuma tarefa nasceu lá ainda.
+- **"Aparecer para todos, pra quem for pegar"**: bloco **"Pra pegar · Outros"** em Minhas
+  atividades lista as pendentes da frente Outros para qualquer pessoa, com "Puxar pra mim"
+  (mesma ação da busca). Para o Daniel elas já estão na lista normal, como escalado.
+Conferir quando a Escala marcar "sim" num evento de Outros: tarefa nasce no Daniel, bloco
+aparece para os outros, "Puxar pra mim" funciona. Banco = repo até a 049 (aplicada pelo
+`execute_sql`, sem `delete`/`drop`; registrada em `schema_migrations`).
+
 ## RETOMAR AQUI (13/10/2026 — entrega só da Escala, dia útil, Minhas atividades)
 
 Disparado pelo Internacional x Corinthians de 07/10, que não aparecia para o Daniel. No ar

@@ -157,6 +157,13 @@ export default async function MinhasAtividades({ searchParams }: { searchParams:
   const termo = sp.busca?.trim().replace(/[,()]/g, "");
   const { data: resultadosBusca } = termo ? await buscarTarefas(supabase, termo) : { data: [] };
 
+  // Frente Outros (049): evento sem competição cai nela e a tarefa nasce no líder de Outros, mas
+  // é pra qualquer um pegar -- por isso aparece pra todo mundo (Daniel, 14/10).
+  const { data: frenteOutros } = await supabase.from("frentes").select("id").eq("sigla", "OTRS").eq("ativa", true).maybeSingle();
+  const { data: praPegarBruto } = frenteOutros
+    ? await supabase.from("tarefas").select(CAMPOS_TAREFA).eq("status", "pendente").eq("frente_id", frenteOutros.id).order("prazo_em").limit(50)
+    : { data: [] as typeof abertas };
+
   const { data: tempos } = ids.length
     ? await supabase.from("v_tempo_tarefa").select("*").in("tarefa_id", ids)
     : { data: [] as { tarefa_id: string; segundos_total: number; sessao_aberta_desde: string | null }[] };
@@ -269,6 +276,13 @@ export default async function MinhasAtividades({ searchParams }: { searchParams:
   const falaSrMinutos = venceHoje ? `${venceHoje.titulo ?? ROTULO_ATIVIDADE[venceHoje.atividade] ?? venceHoje.atividade} vence hoje.` : undefined;
   const idsExistentes = new Set(ids);
   const resultados = (resultadosBusca ?? [])
+    .map((r) => ({
+      ...r,
+      frente: Array.isArray(r.frentes) ? r.frentes[0] : r.frentes,
+      evento: Array.isArray(r.eventos) ? r.eventos[0] : r.eventos,
+    }))
+    .filter((r) => !idsExistentes.has(r.id));
+  const praPegar = (praPegarBruto ?? [])
     .map((r) => ({
       ...r,
       frente: Array.isArray(r.frentes) ? r.frentes[0] : r.frentes,
@@ -484,6 +498,26 @@ export default async function MinhasAtividades({ searchParams }: { searchParams:
               <form action={reverterDesnecessaria.bind(null, t.id)}>
                 <Submit ocupado="..." className="min-h-8 px-2.5 rounded-md border border-linha bg-superficie-2 text-[11.5px] text-tinta-3 hover:text-tinta-2 transition">
                   desfazer
+                </Submit>
+              </form>
+            </Linha>
+          ))}
+        </Secao>
+      )}
+
+      {praPegar.length > 0 && (
+        <Secao titulo="Pra pegar · Outros" contagem={`${praPegar.length}`}>
+          {praPegar.map((t) => (
+            <Linha key={t.id}>
+              <div className="flex-1 min-w-0 flex flex-col gap-1">
+                <span className="text-[13.5px] font-medium">{nomeTarefa(t, "sigla")}</span>
+                <span className="text-[11.5px] text-tinta-3 truncate">
+                  {t.evento ? <>evento {diaCurto(t.evento.data)}</> : SEM_EVENTO} · entrega até {diaCurto(t.prazo_em.slice(0, 10))} · com {escaladosDe(nomePor, t.escalado_id, t.dupla_id)} até alguém pegar
+                </span>
+              </div>
+              <form action={iniciar.bind(null, t.id)} className="shrink-0">
+                <Submit ocupado="..." className="flex items-center gap-2 min-h-[38px] px-3.5 rounded-[9px] border border-verde-borda bg-verde-fundo text-verde-claro text-[12.5px] font-medium hover:brightness-125 transition">
+                  Puxar pra mim
                 </Submit>
               </form>
             </Linha>

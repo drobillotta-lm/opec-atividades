@@ -47,6 +47,7 @@ export type ResumoSincronizacao = {
   competicoes_novas: number;
   competicoes_classificadas: number;
   cadeias_compactos: number;
+  sem_frente_em_outros: number;
   lideres_atualizados: number;
   plantoes: number;
   plantao_sem_pessoa: string[];
@@ -267,6 +268,11 @@ async function executar(): Promise<Omit<ResumoSincronizacao, "duracao_ms">> {
   }
   // Evento que ja existia sem frente quando a competicao foi classificada (029).
   falha("herdar_frente_da_competicao", (await admin.rpc("herdar_frente_da_competicao")).error);
+  // Evento sem competicao (Externa, Kit Mojo, gravacao...) nao tem o que classificar no /admin:
+  // vai para a frente Outros (049), que tem cadeia do lider. Com competicao, espera o gestor.
+  const rOutros = await admin.rpc("encaixar_sem_frente_em_outros");
+  falha("encaixar_sem_frente_em_outros", rOutros.error);
+  const semFrenteEmOutros = (rOutros.data as number | null) ?? 0;
 
   // 4) a decisão "tem entrega?" da Escala (gravada crua no passo 3): sim/não valem,
   //    indefinido desfaz o que a Escala tinha decidido; o que o líder resolveu aqui fica (036).
@@ -341,6 +347,7 @@ async function executar(): Promise<Omit<ResumoSincronizacao, "duracao_ms">> {
     competicoes_novas: competicoesNovas,
     competicoes_classificadas: competicoesClassificadas,
     cadeias_compactos: cadeiasCompactos,
+    sem_frente_em_outros: semFrenteEmOutros,
     lideres_atualizados: lideresAtualizados,
     plantoes: linhasPlantao.length,
     plantao_sem_pessoa: [...semPessoa],
