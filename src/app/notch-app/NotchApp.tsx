@@ -271,7 +271,7 @@ export function NotchApp() {
     return (
       <main data-notch-janela className="fixed inset-0 grid place-items-end p-6">
         <form onSubmit={parear}
-          className="w-full rounded-[18px] bg-[var(--notch-preto)] text-[var(--notch-mostrador)] p-4 flex flex-col gap-2.5 shadow-[0_18px_44px_rgb(0_0_0/0.45)]">
+          className="w-full rounded-[18px] bg-[var(--notch-preto)] text-[var(--notch-mostrador)] p-4 flex flex-col gap-2.5 border border-[var(--notch-linha)]">
           <div className="flex items-center gap-2.5">
             <Rosto estado="verde" tamanho={30} />
             <b className="font-display text-[20px] font-extrabold uppercase leading-none">Parear com o Sr. Minutos</b>

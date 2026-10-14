@@ -262,7 +262,9 @@ export function Notch({
 
       {/* resumo no hover; painel no clique. Mesma caixa, conteúdo a mais quando aberto. */}
       <div role="dialog" aria-label="Sr. Minutos"
-        className={`absolute ${caixa} w-[300px] max-h-[calc(100vh-70px)] overflow-y-auto rounded-[18px] bg-[var(--notch-preto)] text-[var(--notch-mostrador)] p-4 text-[12.5px] shadow-[0_18px_44px_rgb(0_0_0/0.45)] transition duration-150 ${
+        // Sem sombra: a janela nativa cortava o desfoque reto na borda e sobrava um retângulo
+        // quase invisível em volta de tudo (Daniel, 14/10) -- o mesmo que a cabeça tinha em 06/10.
+        className={`absolute ${caixa} w-[300px] max-h-[calc(100vh-70px)] overflow-y-auto rounded-[18px] bg-[var(--notch-preto)] text-[var(--notch-mostrador)] p-4 text-[12.5px] border border-[var(--notch-linha)] transition duration-150 ${
           aberto ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:scale-100 group-focus-within:pointer-events-auto"}`}>
         {tela === "ajustes" ? (
           <div className="flex flex-col gap-3">
