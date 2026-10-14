@@ -11,9 +11,10 @@
 - **Competição sem frente**: botão "não vale" (`descartarCompeticao` → `competicoes.ativa=false`)
   ao lado de classificar/criar frente; some da lista e os eventos dela somem da Gestão de
   eventos; bloco "Competições descartadas" com "voltar" (`reativarCompeticao`). Nada é apagado.
-- **Notch**: cabeça fica MINI (62 %) quando ninguém está com o mouse em cima e a janela nativa
-  encolhe junto (`ESCALA_MINI` em Notch.tsx/NotchApp.tsx); no hover volta ao tamanho cheio e a
-  caixa aparece como antes. ⚙ agora aparece também no hover e abre o painel direto nos
+- **Notch**: em repouso a cabeça AFUNDA 23 px na borda (`RECUO_REPOUSO`, classes
+  `translate-*-[23px]` em Notch.tsx): só o começo dos olhos e as horas ficam de fora; a janela
+  nativa continua do tamanho cheio e é a borda do monitor que esconde o resto. No hover sobe e
+  a caixa aparece como antes. (Primeira versão encolhia a 62 %; o Daniel preferiu afundar.) ⚙ agora aparece também no hover e abre o painel direto nos
   ajustes (antes só existia depois de clicar na cabeça). Olhos menores e mais pra dentro
   (não encostam no risco das 45°). **Daniel relatou "botão de ajustes não funciona" — não
   reproduzi sem o app; se persistir, pedir o que acontece ao clicar (não abre? abre e não
