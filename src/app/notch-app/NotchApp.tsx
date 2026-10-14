@@ -138,8 +138,11 @@ export function NotchApp() {
     const entra = () => setHover(true);
     const sai = () => setHover(false);
     raiz.addEventListener("mouseenter", entra);
+    // mouseover de reforço: quando a cabeça está afundada, o ponteiro às vezes entra pela
+    // borda sem o WebView disparar mouseenter (14/10).
+    raiz.addEventListener("mouseover", entra);
     raiz.addEventListener("mouseleave", sai);
-    return () => { raiz.removeEventListener("mouseenter", entra); raiz.removeEventListener("mouseleave", sai); };
+    return () => { raiz.removeEventListener("mouseenter", entra); raiz.removeEventListener("mouseover", entra); raiz.removeEventListener("mouseleave", sai); };
   }, []);
 
   useEffect(() => {
@@ -308,6 +311,7 @@ export function NotchApp() {
         abrirSemana={() => { invoke("abrir", { caminho: "/semana" }).catch(() => {}); }}
         aoMudarAjustes={setAjustes}
         aoAbrirFechar={setAberto}
+        mostrar={hover}
         aviso={
           valeu ? (
             <span className="inline-flex items-center gap-2 rounded-[10px] bg-[var(--notch-verde)]/15 border border-[var(--notch-verde)] px-2.5 py-1.5">

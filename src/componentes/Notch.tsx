@@ -71,7 +71,7 @@ const ROTULINHO = "text-[10.5px] uppercase tracking-[0.08em] text-[var(--notch-t
 
 export function Notch({
   correndo, pausadas, proximas = [], atrasadas = [],
-  pausar, retomar, entregar, abrirSemana, aoMudarAjustes, aoAbrirFechar, rodapePainel, aviso,
+  pausar, retomar, entregar, abrirSemana, aoMudarAjustes, aoAbrirFechar, rodapePainel, aviso, mostrar,
 }: {
   correndo: TarefaNotch[];
   pausadas: TarefaNotch[];
@@ -86,6 +86,10 @@ export function Notch({
   rodapePainel?: ReactNode;
   /** Mensagem curta no card (erro, "atualize o app", "Valeu cara"). */
   aviso?: ReactNode;
+  /** Quem manda no balão do hover. No app nativo vem do NotchApp (o mesmo sinal que aumenta a
+   * janela): sem isso o CSS :hover mostrava o balão antes de a janela crescer e sobrava uma
+   * tira de 15 px com barra de rolagem (Daniel, 14/10). Sem o prop, vale o :hover do CSS. */
+  mostrar?: boolean;
 }) {
   const [agora, setAgora] = useState(() => Date.now());
   const [aberto, setAberto] = useState(false);
@@ -265,7 +269,9 @@ export function Notch({
         // Sem sombra: a janela nativa cortava o desfoque reto na borda e sobrava um retângulo
         // quase invisível em volta de tudo (Daniel, 14/10) -- o mesmo que a cabeça tinha em 06/10.
         className={`absolute ${caixa} w-[300px] max-h-[calc(100vh-70px)] overflow-y-auto rounded-[18px] bg-[var(--notch-preto)] text-[var(--notch-mostrador)] p-4 text-[12.5px] border border-[var(--notch-linha)] transition duration-150 ${
-          aberto ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:scale-100 group-focus-within:pointer-events-auto"}`}>
+          aberto || mostrar ? "opacity-100 scale-100"
+          : mostrar === false ? "opacity-0 scale-95 pointer-events-none"
+          : "opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:scale-100 group-focus-within:pointer-events-auto"}`}>
         {tela === "ajustes" ? (
           <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
