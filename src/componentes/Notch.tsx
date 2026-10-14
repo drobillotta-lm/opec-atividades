@@ -220,10 +220,12 @@ export function Notch({
       {/* Parado, a cabeça fica afundada na borda (só o começo dos olhos de fora); com o mouse
           em cima ou aberto, sobe e a caixa aparece (Daniel, 14/10). A parte afundada fica fora
           da janela nativa, que está grudada na borda do monitor, então não aparece mesmo. */}
-      <button type="button" onClick={() => setAberto((a) => !a)}
+      {/* Sem regra de foco (focus-within): o clique deixava o botão focado e a cabeça ficava
+          levantada com o balão aberto sem mouse nenhum (a "tira" de 14/10). blur() solta o foco. */}
+      <button type="button" onClick={(e) => { e.currentTarget.blur(); setAberto((a) => !a); }}
         aria-label={`Sr. Minutos: ${rotulo}${principal ? `, ${hms(seg)} de ${hms(previsto)}` : ""}. Abrir resumo`}
         aria-expanded={aberto}
-        className={`relative block transition-transform duration-200 ${aberto ? "translate-x-0 translate-y-0" : `${afunda} group-hover:translate-x-0 group-hover:translate-y-0 group-focus-within:translate-x-0 group-focus-within:translate-y-0`} ${lateral ? "w-[53px] h-[98px]" : "w-[98px] h-[53px]"}`}>
+        className={`relative block transition-transform duration-200 ${aberto ? "translate-x-0 translate-y-0" : `${afunda} group-hover:translate-x-0 group-hover:translate-y-0`} ${lateral ? "w-[53px] h-[98px]" : "w-[98px] h-[53px]"}`}>
         {/* Sem drop-shadow: a janela nativa tinha o tamanho exato do desenho e a sombra era
             cortada reta pela borda, virando um "quadrado meio escuro" em volta. */}
         <svg viewBox="0 0 140 76" width="98" height="53" aria-hidden
@@ -271,7 +273,7 @@ export function Notch({
         className={`absolute ${caixa} w-[300px] max-h-[calc(100vh-70px)] overflow-y-auto rounded-[18px] bg-[var(--notch-preto)] text-[var(--notch-mostrador)] p-4 text-[12.5px] border border-[var(--notch-linha)] transition duration-150 ${
           aberto || mostrar ? "opacity-100 scale-100"
           : mostrar === false ? "opacity-0 scale-95 pointer-events-none"
-          : "opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:scale-100 group-focus-within:pointer-events-auto"}`}>
+          : "opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto"}`}>
         {tela === "ajustes" ? (
           <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
@@ -315,7 +317,7 @@ export function Notch({
               <span className="block text-[10px] font-bold uppercase tracking-[0.1em]" style={{ color: "var(--nt)" }}>{rotulo}</span>
               {/* ⚙ também no hover (antes só depois de clicar na cabeça): abre o painel e vai
                   direto pros ajustes, assim a caixa não some quando o mouse sai da cabeça. */}
-              <button type="button" onClick={() => { setAberto(true); setTela("ajustes"); }} aria-label="Ajustes do notch" title="Ajustes"
+              <button type="button" onClick={(e) => { e.currentTarget.blur(); setAberto(true); setTela("ajustes"); }} aria-label="Ajustes do notch" title="Ajustes"
                 className="w-[26px] h-[26px] grid place-items-center rounded-[8px] border border-[var(--notch-linha)] text-[14px] text-[var(--notch-tinta-2)] hover:bg-[var(--notch-linha)]">⚙</button>
             </div>
             {aviso && <div className="mt-1.5 text-[11.5px] leading-snug">{aviso}</div>}
