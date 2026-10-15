@@ -23,7 +23,12 @@
   e virava uma tira de 15 px com barra de rolagem) + `mouseover` de reforço; **sem regra
   `focus-within`** e `blur()` depois do clique (o botão focado deixava a cabeça levantada e a
   tira aparecendo sem mouse). Regra geral do notch: nada de sombra, nada de foco, e o que
-  aparece depende do estado que o NotchApp conhece, não de pseudo-classes. ⚙ agora aparece também no hover e abre o painel direto nos
+  aparece depende do estado que o NotchApp conhece, não de pseudo-classes.
+  **15/10:** o hover vem do DESENHO, não da janela: `pointer-events-none` no botão da cabeça e
+  `pointer-events-auto` no SVG (só a parte pintada reage), `onMouseEnter` no SVG e no balão
+  chamam `aoHover(true)`, `onMouseLeave` na raiz chama `aoHover(false)` com 250 ms de espera no
+  NotchApp (há um vão de 9 px entre a cabeça e o balão). Antes a janela inteira, um retângulo
+  invisível com margem, acordava o notch antes de o mouse encostar. ⚙ agora aparece também no hover e abre o painel direto nos
   ajustes (antes só existia depois de clicar na cabeça). Olhos menores e mais pra dentro
   (não encostam no risco das 45°). **Daniel relatou "botão de ajustes não funciona" — não
   reproduzi sem o app; se persistir, pedir o que acontece ao clicar (não abre? abre e não
