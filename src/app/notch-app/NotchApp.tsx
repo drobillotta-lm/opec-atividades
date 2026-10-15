@@ -132,18 +132,16 @@ export function NotchApp() {
     return () => clearInterval(t);
   }, [tauri, carregar]);
 
-  // Hover na página inteira = mouse em cima da janela nativa.
-  useEffect(() => {
-    const raiz = document.documentElement;
-    const entra = () => setHover(true);
-    const sai = () => setHover(false);
-    raiz.addEventListener("mouseenter", entra);
-    // mouseover de reforço: quando a cabeça está afundada, o ponteiro às vezes entra pela
-    // borda sem o WebView disparar mouseenter (14/10).
-    raiz.addEventListener("mouseover", entra);
-    raiz.addEventListener("mouseleave", sai);
-    return () => { raiz.removeEventListener("mouseenter", entra); raiz.removeEventListener("mouseover", entra); raiz.removeEventListener("mouseleave", sai); };
+  // Hover vem do DESENHO (Notch.aoHover: parte pintada da cabeça ou o balão), não da janela
+  // inteira (15/10). Sair espera 250 ms: entre a cabeça e o balão há um vão de 9 px, e sem a
+  // espera a janela encolhia no meio do caminho e o balão sumia.
+  const saindo = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const aoHover = useCallback((dentro: boolean) => {
+    if (saindo.current) { clearTimeout(saindo.current); saindo.current = null; }
+    if (dentro) setHover(true);
+    else saindo.current = setTimeout(() => { saindo.current = null; setHover(false); }, 250);
   }, []);
+  useEffect(() => () => { if (saindo.current) clearTimeout(saindo.current); }, []);
 
   useEffect(() => {
     if (!valeu) return;
@@ -312,6 +310,7 @@ export function NotchApp() {
         aoMudarAjustes={setAjustes}
         aoAbrirFechar={setAberto}
         mostrar={hover}
+        aoHover={aoHover}
         aviso={
           valeu ? (
             <span className="inline-flex items-center gap-2 rounded-[10px] bg-[var(--notch-verde)]/15 border border-[var(--notch-verde)] px-2.5 py-1.5">

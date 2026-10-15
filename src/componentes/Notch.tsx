@@ -71,7 +71,7 @@ const ROTULINHO = "text-[10.5px] uppercase tracking-[0.08em] text-[var(--notch-t
 
 export function Notch({
   correndo, pausadas, proximas = [], atrasadas = [],
-  pausar, retomar, entregar, abrirSemana, aoMudarAjustes, aoAbrirFechar, rodapePainel, aviso, mostrar,
+  pausar, retomar, entregar, abrirSemana, aoMudarAjustes, aoAbrirFechar, rodapePainel, aviso, mostrar, aoHover,
 }: {
   correndo: TarefaNotch[];
   pausadas: TarefaNotch[];
@@ -90,6 +90,10 @@ export function Notch({
    * janela): sem isso o CSS :hover mostrava o balão antes de a janela crescer e sobrava uma
    * tira de 15 px com barra de rolagem (Daniel, 14/10). Sem o prop, vale o :hover do CSS. */
   mostrar?: boolean;
+  /** Mouse entrou (true) ou saiu (false) do DESENHO da cabeça ou do balão. É daqui que o
+   * NotchApp tira o hover desde 15/10: antes era a janela inteira, um retângulo invisível
+   * maior que a cabeça, e o notch acordava antes de o mouse encostar nele. */
+  aoHover?: (dentro: boolean) => void;
 }) {
   const [agora, setAgora] = useState(() => Date.now());
   const [aberto, setAberto] = useState(false);
@@ -216,7 +220,10 @@ export function Notch({
   );
 
   return (
-    <div ref={raiz} className={`group fixed z-40 ${posicao}`} style={{ ["--nt" as string]: cor }}>
+    <div ref={raiz} className={`group fixed z-40 ${posicao}`} style={{ ["--nt" as string]: cor }}
+      onMouseLeave={() => aoHover?.(false)}>
+      {/* pointer-events-none no botão e auto no SVG: só a parte PINTADA da cabeça reage ao
+          mouse, não o retângulo em volta (Daniel, 15/10); o clique sobe do SVG pro botão. */}
       {/* Parado, a cabeça fica afundada na borda (só o começo dos olhos de fora); com o mouse
           em cima ou aberto, sobe e a caixa aparece (Daniel, 14/10). A parte afundada fica fora
           da janela nativa, que está grudada na borda do monitor, então não aparece mesmo. */}
@@ -225,11 +232,15 @@ export function Notch({
       <button type="button" onClick={(e) => { e.currentTarget.blur(); setAberto((a) => !a); }}
         aria-label={`Sr. Minutos: ${rotulo}${principal ? `, ${hms(seg)} de ${hms(previsto)}` : ""}. Abrir resumo`}
         aria-expanded={aberto}
-        className={`relative block transition-transform duration-200 ${aberto ? "translate-x-0 translate-y-0" : `${afunda} group-hover:translate-x-0 group-hover:translate-y-0`} ${lateral ? "w-[53px] h-[98px]" : "w-[98px] h-[53px]"}`}>
+        className={`relative block pointer-events-none transition-transform duration-200 ${
+          aberto || mostrar ? "translate-x-0 translate-y-0"
+          : mostrar === false ? afunda
+          : `${afunda} group-hover:translate-x-0 group-hover:translate-y-0`} ${lateral ? "w-[53px] h-[98px]" : "w-[98px] h-[53px]"}`}>
         {/* Sem drop-shadow: a janela nativa tinha o tamanho exato do desenho e a sombra era
             cortada reta pela borda, virando um "quadrado meio escuro" em volta. */}
         <svg viewBox="0 0 140 76" width="98" height="53" aria-hidden
-          className={`absolute transition-transform duration-200 ${lateral ? "left-[-22.5px] top-[22.5px]" : "left-0 top-0 group-hover:-translate-y-[2px]"}`}
+          onMouseEnter={() => aoHover?.(true)}
+          className={`absolute pointer-events-auto transition-transform duration-200 ${lateral ? "left-[-22.5px] top-[22.5px]" : "left-0 top-0 group-hover:-translate-y-[2px]"}`}
           style={giroCabeca ? { transform: giroCabeca } : undefined}>
           <circle cx="70" cy="70" r="66" fill="var(--notch-preto)" />
           <path d="M14,70 A56,56 0 0 1 126,70" fill="none" stroke="var(--notch-trilho)" strokeWidth="9" strokeLinecap="round" pathLength={100} />
@@ -267,7 +278,7 @@ export function Notch({
       </button>
 
       {/* resumo no hover; painel no clique. Mesma caixa, conteúdo a mais quando aberto. */}
-      <div role="dialog" aria-label="Sr. Minutos"
+      <div role="dialog" aria-label="Sr. Minutos" onMouseEnter={() => aoHover?.(true)}
         // Sem sombra: a janela nativa cortava o desfoque reto na borda e sobrava um retângulo
         // quase invisível em volta de tudo (Daniel, 14/10) -- o mesmo que a cabeça tinha em 06/10.
         className={`absolute ${caixa} w-[300px] max-h-[calc(100vh-70px)] overflow-y-auto rounded-[18px] bg-[var(--notch-preto)] text-[var(--notch-mostrador)] p-4 text-[12.5px] border border-[var(--notch-linha)] transition duration-150 ${
