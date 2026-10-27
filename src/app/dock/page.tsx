@@ -82,9 +82,12 @@ export default async function Dock() {
   const hoje = new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
   const abertas = com.filter((t) => t.abre_em <= hoje);
   const rodando = com.filter((t) => t.correndo).sort((a, b) => new Date(b.correndo!).getTime() - new Date(a.correndo!).getTime());
+  // Sem nada aberto, sugere a que ainda vai abrir (dá pra adiantar, 27/10).
   const atual = rodando[0]
     ?? abertas.find((t) => t.segundos > 0)
-    ?? abertas[0];
+    ?? abertas[0]
+    ?? com.find((t) => t.segundos > 0)
+    ?? com[0];
   const outrasRodando = rodando.filter((t) => t.id !== atual?.id);
   const pct = atual ? Math.min(100, (100 * atual.segundos) / (atual.estimativa_min * 60)) : 0;
 

@@ -294,3 +294,10 @@ Pedidos do Daniel em 07/10, decisões em 08/10 (migrations 045 e 046):
   **fim do dia em Brasília** (`private.fim_do_dia_brt`; antes vencia às 20:59 BRT).
 - **Menu da esquerda recolhe** (preferência local, celular começa recolhido) e **o tempo da
   atividade aceita qualquer minuto** (o passo de 5 recusava o envio).
+
+## 27/10/2026 — Dá pra iniciar antes da janela abrir
+
+`abre_em` passa a ser orientação, não trava. Quem quer adiantar uma atividade ainda "não aberta"
+inicia normalmente no site, no notch e no dock; a etiqueta "abre dd/mm · pode adiantar" só avisa
+que está antes do previsto. O prazo (`prazo_em`) e o cálculo de atraso não mudam. Migration
+`051_iniciar_antes_de_abrir.sql` (só o `notch_estado`; o resto é tela).

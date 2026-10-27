@@ -1,5 +1,23 @@
 # Onde paramos — 28/09/2026
 
+## RETOMAR AQUI (27/10/2026 — iniciar antes da janela abrir)
+
+Pedido do Daniel: atividade que "ainda não abriu" (`abre_em` no futuro) tem que poder ser
+iniciada por quem quiser adiantar. No ar (migration **051**, aplicada pelo `execute_sql` e
+registrada em `schema_migrations`):
+- **Minhas atividades**: o botão Iniciar deixou de ficar `disabled` quando `fechada`; a
+  etiqueta virou "abre dd/mm · pode adiantar", só aviso. A ação `iniciar` nunca travou por
+  `abre_em` (nem a policy de `sessoes`), a trava era só o botão.
+- **Notch** (`notch_estado`, 051): `candidatas` sem o corte `abre_em <= hoje`, então
+  "próximas" traz também as que ainda vão abrir (mesma ordem por prazo, limite 8). Corpo igual
+  ao da 048 fora essa linha.
+- **Dock**: sem nada aberto, sugere a que ainda vai abrir em vez de "Nada em andamento".
+- Não mudou: `gerar_tarefas` continua criando só o que abre dentro de `DIAS_A_FRENTE` da
+  sync (tarefa que ainda nem existe no banco não dá pra adiantar); `/frente` segue mostrando
+  "· abre dd" pro líder; o quadro kanban (`quadro.ts`) segue cortando por `abre_em <= fim`.
+- Lint pré-existente: `react-hooks/purity` reclama de `Date.now()` em `semana/page.tsx:199`
+  (já estava assim no `672b4b1`, não bloqueia o build).
+
 ## RETOMAR AQUI (14/10/2026, tarde — 5 ajustes: admin de hoje em diante, excluir do zero, competição "não vale", notch mini e olhos)
 
 - **Gestão de eventos** (`/admin/eventos`) mostra de hoje em diante (antes: 7 dias pra trás).

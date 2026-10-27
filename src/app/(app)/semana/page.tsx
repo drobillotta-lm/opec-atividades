@@ -605,7 +605,9 @@ function LinhaAberta({ t, euId, time, daFrente, nomePor }: {
       <TempoParado segundos={t.segundos} estimativaMin={t.estimativa_min} />
       <div className="flex gap-2 shrink-0">
         <form action={iniciar.bind(null, t.id)}>
-          <Submit ocupado="..." disabled={t.fechada} className={`flex items-center gap-2 min-h-[38px] px-3.5 rounded-[9px] border text-[12.5px] font-medium transition disabled:cursor-not-allowed ${
+          {/* Tarefa ainda não aberta também pode começar: quem quer adiantar, adianta (27/10).
+              A etiqueta "abre dd/mm" fica só como aviso. */}
+          <Submit ocupado="..." className={`flex items-center gap-2 min-h-[38px] px-3.5 rounded-[9px] border text-[12.5px] font-medium transition ${
             pausada ? "border-verde-borda bg-verde-fundo text-verde-claro hover:brightness-125" : "border-linha bg-elevado hover:bg-linha"}`}>
             {pausada ? "Retomar" : "Iniciar"}
           </Submit>
@@ -677,7 +679,7 @@ function Etiqueta({ atrasada, fechada, abre }: { atrasada: boolean; fechada: boo
   if (fechada) {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-md border border-dashed border-linha px-2.5 py-1 text-[11px] font-medium shrink-0 text-tinta-3">
-        <Rosto estado="cinza" />abre {diaCurto(abre)}
+        <Rosto estado="cinza" />abre {diaCurto(abre)} · pode adiantar
       </span>
     );
   }
