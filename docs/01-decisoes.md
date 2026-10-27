@@ -301,3 +301,11 @@ Pedidos do Daniel em 07/10, decisões em 08/10 (migrations 045 e 046):
 inicia normalmente no site, no notch e no dock; a etiqueta "abre dd/mm · pode adiantar" só avisa
 que está antes do previsto. O prazo (`prazo_em`) e o cálculo de atraso não mudam. Migration
 `051_iniciar_antes_de_abrir.sql` (só o `notch_estado`; o resto é tela).
+
+## 27/10/2026 — Competição classificada pode mudar de frente; as tarefas vão junto
+
+Quadra Aberta era Olímpicos e estava em Programas. Mudar o `frente_id` da competição passa a
+levar os eventos (013) **e** as tarefas pendentes (`mover_tarefas_da_competicao`, 052): quem não
+lançou tempo é reescalado pelo mapa da frente nova, com estimativa e janela recalculadas; quem
+já lançou tempo continua dono (só a frente muda); atividade que a cadeia nova não tem vira "não
+necessária". Opção no Admin, bloco "Competições classificadas", só gestor.

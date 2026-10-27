@@ -1,5 +1,35 @@
 # Onde paramos — 28/09/2026
 
+## RETOMAR AQUI (27/10/2026 — Quadra Aberta é Olímpicos; mudar frente de competição)
+
+Pedido do Daniel: os eventos de "Quadra Aberta" são de Olímpicos e estavam em Programas. A
+competição "Programa Podcast Quadra Aberta 2026" tinha `frente_id = PR`, então roteiro ia pro
+Lucas, materiais pra Julia, sinc/auditoria pro Gabriel. No ar (migration **052**, aplicada pelo
+`execute_sql` e registrada em `schema_migrations`):
+- **Trocar a frente de uma competição não movia as tarefas**: a trigger da 013 leva os
+  eventos, mas `tarefas.frente_id` ficava na frente velha; `desfazer_tarefas_fora_da_cadeia`
+  e `reaplicar_mapa` olham `t.frente_id` (continuavam achando tudo certo) e `gerar_tarefas`
+  não recria por causa do unique `(evento_id, atividade)`.
+- **`mover_tarefas_da_competicao(p_competicao)`** (052): realinha as pendentes de cadeia dos
+  eventos da competição à frente que o evento tem agora. Sem tempo lançado: frente,
+  escalado/dupla (mapa ou líder), estimativa, `abre_em` e `prazo_em` recalculados como o
+  `gerar_tarefas` faria (dono_manual preserva a pessoa). Com tempo: só a frente muda. Atividade
+  que a cadeia nova não tem: vira `na` (fora_da_cadeia). Nada é apagado. Helper
+  `private.tarefas_a_mover` recomputa o conjunto a cada passo (sem temp table, porque `on
+  commit drop` tem a palavra que o MCP recusa).
+- **Admin › "Competições classificadas · N · mudar de frente"** (`<details>` abaixo de "sem
+  frente"): select com a frente atual + "mudar" → `reclassificarCompeticao` (só gestor): update
+  em `competicoes`, `mover_tarefas_da_competicao` pela service role, `gerar_tarefas`.
+- **Quadra Aberta aplicado à mão** (mesmo caminho): 9 tarefas pendentes realinhadas, 0 só
+  frente, 0 fora da cadeia; Ep 6, #10 e #11 agora em OL com Pedro (roteiro), Bárbara
+  (materiais), Juliana (sinc + auditoria). `abre_em`/`prazo_em` do #10 mudaram um dia (recalculados
+  pela regra atual de dia útil; os antigos eram de antes da 047).
+- **Fica como está**: os eventos "Quadra Aberta ep N (Gravação)" chegam da Escala SEM
+  competição e caem em Outros (Daniel) — é dado da Matriz, corrigir lá (competição no evento)
+  ou classificar evento a evento em Gestão de eventos quando aparecer sem frente.
+- Armadilha repetida: chamar a função e ler o resultado NA MESMA query mostra a foto antiga
+  (já estava na memória); conferir com uma leitura nova.
+
 ## RETOMAR AQUI (27/10/2026 — iniciar antes da janela abrir)
 
 Pedido do Daniel: atividade que "ainda não abriu" (`abre_em` no futuro) tem que poder ser

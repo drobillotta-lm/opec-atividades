@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { criarClienteServidor } from "@/lib/supabase/server";
-import { classificarCompeticao, criarFrenteEClassificar, sincronizarAgora, descartarCompeticao, reativarCompeticao } from "../acoes";
+import { classificarCompeticao, criarFrenteEClassificar, sincronizarAgora, descartarCompeticao, reativarCompeticao, reclassificarCompeticao } from "../acoes";
 import { ClassificarFrente } from "@/componentes/ClassificarFrente";
 import { Submit } from "../semana/Cronometro";
 import type { ResumoSincronizacao } from "@/lib/escala/sincronizar";
@@ -15,6 +15,9 @@ export default async function Admin() {
     .from("frentes").select("id, sigla, nome, regime, ativa, lider_id").order("sigla");
   const { data: semFrente } = await supabase
     .from("competicoes").select("nome, entrega_padrao").is("frente_id", null).eq("ativa", true).order("nome");
+  // Já classificadas: dá pra mudar de frente (27/10). As tarefas pendentes vão junto.
+  const { data: classificadas } = await supabase
+    .from("competicoes").select("nome, frente_id").not("frente_id", "is", null).eq("ativa", true).order("nome");
   // Descartadas pelo gestor ("não vale"): ficam num canto, com o caminho de volta.
   const { data: descartadas } = await supabase
     .from("competicoes").select("nome").eq("ativa", false).order("nome");
@@ -71,6 +74,31 @@ export default async function Admin() {
             </div>
           ))}
         </Cartao>
+      )}
+
+      {(classificadas ?? []).length > 0 && (
+        <details className="rounded-xl bg-superficie border border-linha px-5 py-3">
+          <summary className="cursor-pointer text-[11.5px] font-semibold uppercase tracking-[0.1em] text-tinta-3">
+            Competições classificadas · {(classificadas ?? []).length} · mudar de frente
+          </summary>
+          <p className="text-[11.5px] text-tinta-4 pt-1">
+            Caiu na frente errada? Escolha a certa e clique em mudar: os eventos e as atividades pendentes vão
+            pra frente nova, com as pessoas do mapa dela. Quem já lançou tempo numa atividade continua dono.
+          </p>
+          {(classificadas ?? []).map((c) => (
+            <form key={c.nome} action={reclassificarCompeticao.bind(null, c.nome)}
+              className="flex items-center justify-between gap-3 py-2 border-t border-linha-2 text-[12.5px]">
+              <span className="truncate">{c.nome}</span>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <select name="frente_id" defaultValue={c.frente_id ?? ""}
+                  className="min-h-8 px-2 rounded-md border border-linha bg-superficie-2 text-[12px] text-tinta-2">
+                  {frentesAtivas.map((f) => <option key={f.id} value={f.id}>{f.nome}</option>)}
+                </select>
+                <Submit ocupado="..." className="min-h-8 px-2.5 rounded-md border border-linha bg-elevado text-[12px] text-tinta-2 hover:bg-linha transition">mudar</Submit>
+              </div>
+            </form>
+          ))}
+        </details>
       )}
 
       {(descartadas ?? []).length > 0 && (

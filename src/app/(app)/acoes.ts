@@ -157,6 +157,25 @@ export async function classificarCompeticao(nome: string, formData: FormData) {
   revalidatePath("/admin/eventos");
 }
 
+/** Competição já classificada mudou de frente (Quadra Aberta estava em Programas e é de
+ * Olímpicos, 27/10): a trigger da 013 leva os eventos; mover_tarefas_da_competicao (052) leva as
+ * tarefas pendentes (quem já lançou tempo continua dono); gerar_tarefas cria o que só existe na
+ * cadeia nova. */
+export async function reclassificarCompeticao(nome: string, formData: FormData) {
+  const { supabase, pessoa } = await eu();
+  if (pessoa.papel !== "gestor") throw new Error("só gestor muda a frente de uma competição");
+  const frenteId = String(formData.get("frente_id") || "");
+  if (!frenteId) return;
+  const { data: comp, error } = await supabase
+    .from("competicoes").update({ frente_id: frenteId }).eq("nome", nome).select("id").single();
+  if (error) throw new Error(error.message);
+  const { error: eMover } = await criarClienteAdmin().rpc("mover_tarefas_da_competicao", { p_competicao: comp.id });
+  if (eMover) throw new Error(`mover tarefas: ${eMover.message}`);
+  await gerarTarefasAgora();
+  revalidatePath("/admin");
+  revalidatePath("/admin/eventos");
+}
+
 /** Competição que não vale (sem entrega, teste, lixo da Matriz): sai da lista "sem frente" e os
  * eventos dela somem da Gestão de eventos. Não apaga nada: a sync continua trazendo os eventos
  * e dá pra voltar atrás com reativarCompeticao. (Daniel, 14/10) */
