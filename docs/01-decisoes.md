@@ -309,3 +309,11 @@ levar os eventos (013) **e** as tarefas pendentes (`mover_tarefas_da_competicao`
 lançou tempo é reescalado pelo mapa da frente nova, com estimativa e janela recalculadas; quem
 já lançou tempo continua dono (só a frente muda); atividade que a cadeia nova não tem vira "não
 necessária". Opção no Admin, bloco "Competições classificadas", só gestor.
+
+## 28/10/2026 — Evento sem competição pode ter dono pelo nome
+
+A Matriz manda alguns eventos sem competição (as gravações do Quadra Aberta). Em vez de cair
+em Outros e esperar o gestor, uma regra por nome (`competicao_por_nome`, `053`) diz a que
+competição o evento pertence; ele herda a frente dela e as pendentes vão junto. A regra roda em
+toda sincronização, porque a Escala continua mandando a competição vazia. Gestão no Admin, só
+gestor. Primeira regra: "quadra aberta" → Programa Podcast Quadra Aberta 2026 (Olímpicos).

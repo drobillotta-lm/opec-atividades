@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { criarClienteServidor } from "@/lib/supabase/server";
-import { classificarCompeticao, criarFrenteEClassificar, sincronizarAgora, descartarCompeticao, reativarCompeticao, reclassificarCompeticao } from "../acoes";
+import { classificarCompeticao, criarFrenteEClassificar, sincronizarAgora, descartarCompeticao, reativarCompeticao, reclassificarCompeticao, criarRegraPorNome, apagarRegraPorNome } from "../acoes";
 import { ClassificarFrente } from "@/componentes/ClassificarFrente";
 import { Submit } from "../semana/Cronometro";
 import type { ResumoSincronizacao } from "@/lib/escala/sincronizar";
@@ -17,7 +17,13 @@ export default async function Admin() {
     .from("competicoes").select("nome, entrega_padrao").is("frente_id", null).eq("ativa", true).order("nome");
   // Já classificadas: dá pra mudar de frente (27/10). As tarefas pendentes vão junto.
   const { data: classificadas } = await supabase
-    .from("competicoes").select("nome, frente_id").not("frente_id", "is", null).eq("ativa", true).order("nome");
+    .from("competicoes").select("id, nome, frente_id").not("frente_id", "is", null).eq("ativa", true).order("nome");
+  // Regras por nome do evento (053): evento sem competição cujo nome bate entra na competição.
+  const { data: regrasBrutas } = await supabase
+    .from("competicao_por_nome").select("id, padrao, competicoes ( nome )").eq("ativa", true).order("padrao");
+  const regras = (regrasBrutas ?? []).map((r) => ({
+    ...r, competicao: Array.isArray(r.competicoes) ? r.competicoes[0] : r.competicoes,
+  }));
   // Descartadas pelo gestor ("não vale"): ficam num canto, com o caminho de volta.
   const { data: descartadas } = await supabase
     .from("competicoes").select("nome").eq("ativa", false).order("nome");
@@ -101,6 +107,40 @@ export default async function Admin() {
         </details>
       )}
 
+      <details className="rounded-xl bg-superficie border border-linha px-5 py-3">
+        <summary className="cursor-pointer text-[11.5px] font-semibold uppercase tracking-[0.1em] text-tinta-3">
+          Regras por nome do evento · {regras.length}
+        </summary>
+        <p className="text-[11.5px] text-tinta-4 pt-1">
+          Evento que chega da Matriz sem competição mas cujo nome contém o texto entra na competição escolhida e
+          herda a frente dela, em vez de cair em Outros (ex.: “quadra aberta” → Programa Podcast Quadra Aberta 2026).
+          Vale a cada sincronização e as atividades pendentes vão junto.
+        </p>
+        {regras.map((r) => (
+          <div key={r.id} className="flex items-center justify-between gap-3 py-2 border-t border-linha-2 text-[12.5px]">
+            <span className="truncate">
+              <span className="num text-tinta-2">{r.padrao.replace(/%/g, "")}</span>
+              <span className="text-tinta-4"> → </span>{r.competicao?.nome ?? "?"}
+            </span>
+            <form action={apagarRegraPorNome.bind(null, r.id)}>
+              <Submit ocupado="..." className="min-h-8 px-2.5 rounded-lg border border-linha-2 bg-superficie-2 text-[11.5px] text-tinta-4 hover:text-rosa transition">apagar</Submit>
+            </form>
+          </div>
+        ))}
+        <form action={criarRegraPorNome} className="flex gap-1.5 items-center flex-wrap pt-2 border-t border-linha-2">
+          <input name="padrao" placeholder="texto no nome do evento" required
+            className="min-h-8 flex-1 min-w-[180px] px-2 rounded-md border border-linha bg-superficie-2 text-[12px] text-tinta-2" />
+          <select name="competicao_id" defaultValue="" required
+            className="min-h-8 px-2 rounded-md border border-linha bg-superficie-2 text-[12px] text-tinta-2">
+            <option value="" disabled>qual competição?</option>
+            {(classificadas ?? []).map((c) => <option key={c.id} value={c.id}>{c.nome}</option>)}
+          </select>
+          <Submit ocupado="..." className="min-h-8 px-2.5 rounded-md border border-verde-borda bg-verde-fundo text-verde-claro text-[12px] font-medium">
+            criar regra
+          </Submit>
+        </form>
+      </details>
+
       {(descartadas ?? []).length > 0 && (
         <details className="rounded-xl bg-superficie border border-linha px-5 py-3">
           <summary className="cursor-pointer text-[11.5px] font-semibold uppercase tracking-[0.1em] text-tinta-3">
@@ -163,6 +203,7 @@ export default async function Admin() {
                   `entrega ${r.entrega.sim} sim / ${r.entrega.nao} não / ${r.entrega.indefinido} indefinido`,
                   `${r.tarefas?.criadas ?? 0} tarefas criadas`,
                   `${(r.sem_entrega?.apagadas ?? 0) + (r.sem_entrega?.marcadas_na ?? 0)} sem entrega`,
+                  `${r.por_nome?.eventos ?? 0} por nome`,
                   `${(r.fora_da_cadeia?.apagadas ?? 0) + (r.fora_da_cadeia?.marcadas_na ?? 0)} fora da cadeia`,
                   `${r.reaplicadas.reduce((n, x) => n + x.reescaladas, 0)} reescaladas`,
                 ].join(" · ") : ""}

@@ -58,6 +58,18 @@ entrega_padrao  text not null default 'lider_decide'   -- 'sim'|'nao'|'lider_dec
 ativa           boolean not null default true
 ```
 
+### `competicao_por_nome`
+Regra por nome do evento, criada em `053` (28/10). A Matriz manda evento sem competição
+("Quadra Aberta ep 10 (Gravação)"); se o nome bate no padrão, o evento entra na competição e
+herda a frente dela, em vez de cair em Outros. A sync aplica logo depois do upsert dos eventos
+(que zera `competicao_id` a cada hora). Padrão mais longo vence. Gestão no Admin.
+```
+padrao          text not null unique         -- ILIKE sobre eventos.evento_id_origem, ex.: '%quadra aberta%'
+competicao_id   uuid not null references competicoes
+ativa           boolean not null default true
+obs             text
+```
+
 ### `taxas`
 `config/taxas.yaml` com data de vigência (`008`). Medir para poder mudar é o ponto do app,
 então a taxa não pode ser constante no código.
@@ -204,6 +216,9 @@ conta **meio a meio** (previsto e medido) pros dois, a menos que um terceiro ten
 | `reaplicar_mapa(competencia)` | Alinha escalado e dupla das pendentes sem tempo ao mapa do mês, só em elo `escalado_regra = 'mapa'`. Devolve reescaladas, sem mapa e divergentes com tempo (`034`/`035b`) |
 | `aplicar_entrega_da_escala()` | Aplica `entrega_escala`: sim/não com origem `escala`; `indefinido` volta a null só se a decisão era da Escala; `lider` nunca muda (`036`/`037`) |
 | `desfazer_tarefas_sem_entrega()` | Pendente do mês corrente em diante em evento sem entrega: sem tempo some, com tempo vira `na`/`sem_entrega`; reabre se a entrega volta (`037`) |
+| `mover_tarefas_da_competicao(competicao)` | Competição mudou de frente: pendentes de cadeia dos eventos dela seguem a frente do evento. Sem tempo: reescala pelo mapa/líder da frente nova e recalcula estimativa e janela; com tempo: só a frente; atividade fora da cadeia nova vira `na` (`052`) |
+| `encaixar_competicao_por_nome()` | Evento sem `competicao_id` cujo nome bate em `competicao_por_nome` ganha competição, nome e frente (se estava sem frente ou em Outros) e chama `mover_tarefas_da_competicao` (`053`) |
+| `encaixar_sem_frente_em_outros()` | Evento sem frente E sem competição vai para Outros (`049`) |
 | `private.cadeia_vigente(frente, competicao, data)` | A cadeia em vigor na data; competição vence frente (`032`) |
 | `tarefas_da_semana(inicio, fim)` | A semana de uma pessoa: tarefa cuja janela cruza a semana pedida, não os eventos da semana (`016`) |
 | `private.taxa_min(atividade, data)` | A taxa vigente naquela data |

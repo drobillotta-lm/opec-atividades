@@ -48,6 +48,7 @@ export type ResumoSincronizacao = {
   competicoes_classificadas: number;
   cadeias_compactos: number;
   sem_frente_em_outros: number;
+  por_nome: { eventos: number; tarefas_movidas: number } | null;
   lideres_atualizados: number;
   plantoes: number;
   plantao_sem_pessoa: string[];
@@ -266,6 +267,12 @@ async function executar(): Promise<Omit<ResumoSincronizacao, "duracao_ms">> {
       .upsert(linhasEvento.slice(i, i + LOTE_UPSERT), { onConflict: "airtable_record_id" });
     falha("upsert eventos", error);
   }
+  // Evento sem competicao cujo nome bate numa regra (053, ex.: "%quadra aberta%") ganha a
+  // competicao e a frente dela antes de cair em Outros; as tarefas pendentes vao junto. O
+  // upsert acima zera competicao_id de novo a cada hora (a Escala nao tem a competicao), por
+  // isso a regra roda sempre, logo depois dele.
+  const rNome = await admin.rpc("encaixar_competicao_por_nome");
+  falha("encaixar_competicao_por_nome", rNome.error);
   // Evento que ja existia sem frente quando a competicao foi classificada (029).
   falha("herdar_frente_da_competicao", (await admin.rpc("herdar_frente_da_competicao")).error);
   // Evento sem competicao (Externa, Kit Mojo, gravacao...) nao tem o que classificar no /admin:
@@ -348,6 +355,7 @@ async function executar(): Promise<Omit<ResumoSincronizacao, "duracao_ms">> {
     competicoes_classificadas: competicoesClassificadas,
     cadeias_compactos: cadeiasCompactos,
     sem_frente_em_outros: semFrenteEmOutros,
+    por_nome: (rNome.data as ResumoSincronizacao["por_nome"][])?.[0] ?? null,
     lideres_atualizados: lideresAtualizados,
     plantoes: linhasPlantao.length,
     plantao_sem_pessoa: [...semPessoa],

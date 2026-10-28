@@ -1,5 +1,28 @@
 # Onde paramos — 28/09/2026
 
+## RETOMAR AQUI (28/10/2026 — evento sem competição chega já na frente certa: regra por nome)
+
+Daniel: "o ideal é chegar já configurado como Olímpicos". Os eventos "Quadra Aberta ep N
+(Gravação)" vêm da Matriz com competição vazia (conferido no Supabase da Escala), então a sync
+gravava `competicao=''` e eles caíam em Outros, com tarefas no Daniel. No ar (migration **053**,
+aplicada pelo `execute_sql`, registrada em `schema_migrations`):
+- **Tabela `competicao_por_nome`** (padrão ILIKE sobre `evento_id_origem` → competição) com a
+  regra `%quadra aberta%` → "Programa Podcast Quadra Aberta 2026" (que está em OL desde 27/10).
+- **`encaixar_competicao_por_nome()`**: evento com `competicao_id` null cujo nome bate ganha
+  `competicao_id`, o nome da competição e a frente dela (só se estava sem frente ou em Outros;
+  frente escolhida à mão pelo gestor fica), e chama `mover_tarefas_da_competicao` (052) — as
+  pendentes seguem. Primeira rodada: 9 eventos encaixados, 4 tarefas movidas (gravação de
+  29/10: Daniel → Pedro/Bárbara/Juliana). Padrão mais longo vence quando dois batem.
+- **Sync**: roda logo depois do upsert dos eventos e antes de `herdar_frente_da_competicao` /
+  `encaixar_sem_frente_em_outros`. Tem que ser toda hora: o upsert zera `competicao_id` de
+  novo (a Escala não tem a competição). Resumo ganhou `por_nome` ("N por nome" no Admin).
+- **Admin › "Regras por nome do evento · N"**: lista com "apagar" e formulário texto +
+  competição classificada → `criarRegraPorNome` (só gestor; aplica na hora e gera tarefas).
+  Apagar a regra não desfaz o que ela encaixou: na sync seguinte o evento volta a ficar sem
+  competição mas mantém a frente (Outros só pega quem está sem frente).
+- Raiz do problema continua na Matriz (competição vazia no evento). A regra é o remendo
+  daqui; se a Matriz passar a preencher, a regra simplesmente não encontra mais nada.
+
 ## RETOMAR AQUI (27/10/2026 — Quadra Aberta é Olímpicos; mudar frente de competição)
 
 Pedido do Daniel: os eventos de "Quadra Aberta" são de Olímpicos e estavam em Programas. A

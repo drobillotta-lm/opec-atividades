@@ -176,6 +176,36 @@ export async function reclassificarCompeticao(nome: string, formData: FormData) 
   revalidatePath("/admin/eventos");
 }
 
+/** Regra por nome (053): evento que chega da Matriz sem competição mas cujo nome contém o
+ * texto (ex.: "quadra aberta") pertence à competição escolhida e herda a frente dela. A sync
+ * reaplica a cada hora. Aplica agora para o que já está no banco. */
+export async function criarRegraPorNome(formData: FormData) {
+  const { pessoa } = await eu();
+  if (pessoa.papel !== "gestor") throw new Error("só gestor cria regra por nome");
+  const texto = String(formData.get("padrao") || "").trim().toLowerCase();
+  const competicaoId = String(formData.get("competicao_id") || "");
+  if (!texto || !competicaoId) return;
+  const admin = criarClienteAdmin();
+  const { error } = await admin.from("competicao_por_nome")
+    .insert({ padrao: texto.includes("%") ? texto : `%${texto}%`, competicao_id: competicaoId });
+  if (error) throw new Error(error.message);
+  const { error: eAplicar } = await admin.rpc("encaixar_competicao_por_nome");
+  if (eAplicar) throw new Error(`aplicar regra: ${eAplicar.message}`);
+  await gerarTarefasAgora();
+  revalidatePath("/admin");
+  revalidatePath("/admin/eventos");
+}
+
+/** Apagar a regra não desfaz o que ela já encaixou: na sync seguinte o evento volta a ficar sem
+ * competição, mas mantém a frente que recebeu (Outros só pega quem está sem frente). */
+export async function apagarRegraPorNome(id: string) {
+  const { pessoa } = await eu();
+  if (pessoa.papel !== "gestor") throw new Error("só gestor apaga regra por nome");
+  const { error } = await criarClienteAdmin().from("competicao_por_nome").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+  revalidatePath("/admin");
+}
+
 /** Competição que não vale (sem entrega, teste, lixo da Matriz): sai da lista "sem frente" e os
  * eventos dela somem da Gestão de eventos. Não apaga nada: a sync continua trazendo os eventos
  * e dá pra voltar atrás com reativarCompeticao. (Daniel, 14/10) */
