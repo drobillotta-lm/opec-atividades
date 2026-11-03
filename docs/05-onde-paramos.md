@@ -1,5 +1,18 @@
 # Onde paramos — 28/09/2026
 
+## RETOMAR AQUI (03/11/2026 — Jogos Olímpicos da Juventude eram Programas; só dado, sem código)
+
+Daniel: "os jogos da Juventude estão como Programas, são Olímpicos". Achado: a competição
+"Jogos Olímpicos da Juventude 2026" não existe na Escala (`escala.competicoes`), nasceu aqui
+sem frente e os 51 eventos dela estavam em PR (2 sem frente), com 139 pendentes em
+Lucas/Julia/Gabriel. Feito direto no banco, pelo mesmo caminho do Admin "mudar de frente":
+competição → OL (gatilho 013 levou os 53 eventos), `mover_tarefas_da_competicao` realinhou 139
+(0 com tempo), `gerar_tarefas` não criou nada. A "Cerimônia de Encerramento" (13/11) está na
+competição "Eventos Especiais 2026" (PR na Escala): o evento foi posto em OL à mão e as 4
+pendentes seguiram. Resultado: 143 pendentes de 31/10 a 13/11 em OL — Pedro roteiro, Bárbara
+materiais, Juliana sinc + auditoria. Dado ruim da Matriz que ficou: "Jogos Olímpicos da
+Juventude - Natação #1" (01/11) está na competição "Jogos Olímpicos 2024", sem entrega.
+
 ## RETOMAR AQUI (28/10/2026 — evento sem competição chega já na frente certa: regra por nome)
 
 Daniel: "o ideal é chegar já configurado como Olímpicos". Os eventos "Quadra Aberta ep N
