@@ -6,9 +6,11 @@ import { QuadroKanban, type TarefaQuadro } from "@/componentes/QuadroKanban";
 import { semanaDe, deslocarSemana, diaCurto, hhmm, tempoLegivel, ROTULO_ATIVIDADE, escaladosDe, hojeISO, diaBRT, somarDias } from "@/lib/semana";
 import { Relogio, Submit, TempoParado, DialogoEntrega, DialogoDesnecessaria, DialogoAjuste, DialogoExcluir } from "./Cronometro";
 import { DialogoPartes, type Parte } from "./Partes";
+import { LoteProvider, CaixaLote, BarraLote, DialogoEntregaLote } from "./Lote";
 import {
   iniciar, pausar, entregar, marcarDesnecessaria, reverterDesnecessaria, ajustarTempo, excluirTarefaRegistrada,
   criarSubtarefa, iniciarSubtarefa, concluirSubtarefa, reabrirSubtarefa, apagarSubtarefa,
+  iniciarLote, pausarLote, entregarLote,
 } from "../acoes";
 import { AbrirDock } from "@/componentes/AbrirDock";
 import { AutoAtualiza } from "@/componentes/AutoAtualiza";
@@ -172,8 +174,8 @@ export default async function MinhasAtividades({ searchParams }: { searchParams:
   // (várias pessoas cronometram a mesma tarefa), errado pro botão: "Pausar" tem que fechar
   // A MINHA sessão, não mostrar rodando só porque outra pessoa está nela.
   const { data: sessoesDaTarefa } = ids.length
-    ? await supabase.from("sessoes").select("tarefa_id, pessoa_id, inicio, fim, subtarefa_id").in("tarefa_id", ids)
-    : { data: [] as { tarefa_id: string; pessoa_id: string; inicio: string; fim: string | null; subtarefa_id: string | null }[] };
+    ? await supabase.from("sessoes").select("tarefa_id, pessoa_id, inicio, fim, subtarefa_id, lote_id, fracao").in("tarefa_id", ids)
+    : { data: [] as { tarefa_id: string; pessoa_id: string; inicio: string; fim: string | null; subtarefa_id: string | null; lote_id: string | null; fracao: number }[] };
 
   const [{ data: time }, { data: subtarefas }, { data: temposParte }] = await Promise.all([
     supabase.from("pessoas").select("id, nome").is("saida", null).order("nome"),
@@ -207,7 +209,7 @@ export default async function MinhasAtividades({ searchParams }: { searchParams:
       .map((id) => ({
         nome: nomePor.get(id) ?? "—",
         segundos: sessoes.filter((s) => s.pessoa_id === id)
-          .reduce((soma, s) => soma + (new Date(s.fim ?? Date.now()).getTime() - new Date(s.inicio).getTime()) / 1000, 0),
+          .reduce((soma, s) => soma + ((new Date(s.fim ?? Date.now()).getTime() - new Date(s.inicio).getTime()) / 1000) * Number(s.fracao ?? 1), 0),
       }))
       .filter((c) => c.segundos > 0);
 
@@ -234,6 +236,8 @@ export default async function MinhasAtividades({ searchParams }: { searchParams:
       evento: Array.isArray(t.eventos) ? t.eventos[0] : t.eventos,
       segundos: Number(porId.get(t.id)?.segundos_total ?? 0),
       correndo,
+      minhoLote: minhaAberta?.lote_id ?? null,
+      minhaFracao: Number(minhaAberta?.fracao ?? 1),
       minhaParte: minhaAberta?.subtarefa_id ? tituloParte.get(minhaAberta.subtarefa_id) ?? null : null,
       outrosRodando,
       contribuintes,
@@ -261,6 +265,12 @@ export default async function MinhasAtividades({ searchParams }: { searchParams:
   // Vários cronômetros por pessoa (044): "em andamento" é lista, a mais recente primeiro.
   const emAndamento = visiveis.filter((t) => t.correndo)
     .sort((a, b) => new Date(b.correndo!).getTime() - new Date(a.correndo!).getTime());
+  // Lote (054): as que estão rodando juntas viram um cartão só, com um relógio.
+  const gruposAndamento: { lote: string | null; itens: typeof emAndamento }[] = [];
+  for (const t of emAndamento) {
+    const g = t.minhoLote ? gruposAndamento.find((x) => x.lote === t.minhoLote) : undefined;
+    if (g) g.itens.push(t); else gruposAndamento.push({ lote: t.minhoLote, itens: [t] });
+  }
   const abertasVisiveis = visiveis.filter((t) => t.status === "pendente" && !t.correndo);
   const atrasadas = abertasVisiveis.filter((t) => t.atrasada);
   const porDia = new Map<string, Tarefa[]>();
@@ -298,10 +308,11 @@ export default async function MinhasAtividades({ searchParams }: { searchParams:
   }));
 
   const linha = (t: Tarefa) => (
-    <LinhaAberta key={t.id} t={t} euId={pessoa!.id} time={time ?? []} daFrente={daFrente} nomePor={nomePor} />
+    <LinhaAberta key={t.id} t={t} euId={pessoa!.id} time={time ?? []} daFrente={daFrente} nomePor={nomePor} selecionavel={!daFrente} />
   );
 
   return (
+    <LoteProvider>
     <div className={`p-6 px-8 flex flex-col gap-5 ${vista === "kanban" ? "max-w-[1280px]" : "max-w-[1080px]"}`}>
       <AutoAtualiza segundos={30} />
       <header className="flex flex-wrap items-end justify-between gap-5">
@@ -377,12 +388,21 @@ export default async function MinhasAtividades({ searchParams }: { searchParams:
           : <QuadroKanban tarefas={quadro} nomePor={nomePor} />
       )}
 
-      {!quadro && emAndamento.map((emCurso, i) => (
+      {!quadro && gruposAndamento.map((g, i) => g.lote ? (
+        <CartaoLote key={g.lote} loteId={g.lote} primeiro={i === 0} fala={falaSrMinutos}
+          itens={g.itens.map((t) => ({
+            id: t.id, nome: nomeTarefa(t, "nome"), segundos: t.segundos, estimativaMin: t.estimativa_min,
+            fracao: t.minhaFracao, escaladoId: t.escalado_id, duplaId: t.dupla_id, atrasada: t.atrasada, diaPrazo: t.diaPrazo,
+          }))}
+          desde={g.itens.reduce((m, t) => (t.correndo! < m ? t.correndo! : m), g.itens[0].correndo!)}
+          euId={pessoa!.id} time={time ?? []}
+          pausar={pausarLote.bind(null, g.lote)} entregar={entregarLote.bind(null, g.lote)} />
+      ) : (() => { const emCurso = g.itens[0]; return (
         <div key={emCurso.id} className={`relative ${i === 0 ? "mt-[118px]" : ""} flex items-center gap-5 rounded-xl bg-verde-fundo border border-verde-borda px-5 py-4`}>
           {i === 0 && <Corpo pose="apontando" altura={116} fala={falaSrMinutos} className="right-10 bottom-[calc(100%-6px)]" />}
           <div className="flex flex-col gap-1.5 flex-1 min-w-0">
             <span className="inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.11em] text-verde-claro">
-              <Rosto estado="verde" tamanho={16} />Em andamento{emAndamento.length > 1 ? ` · ${i + 1} de ${emAndamento.length}` : ""}
+              <Rosto estado="verde" tamanho={16} />Em andamento{gruposAndamento.length > 1 ? ` · ${i + 1} de ${gruposAndamento.length}` : ""}
               {emCurso.atrasada && <PrazoVenceu dia={emCurso.diaPrazo} />}
             </span>
             <span className="text-[16px] font-semibold tracking-[-0.01em]">
@@ -433,7 +453,7 @@ export default async function MinhasAtividades({ searchParams }: { searchParams:
             />
           </div>
         </div>
-      ))}
+      ); })())}
 
       {!quadro && (<>
       {visiveis.length === 0 && (temFiltro
@@ -563,13 +583,15 @@ export default async function MinhasAtividades({ searchParams }: { searchParams:
       </section>
       </>)}
     </div>
+    {!daFrente && <BarraLote iniciar={iniciarLote} />}
+    </LoteProvider>
   );
 }
 
 const ROTULO = "min-w-[120px] text-[10.5px] font-semibold uppercase tracking-[0.1em] text-tinta-3";
 
 /** Tarefa aberta (pausada ou não começada) na lista: mesma linha em qualquer grupo. */
-function LinhaAberta({ t, euId, time, daFrente, nomePor }: {
+function LinhaAberta({ t, euId, time, daFrente, nomePor, selecionavel }: {
   t: {
     id: string; atividade: string; titulo: string | null; status: string; estimativa_min: number;
     escalado_id: string; dupla_id: string | null; abre_em: string; diaPrazo: string;
@@ -579,11 +601,12 @@ function LinhaAberta({ t, euId, time, daFrente, nomePor }: {
     evento?: { competicao: string; data: string; evento_id_origem: string | null; confronto: string | null } | null;
     origem?: string | null;
   };
-  euId: string; time: { id: string; nome: string }[]; daFrente: boolean; nomePor: Map<string, string>;
+  euId: string; time: { id: string; nome: string }[]; daFrente: boolean; nomePor: Map<string, string>; selecionavel?: boolean;
 }) {
   const pausada = t.segundos > 0;
   return (
     <Linha pausada={pausada && !t.atrasada} destaque={t.atrasada}>
+      {selecionavel && <CaixaLote id={t.id} />}
       {pausada ? (
         <span className="inline-flex items-center gap-1.5 rounded-md bg-ambar-fundo border border-ambar-borda px-2.5 py-1 text-[11px] font-medium text-ambar shrink-0">
           <Rosto estado="ambar" />Pausada
@@ -642,6 +665,48 @@ function LinhaAberta({ t, euId, time, daFrente, nomePor }: {
         )}
       </div>
     </Linha>
+  );
+}
+
+/** Cartão "em andamento" de um lote (054): um relógio para N tarefas rodando juntas. O relógio
+ * mostra o tempo deste lote; cada linha mostra o total que a tarefa já tem (rateado). */
+function CartaoLote({ loteId, primeiro, fala, itens, desde, euId, time, pausar, entregar }: {
+  loteId: string; primeiro: boolean; fala?: string;
+  itens: { id: string; nome: string; segundos: number; estimativaMin: number; fracao: number; escaladoId: string; duplaId: string | null; atrasada: boolean; diaPrazo: string }[];
+  desde: string; euId: string; time: { id: string; nome: string }[];
+  pausar: () => Promise<void>; entregar: (formData: FormData) => Promise<void>;
+}) {
+  const atrasada = itens.some((it) => it.atrasada);
+  const estimativa = itens.reduce((s, it) => s + it.estimativaMin, 0);
+  return (
+    <div key={loteId} className={`relative ${primeiro ? "mt-[118px]" : ""} flex items-center gap-5 rounded-xl bg-verde-fundo border border-verde-borda px-5 py-4`}>
+      {primeiro && <Corpo pose="apontando" altura={116} fala={fala} className="right-10 bottom-[calc(100%-6px)]" />}
+      <div className="flex flex-col gap-1.5 flex-1 min-w-0">
+        <span className="inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.11em] text-verde-claro">
+          <Rosto estado="verde" tamanho={16} />Em andamento · {itens.length} juntas
+        </span>
+        {itens.map((it) => (
+          <span key={it.id} className="text-[14px] font-semibold tracking-[-0.01em] flex items-baseline gap-2 min-w-0">
+            <span className="truncate">{it.nome}</span>
+            <span className="num text-[11px] font-normal text-tinta-4 shrink-0">{Math.round(it.fracao * 100)}% · {tempoLegivel(it.segundos)} antes · até {diaCurto(it.diaPrazo)}</span>
+            {it.atrasada && <PrazoVenceu dia={it.diaPrazo} />}
+          </span>
+        ))}
+      </div>
+      <div className="flex flex-col items-end">
+        <Relogio desde={desde} baseSeg={0} />
+        <span className="num text-[11px] text-tinta-4">de {hhmm(estimativa)} somadas</span>
+      </div>
+      <div className="flex gap-2">
+        <form action={pausar}>
+          <Submit ocupado="..." className="flex items-center gap-2 min-h-[42px] px-3.5 rounded-[9px] border border-linha bg-elevado text-[12.5px] font-medium hover:bg-linha transition">
+            Pausar as {itens.length}
+          </Submit>
+        </form>
+        <DialogoEntregaLote acao={entregar} itens={itens} desde={desde} euId={euId} time={time} atrasada={atrasada}
+          classeBotao="flex items-center gap-2 min-h-[42px] px-3.5 rounded-[9px] bg-verde text-verde-ink text-[12.5px] font-semibold hover:brightness-110 transition" />
+      </div>
+    </div>
   );
 }
 

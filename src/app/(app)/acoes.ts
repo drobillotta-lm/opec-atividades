@@ -70,25 +70,34 @@ export async function entregar(tarefaId: string, formData: FormData) {
   // SO desta: entregar A nao pode parar o relogio de B.
   await fecharSessao(supabase, pessoa.id, tarefaId, "entrega");
 
+  const informado = Math.round(Number(formData.get("minutos")));
+  await concluirTarefa(supabase, pessoa.id, tarefaId, Number.isFinite(informado) ? informado : null,
+    String(formData.get("quem") || ""), String(formData.get("comentario") || "").trim());
+  revalidatePath("/semana");
+  revalidatePath("/frente");
+}
+
+/** Miolo da entrega, usado pela entrega de uma tarefa e pela do lote (054): confere o tempo
+ * informado contra o medido (a diferença vira ajuste), decide quem fez e fecha a tarefa. */
+async function concluirTarefa(supabase: Supabase, pessoaId: string, tarefaId: string,
+                              informado: number | null, quem: string, comentario: string) {
   const { data: tarefa } = await supabase
     .from("tarefas").select("prazo_em, escalado_id, dupla_id").eq("id", tarefaId).single();
   const { data: tempo } = await supabase
     .from("v_tempo_tarefa").select("segundos_total").eq("tarefa_id", tarefaId).maybeSingle();
 
   const medido = Math.round(Number(tempo?.segundos_total ?? 0) / 60);
-  const informado = Math.round(Number(formData.get("minutos")));
-  if (Number.isFinite(informado) && informado !== medido) {
+  if (informado !== null && informado !== medido) {
     await supabase.from("ajustes_tempo").insert({
       tarefa_id: tarefaId,
-      pessoa_id: pessoa.id,
+      pessoa_id: pessoaId,
       minutos_delta: informado - medido,
       motivo: "tempo confirmado na entrega",
     });
   }
 
-  const souDaTarefa = tarefa && (pessoa.id === tarefa.escalado_id || pessoa.id === tarefa.dupla_id);
-  const quemFez = String(formData.get("quem") || "") || (souDaTarefa ? pessoa.id : tarefa?.escalado_id) || pessoa.id;
-  const comentario = String(formData.get("comentario") || "").trim();
+  const souDaTarefa = tarefa && (pessoaId === tarefa.escalado_id || pessoaId === tarefa.dupla_id);
+  const quemFez = quem || (souDaTarefa ? pessoaId : tarefa?.escalado_id) || pessoaId;
   const agora = new Date();
   const noPrazo = tarefa ? agora <= new Date(tarefa.prazo_em) : true;
 
@@ -102,6 +111,77 @@ export async function entregar(tarefaId: string, formData: FormData) {
     })
     .eq("id", tarefaId);
   if (error) throw new Error(error.message);
+}
+
+/** "Iniciar juntas" (054): uma sessão por tarefa, todas com o mesmo lote_id, cada uma com a
+ * fração do tempo = estimativa / soma das estimativas. Recusa se alguma já está rodando pra mim. */
+export async function iniciarLote(ids: string[]) {
+  const { supabase, pessoa } = await eu();
+  const unicos = [...new Set(ids)].filter(Boolean);
+  if (unicos.length < 2) throw new Error("marque pelo menos duas atividades");
+  const { data: tarefas } = await supabase.from("tarefas").select("id, estimativa_min, status").in("id", unicos);
+  const pendentes = (tarefas ?? []).filter((t) => t.status === "pendente");
+  if (pendentes.length !== unicos.length) throw new Error("alguma delas não está mais pendente; recarregue a página");
+  const { data: abertas } = await supabase
+    .from("sessoes").select("tarefa_id").eq("pessoa_id", pessoa.id).in("tarefa_id", unicos).is("fim", null);
+  if (abertas?.length) throw new Error("uma delas já está com o cronômetro ligado; pause antes de juntar");
+  const total = pendentes.reduce((soma, t) => soma + t.estimativa_min, 0);
+  const loteId = globalThis.crypto.randomUUID();
+  const { error } = await supabase.from("sessoes").insert(pendentes.map((t) => ({
+    tarefa_id: t.id, pessoa_id: pessoa.id, lote_id: loteId,
+    fracao: total > 0 ? t.estimativa_min / total : 1 / pendentes.length,
+  })));
+  if (error) throw new Error(error.message);
+  revalidarTempo();
+}
+
+export async function pausarLote(loteId: string) {
+  const { supabase, pessoa } = await eu();
+  const { error } = await supabase
+    .from("sessoes")
+    .update({ fim: new Date().toISOString(), motivo_fim: "pausa" })
+    .eq("pessoa_id", pessoa.id).eq("lote_id", loteId).is("fim", null);
+  if (error) throw new Error(`nao consegui pausar o lote: ${error.message}`);
+  revalidarTempo();
+}
+
+/** Entrega do lote: fecha as sessões, lê o medido de cada tarefa (já rateado pela fração) e,
+ * se a pessoa informou outro total, distribui a diferença na proporção do medido (ou por
+ * igual, se nada foi medido). Mesmo "quem fez" e comentário para todas. */
+export async function entregarLote(loteId: string, formData: FormData) {
+  const { supabase, pessoa } = await eu();
+  const { data: sessoes } = await supabase
+    .from("sessoes").select("tarefa_id").eq("pessoa_id", pessoa.id).eq("lote_id", loteId);
+  const ids = [...new Set((sessoes ?? []).map((s) => s.tarefa_id))];
+  if (ids.length === 0) throw new Error("lote não encontrado");
+  const { error: eFechar } = await supabase
+    .from("sessoes")
+    .update({ fim: new Date().toISOString(), motivo_fim: "entrega" })
+    .eq("pessoa_id", pessoa.id).eq("lote_id", loteId).is("fim", null);
+  if (eFechar) throw new Error(`nao consegui fechar o lote: ${eFechar.message}`);
+
+  const { data: tempos } = await supabase.from("v_tempo_tarefa").select("tarefa_id, segundos_total").in("tarefa_id", ids);
+  const medidoPor = new Map((tempos ?? []).map((t) => [t.tarefa_id, Number(t.segundos_total ?? 0) / 60]));
+  const totalMedido = ids.reduce((soma, id) => soma + (medidoPor.get(id) ?? 0), 0);
+  const informado = Math.round(Number(formData.get("minutos")));
+  const quem = String(formData.get("quem") || "");
+  const comentario = String(formData.get("comentario") || "").trim();
+
+  // Rateio do total informado: proporcional ao medido; sem medida, por igual. Arredonda e joga
+  // a sobra na última pra soma bater.
+  const alvo = new Map<string, number | null>();
+  if (Number.isFinite(informado)) {
+    let distribuido = 0;
+    ids.forEach((id, i) => {
+      const parte = totalMedido > 0 ? (medidoPor.get(id) ?? 0) / totalMedido : 1 / ids.length;
+      const m = i === ids.length - 1 ? informado - distribuido : Math.round(informado * parte);
+      distribuido += m;
+      alvo.set(id, m);
+    });
+  }
+  for (const id of ids) {
+    await concluirTarefa(supabase, pessoa.id, id, alvo.get(id) ?? null, quem, comentario);
+  }
   revalidatePath("/semana");
   revalidatePath("/frente");
 }

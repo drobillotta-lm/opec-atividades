@@ -317,3 +317,11 @@ em Outros e esperar o gestor, uma regra por nome (`competicao_por_nome`, `053`) 
 competição o evento pertence; ele herda a frente dela e as pendentes vão junto. A regra roda em
 toda sincronização, porque a Escala continua mandando a competição vazia. Gestão no Admin, só
 gestor. Primeira regra: "quadra aberta" → Programa Podcast Quadra Aberta 2026 (Olímpicos).
+
+## 03/11/2026 — Atividades feitas juntas: um cronômetro, tarefas separadas
+
+Quem faz várias atividades de uma vez (três auditorias) marca as linhas e clica "Iniciar
+juntas": um relógio só, uma entrega só. Por baixo cada tarefa continua existindo com a sua
+sessão (`lote_id` em comum) e recebe uma fração do tempo, proporcional à estimativa. Não se
+funde tarefa: o modelo por evento × elo, as taxas e os relatórios continuam valendo. Vale pra
+qualquer pessoa e qualquer mistura de atividades (`054`).

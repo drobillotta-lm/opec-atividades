@@ -1,5 +1,34 @@
 # Onde paramos — 28/09/2026
 
+## RETOMAR AQUI (03/11/2026 — "Iniciar juntas": um cronômetro para várias atividades)
+
+Pedido do Daniel (Julia Bruno faz 3 auditorias de uma vez): ele propôs fundir em uma atividade
+nova; eu recomendei NÃO fundir (cada tarefa é evento × elo, é o que o modelo do Yuri, as taxas
+e os relatórios por evento leem; a sync recriaria as originais) e sim **iniciar juntas, com
+rateio**. Aprovado. No ar (migration **054**, aplicada pelo `execute_sql`, registrada):
+- **Banco**: `sessoes.lote_id` + `sessoes.fracao` (default 1, check 0 < f ≤ 1).
+  `v_tempo_tarefa` multiplica cada sessão fechada pela fração (soma geral igual antes/depois).
+  Fração = estimativa da tarefa / soma das estimativas do lote (3 auditorias iguais = 1/3).
+- **Ações** (`acoes.ts`): `iniciarLote(ids)` (≥ 2 pendentes, nenhuma já rodando pra mim; uma
+  sessão por tarefa, mesmo lote_id, `crypto.randomUUID()`); `pausarLote(loteId)` fecha todas;
+  `entregarLote(loteId, form)` fecha as sessões, lê o medido de cada (já rateado), rateia o
+  total informado na proporção do medido (ou por igual) e chama `concluirTarefa` — miolo
+  extraído de `entregar`, que agora também o usa (ajuste por diferença, quem fez, prazo).
+- **Tela** (`semana/Lote.tsx`, cliente): `LoteProvider` (seleção em contexto), `CaixaLote`
+  (checkbox na linha, só nas minhas — não em "Toda a frente"), `BarraLote` (fixa embaixo,
+  "N selecionadas · Iniciar juntas", erro inline), `DialogoEntregaLote` (tempo total, quem
+  fez, comentário; mostra as % de cada). Em `page.tsx`: `gruposAndamento` agrupa as rodando
+  por `minhoLote`; lote vira `CartaoLote` (um relógio, linhas com %, "antes" e prazo, "Pausar
+  as N", "Entregar as N"); solo segue o cartão antigo. `contribuintes` também rateia.
+- **Pausar e retomar**: pausar fecha as N sessões; cada tarefa volta pra lista como "Pausada".
+  Retomar juntas = marcar de novo e "Iniciar juntas" (novo lote_id, nova fração). Entregar
+  uma sozinha pelo caminho normal fecha só a sessão dela (`fecharSessao` por tarefa).
+- **Fase 2 (não feito)**: notch e dock veem N sessões correndo, cada uma com o relógio
+  inteiro — não sabem que é lote. Kanban não mostra lote.
+- **Não testado no navegador**: tsc e eslint ok (lint pré-existente de `Date.now()`);
+  banco validado só pelo total da view. Conferir com a Julia: marcar 3 auditorias → barra →
+  Iniciar juntas → cartão único → Entregar as 3 → tempos rateados em cada uma.
+
 ## RETOMAR AQUI (03/11/2026 — Jogos Olímpicos da Juventude eram Programas; só dado, sem código)
 
 Daniel: "os jogos da Juventude estão como Programas, são Olímpicos". Achado: a competição

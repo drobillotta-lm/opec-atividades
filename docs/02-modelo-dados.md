@@ -171,6 +171,10 @@ Várias sessões abertas por pessoa (um cronômetro por tarefa, cada um somando 
 só uma por (pessoa, tarefa). `'troca'` só acontece ao mudar de parte dentro da mesma tarefa.
 Até a 043 era uma por pessoa e trocar de tarefa fechava a atual.
 
+Desde `054`, uma sessão pode fazer parte de um **lote** (`lote_id`: várias tarefas iniciadas
+juntas, pausadas e entregues juntas) e carrega `fracao` (0 < f ≤ 1, default 1): a parte do
+tempo dela que conta pra tarefa. `v_tempo_tarefa` soma `(fim − inicio) × fracao`.
+
 ### `ajustes_tempo`
 ```
 tarefa_id     uuid references tarefas not null
