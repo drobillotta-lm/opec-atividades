@@ -135,6 +135,21 @@ export async function iniciarLote(ids: string[]) {
   revalidarTempo();
 }
 
+/** "Começar do zero" pelo site (04/11), igual ao notch: tarefa registrada no nome de quem
+ * pediu, já rodando. A função do banco não tem execute para authenticated; a pessoa vem da
+ * sessão (eu()), nunca do formulário. */
+export async function comecarDoZeroSite(formData: FormData) {
+  const { pessoa } = await eu();
+  const titulo = String(formData.get("titulo") || "").trim().slice(0, 120);
+  if (!titulo) throw new Error("diga o que você vai fazer");
+  const frente = String(formData.get("frente") || "");
+  const { error } = await criarClienteAdmin().rpc("notch_comecar_do_zero", {
+    p_pessoa: pessoa.id, p_titulo: titulo, p_frente_sigla: frente,
+  });
+  if (error) throw new Error(error.message);
+  revalidarTempo();
+}
+
 export async function pausarLote(loteId: string) {
   const { supabase, pessoa } = await eu();
   const { error } = await supabase

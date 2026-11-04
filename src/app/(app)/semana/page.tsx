@@ -8,11 +8,12 @@ import { Relogio, Submit, TempoParado, DialogoEntrega, DialogoDesnecessaria, Dia
 import { DialogoPartes, type Parte } from "./Partes";
 import { LoteProvider, CaixaLote, BarraLote, DialogoEntregaLote } from "./Lote";
 import { BuscaRapida } from "./BuscaRapida";
+import { NovaAtividade } from "./NovaAtividade";
 import { normalizar } from "@/lib/busca";
 import {
   iniciar, pausar, entregar, marcarDesnecessaria, reverterDesnecessaria, ajustarTempo, excluirTarefaRegistrada,
   criarSubtarefa, iniciarSubtarefa, concluirSubtarefa, reabrirSubtarefa, apagarSubtarefa,
-  iniciarLote, pausarLote, entregarLote,
+  iniciarLote, pausarLote, entregarLote, comecarDoZeroSite,
 } from "../acoes";
 import { AbrirDock } from "@/componentes/AbrirDock";
 import { AutoAtualiza } from "@/componentes/AutoAtualiza";
@@ -179,6 +180,7 @@ export default async function MinhasAtividades({ searchParams }: { searchParams:
     ? await supabase.from("sessoes").select("tarefa_id, pessoa_id, inicio, fim, subtarefa_id, lote_id, fracao").in("tarefa_id", ids)
     : { data: [] as { tarefa_id: string; pessoa_id: string; inicio: string; fim: string | null; subtarefa_id: string | null; lote_id: string | null; fracao: number }[] };
 
+  const { data: frentesAtivas } = await supabase.from("frentes").select("sigla, nome").eq("ativa", true).order("nome");
   const [{ data: time }, { data: subtarefas }, { data: temposParte }] = await Promise.all([
     supabase.from("pessoas").select("id, nome").is("saida", null).order("nome"),
     ids.length
@@ -339,6 +341,7 @@ export default async function MinhasAtividades({ searchParams }: { searchParams:
               <Aba href={link({ quem: "frente" })} ativa={daFrente}>Toda a frente</Aba>
             </nav>
           )}
+          {!daFrente && <NovaAtividade acao={comecarDoZeroSite} frentes={frentesAtivas ?? []} />}
           <AbrirDock />
         </div>
       </header>

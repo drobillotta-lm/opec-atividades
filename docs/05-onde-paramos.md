@@ -1,5 +1,16 @@
 # Onde paramos — 28/09/2026
 
+## RETOMAR AQUI (04/11/2026, fim da tarde — "começar do zero" também no site)
+
+Daniel: atividade não mapeada só começava pelo notch. Agora Minhas atividades tem o botão
+"+ Começar atividade não mapeada" no cabeçalho (só na visão "Minhas"): diálogo com "o que você
+vai fazer" (até 120 caracteres) e frente opcional (frentes ativas; "não sei / nenhuma" deixa sem
+frente pro gestor encaixar). A ação `comecarDoZeroSite` chama a MESMA função do notch
+(`notch_comecar_do_zero`, 043) pela service role, com a pessoa tirada da sessão; a tarefa nasce
+`origem='registrada'`, atividade `livre`, dona = a pessoa, estimativa 60, prazo hoje, e o
+cronômetro já liga. Sem migration. Não testado no navegador (tsc e eslint ok; a função tem 34
+usos reais pelo notch).
+
 ## RETOMAR AQUI (04/11/2026, tarde — "não acho WTA Curitiba"; Kings sem atividade)
 
 - **Juliana não achava a auditoria do WTA Curitiba #2 (30/10)**: a tarefa existe, é dela,
