@@ -7,6 +7,8 @@ import { semanaDe, deslocarSemana, diaCurto, hhmm, tempoLegivel, ROTULO_ATIVIDAD
 import { Relogio, Submit, TempoParado, DialogoEntrega, DialogoDesnecessaria, DialogoAjuste, DialogoExcluir } from "./Cronometro";
 import { DialogoPartes, type Parte } from "./Partes";
 import { LoteProvider, CaixaLote, BarraLote, DialogoEntregaLote } from "./Lote";
+import { BuscaRapida } from "./BuscaRapida";
+import { normalizar } from "@/lib/busca";
 import {
   iniciar, pausar, entregar, marcarDesnecessaria, reverterDesnecessaria, ajustarTempo, excluirTarefaRegistrada,
   criarSubtarefa, iniciarSubtarefa, concluirSubtarefa, reabrirSubtarefa, apagarSubtarefa,
@@ -90,7 +92,7 @@ export default async function MinhasAtividades({ searchParams }: { searchParams:
   const tipos = lista(sp.tipo);
   const estados = sp.status !== undefined ? lista(sp.status) : ESTADOS_PADRAO;
   const janela = janelaDe(sp, hoje);
-  const termoEvento = sp.evento?.trim().toLowerCase() ?? "";
+  const termoEvento = normalizar(sp.evento ?? "");
   const temFiltro = Boolean(termoEvento || tipos.length || sp.prazo || sp.de || sp.ate || sp.status !== undefined);
 
   // Links: muda só o que foi pedido e guarda o resto. Valor vazio tira o parâmetro.
@@ -250,8 +252,7 @@ export default async function MinhasAtividades({ searchParams }: { searchParams:
   });
 
   type Tarefa = (typeof comTempo)[number];
-  const textoDe = (t: Tarefa) =>
-    [t.titulo, t.evento?.confronto, t.evento?.competicao, t.evento?.evento_id_origem].filter(Boolean).join(" ").toLowerCase();
+  const textoDe = (t: Tarefa) => textoBusca(t);
   const visiveis = comTempo.filter((t) => {
     if (!estados.includes(t.estado)) return false;
     if (tipos.length && !tipos.includes(t.atividade)) return false;
@@ -456,16 +457,17 @@ export default async function MinhasAtividades({ searchParams }: { searchParams:
       ); })())}
 
       {!quadro && (<>
+      {visiveis.length > 0 && <BuscaRapida total={visiveis.length} />}
       {visiveis.length === 0 && (temFiltro
         ? <Vazio>Nenhuma atividade com esses filtros. Use “Limpar filtros” para voltar a ver tudo.</Vazio>
         : <VazioComEle pose="ferias" titulo="Hoje não tem nada aberto." texto="Nenhuma atividade pendente. Vai viver." />)}
 
       {atrasadas.length > 0 && (
-        <Secao titulo="Atrasadas" contagem={`${atrasadas.length}`} rosa>{atrasadas.map(linha)}</Secao>
+        <Secao titulo="Atrasadas" contagem={`${atrasadas.length}`} rosa busca>{atrasadas.map(linha)}</Secao>
       )}
 
       {dias.map((dia) => (
-        <Secao key={dia} contagem={`${porDia.get(dia)!.length}`}
+        <Secao key={dia} busca contagem={`${porDia.get(dia)!.length}`}
           titulo={dia === hoje ? "Vence hoje" : dia === somarDias(hoje, 1) ? `Amanhã · ${diaCurto(dia)}` : `Vence ${diaCurto(dia)}`}>
           {porDia.get(dia)!.map(linha)}
         </Secao>
@@ -526,9 +528,9 @@ export default async function MinhasAtividades({ searchParams }: { searchParams:
       )}
 
       {praPegar.length > 0 && (
-        <Secao titulo="Pra pegar · Outros" contagem={`${praPegar.length}`}>
+        <Secao titulo="Pra pegar · Outros" contagem={`${praPegar.length}`} busca>
           {praPegar.map((t) => (
-            <Linha key={t.id}>
+            <Linha key={t.id} busca={textoBusca(t)}>
               <div className="flex-1 min-w-0 flex flex-col gap-1">
                 <span className="text-[13.5px] font-medium">{nomeTarefa(t, "sigla")}</span>
                 <span className="text-[11.5px] text-tinta-3 truncate">
@@ -605,7 +607,7 @@ function LinhaAberta({ t, euId, time, daFrente, nomePor, selecionavel }: {
 }) {
   const pausada = t.segundos > 0;
   return (
-    <Linha pausada={pausada && !t.atrasada} destaque={t.atrasada}>
+    <Linha pausada={pausada && !t.atrasada} destaque={t.atrasada} busca={textoBusca(t)}>
       {selecionavel && <CaixaLote id={t.id} />}
       {pausada ? (
         <span className="inline-flex items-center gap-1.5 rounded-md bg-ambar-fundo border border-ambar-borda px-2.5 py-1 text-[11px] font-medium text-ambar shrink-0">
@@ -710,9 +712,9 @@ function CartaoLote({ loteId, primeiro, fala, itens, desde, euId, time, pausar, 
   );
 }
 
-function Secao({ titulo, contagem, rosa, children }: { titulo: string; contagem: string; rosa?: boolean; children: React.ReactNode }) {
+function Secao({ titulo, contagem, rosa, busca, children }: { titulo: string; contagem: string; rosa?: boolean; busca?: boolean; children: React.ReactNode }) {
   return (
-    <section className="flex flex-col gap-2">
+    <section data-secao={busca ? "" : undefined} className="flex flex-col gap-2">
       <div className="flex items-baseline gap-2.5">
         <h2 className={`text-[11.5px] font-semibold uppercase tracking-[0.1em] ${rosa ? "text-rosa" : "text-tinta-3"}`}>{titulo}</h2>
         <span className="num text-[11.5px] text-tinta-4">{contagem}</span>
@@ -722,9 +724,9 @@ function Secao({ titulo, contagem, rosa, children }: { titulo: string; contagem:
   );
 }
 
-function Linha({ children, destaque, apagada, pausada }: { children: React.ReactNode; destaque?: boolean; apagada?: boolean; pausada?: boolean }) {
+function Linha({ children, destaque, apagada, pausada, busca }: { children: React.ReactNode; destaque?: boolean; apagada?: boolean; pausada?: boolean; busca?: string }) {
   return (
-    <div className={`flex items-center gap-3.5 rounded-[10px] px-4 py-3 border ${
+    <div data-busca={busca} className={`flex items-center gap-3.5 rounded-[10px] px-4 py-3 border ${
       pausada ? "bg-elevado border-ambar-borda" : destaque ? "bg-rosa-fundo border-rosa-borda" : apagada ? "bg-superficie-2 border-linha-2" : "bg-superficie border-linha"
     }`}>
       {children}
@@ -771,4 +773,17 @@ function VazioComEle({ pose, titulo, texto }: { pose: "ferias" | "triste"; titul
       </div>
     </div>
   );
+}
+
+/** O que a busca enxerga numa tarefa: nome do evento, confronto (os times), competição ou
+ * programa, frente e o tipo de atividade, sem acento. Vale pro filtro da URL e pra busca rápida. */
+function textoBusca(t: {
+  atividade: string; titulo: string | null;
+  frente?: { sigla: string; nome?: string } | null;
+  evento?: { competicao: string; evento_id_origem: string | null; confronto: string | null } | null;
+}) {
+  return normalizar([
+    t.titulo, t.evento?.confronto, t.evento?.competicao, t.evento?.evento_id_origem,
+    t.frente?.nome, t.frente?.sigla, ROTULO_ATIVIDADE[t.atividade] ?? t.atividade,
+  ].filter(Boolean).join(" "));
 }

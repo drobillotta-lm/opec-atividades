@@ -1,5 +1,28 @@
 # Onde paramos — 28/09/2026
 
+## RETOMAR AQUI (04/11/2026 — busca rápida em Minhas atividades; "auditoria de OL não aparece pra Juliana")
+
+Dois pedidos do Daniel:
+- **"Auditoria de Olímpicos não aparece pra Juliana"**: dado e permissão estão certos. Ela tem
+  94 auditorias OL pendentes (26 atrasadas) e, simulando o login dela (`request.jwt.claims` +
+  `set local role authenticated`), todas são lidas; o `notch_estado` dela lista 8 nas próximas.
+  Causa provável: a lista dela tem 245 pendentes, 120 atrasadas no topo (roteiros de PR de
+  setembro, CP etc.), e as auditorias ficam enterradas; ou ela estava em "Toda a frente" (ela é
+  líder de FI e NA, não de OL — OL é do Lucas, então lá não aparece por desenho). Ela nunca abriu
+  sessão (0 sessões). Sem mudança de dado.
+- **Busca rápida** (`semana/BuscaRapida.tsx` + `src/lib/busca.ts`): campo no topo da lista
+  que filtra enquanto digita, sem recarregar, sem acento e sem maiúscula, todas as palavras
+  (ex.: "flamengo auditoria", "quadra", "olimpicos"). Cada linha aberta e de "Pra pegar" leva
+  `data-busca` = `textoBusca(t)` (nome do evento, confronto, competição/programa, frente nome e
+  sigla, rótulo da atividade); o cliente escreve um `<style>` com seletores de atributo
+  (`[data-busca]:not([data-busca*="w1"][data-busca*="w2"])` some) e esconde as `Secao` com
+  `data-secao` que ficaram sem linha (`:has`). Entregues/N.A. não têm `data-busca` e somem só se
+  a seção for marcada; não foram marcadas, ficam sempre. O filtro "Evento" da URL passou a usar
+  o mesmo texto (agora sem acento e pegando frente e tipo).
+- Não testado no navegador (tsc e eslint ok). `:has` exige Chrome/Edge 105+, Safari 15.4+,
+  Firefox 121+. A busca "Ajudar alguém" (outras pessoas) continua no servidor com `ilike`,
+  sensível a acento.
+
 ## RETOMAR AQUI (03/11/2026 — "Iniciar juntas": um cronômetro para várias atividades)
 
 Pedido do Daniel (Julia Bruno faz 3 auditorias de uma vez): ele propôs fundir em uma atividade
