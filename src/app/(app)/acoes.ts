@@ -150,6 +150,41 @@ export async function comecarDoZeroSite(formData: FormData) {
   revalidarTempo();
 }
 
+/** Cancelar um início por engano (04/11): apaga só a MINHA sessão aberta nessas tarefas (o
+ * tempo de antes fica). Se sobrar tarefa começada do zero sem tempo nenhum, ela some também —
+ * "como se não tivesse sido iniciada". A RLS (minhas_sessoes, apaga_tarefa_registrada) garante
+ * que só mexe no que é da pessoa. */
+async function descartarSessoesAbertas(supabase: Supabase, pessoaId: string, filtro: { tarefaId?: string; loteId?: string }) {
+  let q = supabase.from("sessoes").delete().eq("pessoa_id", pessoaId).is("fim", null);
+  q = filtro.loteId ? q.eq("lote_id", filtro.loteId) : q.eq("tarefa_id", filtro.tarefaId!);
+  const { data: apagadas, error } = await q.select("tarefa_id");
+  if (error) throw new Error(`nao consegui cancelar: ${error.message}`);
+  const ids = [...new Set((apagadas ?? []).map((s) => s.tarefa_id))];
+  if (!ids.length) return;
+  const { data: registradas } = await supabase
+    .from("tarefas").select("id").in("id", ids).eq("origem", "registrada").eq("status", "pendente");
+  for (const t of registradas ?? []) {
+    const [{ count: sess }, { count: aj }, { count: partes }] = await Promise.all([
+      supabase.from("sessoes").select("id", { count: "exact", head: true }).eq("tarefa_id", t.id),
+      supabase.from("ajustes_tempo").select("id", { count: "exact", head: true }).eq("tarefa_id", t.id),
+      supabase.from("subtarefas").select("id", { count: "exact", head: true }).eq("tarefa_id", t.id),
+    ]);
+    if (!sess && !aj && !partes) await supabase.from("tarefas").delete().eq("id", t.id).eq("origem", "registrada");
+  }
+}
+
+export async function cancelarInicio(tarefaId: string) {
+  const { supabase, pessoa } = await eu();
+  await descartarSessoesAbertas(supabase, pessoa.id, { tarefaId });
+  revalidarTempo();
+}
+
+export async function cancelarLote(loteId: string) {
+  const { supabase, pessoa } = await eu();
+  await descartarSessoesAbertas(supabase, pessoa.id, { loteId });
+  revalidarTempo();
+}
+
 export async function pausarLote(loteId: string) {
   const { supabase, pessoa } = await eu();
   const { error } = await supabase

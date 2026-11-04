@@ -9,11 +9,12 @@ import { DialogoPartes, type Parte } from "./Partes";
 import { LoteProvider, CaixaLote, BarraLote, DialogoEntregaLote } from "./Lote";
 import { BuscaRapida } from "./BuscaRapida";
 import { NovaAtividade } from "./NovaAtividade";
+import { BotaoCancelar } from "./Cancelar";
 import { normalizar } from "@/lib/busca";
 import {
   iniciar, pausar, entregar, marcarDesnecessaria, reverterDesnecessaria, ajustarTempo, excluirTarefaRegistrada,
   criarSubtarefa, iniciarSubtarefa, concluirSubtarefa, reabrirSubtarefa, apagarSubtarefa,
-  iniciarLote, pausarLote, entregarLote, comecarDoZeroSite,
+  iniciarLote, pausarLote, entregarLote, comecarDoZeroSite, cancelarInicio, cancelarLote,
 } from "../acoes";
 import { AbrirDock } from "@/componentes/AbrirDock";
 import { AutoAtualiza } from "@/componentes/AutoAtualiza";
@@ -403,7 +404,7 @@ export default async function MinhasAtividades({ searchParams }: { searchParams:
           }))}
           desde={g.itens.reduce((m, t) => (t.correndo! < m ? t.correndo! : m), g.itens[0].correndo!)}
           euId={pessoa!.id} time={time ?? []}
-          pausar={pausarLote.bind(null, g.lote)} entregar={entregarLote.bind(null, g.lote)} />
+          pausar={pausarLote.bind(null, g.lote)} entregar={entregarLote.bind(null, g.lote)} cancelar={cancelarLote.bind(null, g.lote)} />
       ) : (() => { const emCurso = g.itens[0]; return (
         <div key={emCurso.id} className={`relative ${i === 0 ? "mt-[118px]" : ""} flex items-center gap-5 rounded-xl bg-verde-fundo border border-verde-borda px-5 py-4`}>
           {i === 0 && <Corpo pose="apontando" altura={116} fala={falaSrMinutos} className="right-10 bottom-[calc(100%-6px)]" />}
@@ -432,6 +433,7 @@ export default async function MinhasAtividades({ searchParams }: { searchParams:
             <span className="num text-[11px] text-tinta-4">de {hhmm(emCurso.estimativa_min)}</span>
           </div>
           <div className="flex gap-2">
+            <BotaoCancelar acao={cancelarInicio.bind(null, emCurso.id)} />
             <form action={pausar.bind(null, emCurso.id)}>
               <Submit ocupado="..." className="flex items-center gap-2 min-h-[42px] px-3.5 rounded-[9px] border border-linha bg-elevado text-[12.5px] font-medium hover:bg-linha transition">
                 Pausar
@@ -679,11 +681,11 @@ function LinhaAberta({ t, euId, time, daFrente, nomePor, selecionavel }: {
 
 /** Cartão "em andamento" de um lote (054): um relógio para N tarefas rodando juntas. O relógio
  * mostra o tempo deste lote; cada linha mostra o total que a tarefa já tem (rateado). */
-function CartaoLote({ loteId, primeiro, fala, itens, desde, euId, time, pausar, entregar }: {
+function CartaoLote({ loteId, primeiro, fala, itens, desde, euId, time, pausar, entregar, cancelar }: {
   loteId: string; primeiro: boolean; fala?: string;
   itens: { id: string; nome: string; segundos: number; estimativaMin: number; fracao: number; escaladoId: string; duplaId: string | null; atrasada: boolean; diaPrazo: string }[];
   desde: string; euId: string; time: { id: string; nome: string }[];
-  pausar: () => Promise<void>; entregar: (formData: FormData) => Promise<void>;
+  pausar: () => Promise<void>; entregar: (formData: FormData) => Promise<void>; cancelar: () => Promise<void>;
 }) {
   const atrasada = itens.some((it) => it.atrasada);
   const estimativa = itens.reduce((s, it) => s + it.estimativaMin, 0);
@@ -707,6 +709,7 @@ function CartaoLote({ loteId, primeiro, fala, itens, desde, euId, time, pausar, 
         <span className="num text-[11px] text-tinta-4">de {hhmm(estimativa)} somadas</span>
       </div>
       <div className="flex gap-2">
+        <BotaoCancelar acao={cancelar} quantas={itens.length} />
         <form action={pausar}>
           <Submit ocupado="..." className="flex items-center gap-2 min-h-[42px] px-3.5 rounded-[9px] border border-linha bg-elevado text-[12.5px] font-medium hover:bg-linha transition">
             Pausar as {itens.length}

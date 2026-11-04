@@ -1,5 +1,16 @@
 # Onde paramos — 28/09/2026
 
+## RETOMAR AQUI (04/11/2026, noite — "Cancelar" um início por engano)
+
+Daniel: começou sem querer, não tinha como desfazer. Agora o cartão "Em andamento" (solo e
+lote) tem "Cancelar", com confirmação. `cancelarInicio(tarefaId)` / `cancelarLote(loteId)` →
+`descartarSessoesAbertas`: APAGA (não fecha) só as sessões abertas da própria pessoa naquela
+tarefa ou lote; o tempo de vezes anteriores fica, então uma retomada por engano volta a
+"Pausada" e uma primeira vez volta a "Pendente". Se a tarefa é começada do zero e ficou sem
+sessão, ajuste e parte, ela é apagada também. Sem migration: a RLS já permite
+(`minhas_sessoes` ALL com `pessoa_id = eu()`; `apaga_tarefa_registrada`). Notch e dock não
+têm o cancelar (fase 2). Não testado no navegador (tsc e eslint ok).
+
 ## RETOMAR AQUI (04/11/2026, noite — Kings: Gabriel + Pedro em todas)
 
 Decisão do Daniel: na Kings, Gabriel e Pedro veem todas as atividades. Feito só com dado, pelo
