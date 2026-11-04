@@ -14,7 +14,7 @@ import { normalizar } from "@/lib/busca";
 import {
   iniciar, pausar, entregar, marcarDesnecessaria, reverterDesnecessaria, ajustarTempo, excluirTarefaRegistrada,
   criarSubtarefa, iniciarSubtarefa, concluirSubtarefa, reabrirSubtarefa, apagarSubtarefa,
-  iniciarLote, pausarLote, entregarLote, comecarDoZeroSite, cancelarInicio, cancelarLote,
+  iniciarLote, pausarLote, entregarLote, comecarDoZeroSite, cancelarInicio, cancelarLote, zerarMeuTempo,
 } from "../acoes";
 import { AbrirDock } from "@/componentes/AbrirDock";
 import { AutoAtualiza } from "@/componentes/AutoAtualiza";
@@ -665,6 +665,9 @@ function LinhaAberta({ t, euId, time, daFrente, nomePor, selecionavel }: {
         />
         <DialogoDesnecessaria acao={marcarDesnecessaria.bind(null, t.id)} titulo={`${nomeTarefa(t)}`} />
         <DialogoAjuste acao={ajustarTempo.bind(null, t.id)} titulo={`${nomeTarefa(t)}`} />
+        {pausada && t.contribuintes.some((c) => c.nome === nomePor.get(euId)) && (
+          <BotaoCancelar modo="zerar" acao={zerarMeuTempo.bind(null, t.id)} />
+        )}
         <DialogoPartes
           titulo={`${nomeTarefa(t)}`}
           partes={t.partes} time={time} euId={euId}
@@ -685,7 +688,7 @@ function CartaoLote({ loteId, primeiro, fala, itens, desde, euId, time, pausar, 
   loteId: string; primeiro: boolean; fala?: string;
   itens: { id: string; nome: string; segundos: number; estimativaMin: number; fracao: number; escaladoId: string; duplaId: string | null; atrasada: boolean; diaPrazo: string }[];
   desde: string; euId: string; time: { id: string; nome: string }[];
-  pausar: () => Promise<void>; entregar: (formData: FormData) => Promise<void>; cancelar: () => Promise<void>;
+  pausar: () => Promise<void>; entregar: (formData: FormData) => Promise<void>; cancelar: (formData: FormData) => Promise<void>;
 }) {
   const atrasada = itens.some((it) => it.atrasada);
   const estimativa = itens.reduce((s, it) => s + it.estimativaMin, 0);

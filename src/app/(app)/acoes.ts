@@ -151,16 +151,28 @@ export async function comecarDoZeroSite(formData: FormData) {
 }
 
 /** Cancelar um início por engano (04/11): apaga só a MINHA sessão aberta nessas tarefas (o
- * tempo de antes fica). Se sobrar tarefa começada do zero sem tempo nenhum, ela some também —
- * "como se não tivesse sido iniciada". A RLS (minhas_sessoes, apaga_tarefa_registrada) garante
- * que só mexe no que é da pessoa. */
-async function descartarSessoesAbertas(supabase: Supabase, pessoaId: string, filtro: { tarefaId?: string; loteId?: string }) {
+ * tempo de antes fica). Com `tudo`, apaga também todas as minhas sessões e ajustes nelas, como
+ * se eu nunca tivesse começado; o tempo de outras pessoas fica. Tarefa começada do zero que
+ * sobrar sem tempo nenhum some. A RLS (minhas_sessoes, meus_ajustes, apaga_tarefa_registrada)
+ * garante que só mexe no que é da pessoa. */
+async function descartarMeuTempo(supabase: Supabase, pessoaId: string,
+                                 filtro: { tarefaId?: string; loteId?: string }, tudo: boolean) {
   let q = supabase.from("sessoes").delete().eq("pessoa_id", pessoaId).is("fim", null);
   q = filtro.loteId ? q.eq("lote_id", filtro.loteId) : q.eq("tarefa_id", filtro.tarefaId!);
   const { data: apagadas, error } = await q.select("tarefa_id");
   if (error) throw new Error(`nao consegui cancelar: ${error.message}`);
-  const ids = [...new Set((apagadas ?? []).map((s) => s.tarefa_id))];
+  const ids = [...new Set([...(apagadas ?? []).map((s) => s.tarefa_id), ...(filtro.tarefaId ? [filtro.tarefaId] : [])])];
   if (!ids.length) return;
+
+  if (tudo) {
+    const [rS, rA] = await Promise.all([
+      supabase.from("sessoes").delete().eq("pessoa_id", pessoaId).in("tarefa_id", ids),
+      supabase.from("ajustes_tempo").delete().eq("pessoa_id", pessoaId).in("tarefa_id", ids),
+    ]);
+    if (rS.error) throw new Error(`nao consegui apagar o tempo: ${rS.error.message}`);
+    if (rA.error) throw new Error(`nao consegui apagar os ajustes: ${rA.error.message}`);
+  }
+
   const { data: registradas } = await supabase
     .from("tarefas").select("id").in("id", ids).eq("origem", "registrada").eq("status", "pendente");
   for (const t of registradas ?? []) {
@@ -173,15 +185,22 @@ async function descartarSessoesAbertas(supabase: Supabase, pessoaId: string, fil
   }
 }
 
-export async function cancelarInicio(tarefaId: string) {
+export async function cancelarInicio(tarefaId: string, formData: FormData) {
   const { supabase, pessoa } = await eu();
-  await descartarSessoesAbertas(supabase, pessoa.id, { tarefaId });
+  await descartarMeuTempo(supabase, pessoa.id, { tarefaId }, formData.get("tudo") === "1");
   revalidarTempo();
 }
 
-export async function cancelarLote(loteId: string) {
+export async function cancelarLote(loteId: string, formData: FormData) {
   const { supabase, pessoa } = await eu();
-  await descartarSessoesAbertas(supabase, pessoa.id, { loteId });
+  await descartarMeuTempo(supabase, pessoa.id, { loteId }, formData.get("tudo") === "1");
+  revalidarTempo();
+}
+
+/** Atividade já pausada: apaga todo o meu tempo nela (sessões e ajustes meus). */
+export async function zerarMeuTempo(tarefaId: string) {
+  const { supabase, pessoa } = await eu();
+  await descartarMeuTempo(supabase, pessoa.id, { tarefaId }, true);
   revalidarTempo();
 }
 

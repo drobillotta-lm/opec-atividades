@@ -10,6 +10,12 @@ tarefa ou lote; o tempo de vezes anteriores fica, então uma retomada por engano
 sessão, ajuste e parte, ela é apagada também. Sem migration: a RLS já permite
 (`minhas_sessoes` ALL com `pessoa_id = eu()`; `apaga_tarefa_registrada`). Notch e dock não
 têm o cancelar (fase 2). Não testado no navegador (tsc e eslint ok).
+Complemento (mesmo dia, pergunta do Daniel "e se quiser cancelar a anterior também?"): o
+diálogo do Cancelar tem a caixa "Apagar também o tempo que eu já tinha marcado antes" (`tudo`)
+→ apaga TODAS as sessões e ajustes da pessoa naquela tarefa ou lote; o tempo de outras pessoas
+fica. E a linha "Pausada" ganhou "zerar meu tempo" (`zerarMeuTempo`, mesma limpeza total), que
+aparece quando a pessoa tem sessão nela. Helper renomeado para `descartarMeuTempo`. RLS já
+cobre (`meus_ajustes` ALL com `pessoa_id = eu()`).
 
 ## RETOMAR AQUI (04/11/2026, noite — Kings: Gabriel + Pedro em todas)
 
