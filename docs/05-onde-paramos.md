@@ -1,5 +1,15 @@
 # Onde paramos — 28/09/2026
 
+## RETOMAR AQUI (04/11/2026, noite — Kings: Gabriel + Pedro em todas)
+
+Decisão do Daniel: na Kings, Gabriel e Pedro veem todas as atividades. Feito só com dado, pelo
+mesmo caminho da tela Organizar: frente `KG` religada (`ativa=true`) e `definir_mapa` em nov e
+dez/2026 para materiais, sincronização, roteiro e auditoria com Gabriel escalado e Pedro dupla
+(origem "Kings: Gabriel + Pedro em todas, pedido do Daniel em 04/11/2026"). `gerar_tarefas`
+criou 20 tarefas: os 5 jogos de 02/11 ("Kings Cup Brazil", todos com o mesmo nome e sem
+confronto na Matriz) × 4 atividades, todas Gabriel + Pedro. Os 13 jogos de 09–30/11 nascem
+quando a Escala marcar entrega "sim". Janeiro em diante: copiar o mês na Organizar.
+
 ## RETOMAR AQUI (04/11/2026, fim da tarde — "começar do zero" também no site)
 
 Daniel: atividade não mapeada só começava pelo notch. Agora Minhas atividades tem o botão
