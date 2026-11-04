@@ -291,8 +291,11 @@ export default async function MinhasAtividades({ searchParams }: { searchParams:
       ...r,
       frente: Array.isArray(r.frentes) ? r.frentes[0] : r.frentes,
       evento: Array.isArray(r.eventos) ? r.eventos[0] : r.eventos,
+      // Antes as minhas saíam daqui e a busca respondia "nada pendente" quando a atividade era da
+      // própria pessoa (Juliana procurando "WTA Curitiba", 04/11). Agora aparecem, marcadas.
+      minha: idsExistentes.has(r.id),
     }))
-    .filter((r) => !idsExistentes.has(r.id));
+    .sort((a, b) => Number(b.minha) - Number(a.minha));
   const praPegar = (praPegarBruto ?? [])
     .map((r) => ({
       ...r,
@@ -548,7 +551,7 @@ export default async function MinhasAtividades({ searchParams }: { searchParams:
       )}
 
       <section className="flex flex-col gap-2 pt-2">
-        <h2 className="text-[11.5px] font-semibold uppercase tracking-[0.1em] text-tinta-3">Ajudar alguém</h2>
+        <h2 className="text-[11.5px] font-semibold uppercase tracking-[0.1em] text-tinta-3">Buscar em todo o time</h2>
         <form method="GET" className="flex gap-2">
           {Object.entries(sp).filter(([k, v]) => v && k !== "busca")
             .map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />)}
@@ -572,12 +575,13 @@ export default async function MinhasAtividades({ searchParams }: { searchParams:
                 {nomeTarefa(t, "sigla")}
               </span>
               <span className="text-[11.5px] text-tinta-3 truncate">
-                {t.evento ? <>evento {diaCurto(t.evento.data)}</> : SEM_EVENTO} · escalado: {escaladosDe(nomePor, t.escalado_id, t.dupla_id)}
+                {t.evento ? <>evento {diaCurto(t.evento.data)}</> : SEM_EVENTO} · entrega até {diaCurto(t.prazo_em.slice(0, 10))} ·{" "}
+                {t.minha ? <span className="text-verde-claro font-medium">é sua, também está na lista acima</span> : <>escalado: {escaladosDe(nomePor, t.escalado_id, t.dupla_id)}</>}
               </span>
             </div>
             <form action={iniciar.bind(null, t.id)} className="shrink-0">
               <Submit ocupado="..." className="flex items-center gap-2 min-h-[38px] px-3.5 rounded-[9px] border border-verde-borda bg-verde-fundo text-verde-claro text-[12.5px] font-medium hover:brightness-125 transition">
-                Puxar pra mim
+                {t.minha ? "Iniciar" : "Puxar pra mim"}
               </Submit>
             </form>
           </Linha>

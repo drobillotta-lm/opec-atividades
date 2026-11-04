@@ -1,5 +1,19 @@
 # Onde paramos — 28/09/2026
 
+## RETOMAR AQUI (04/11/2026, tarde — "não acho WTA Curitiba"; Kings sem atividade)
+
+- **Juliana não achava a auditoria do WTA Curitiba #2 (30/10)**: a tarefa existe, é dela,
+  pendente, prazo 04/11 23:59. Ela buscou no campo "Ajudar alguém" (fim da página), que
+  descartava as tarefas da própria pessoa (`.filter(!idsExistentes.has)`) e respondia "Nada
+  pendente". Agora a busca mostra as minhas também, primeiro, com "é sua, também está na lista
+  acima" e botão "Iniciar"; o título virou "Buscar em todo o time" e a linha mostra o prazo.
+- **Kings League sem atividades (aberto, decisão do Daniel)**: frente `KG` está `ativa=false`,
+  a cadeia é toda `escalado_regra='mapa'` e NÃO existe linha de mapa da KG em mês nenhum (o
+  mapa de novembro só tem CP, FI, NA, OL, PR). `gerar_tarefas` conta como `sem_escalado` e não
+  cria nada. 5 jogos de 02/11 com entrega "sim" e 0 tarefas; 13 jogos de 09–30/11 ainda com
+  entrega indefinida na Escala. Opções levadas ao Daniel: cadeia da KG com regra `lider`
+  (Gabriel) até o Yuri modelar, ou pessoas por atividade no mapa de novembro.
+
 ## RETOMAR AQUI (04/11/2026 — busca rápida em Minhas atividades; "auditoria de OL não aparece pra Juliana")
 
 Dois pedidos do Daniel:
