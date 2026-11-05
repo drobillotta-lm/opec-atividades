@@ -508,6 +508,9 @@ export default async function MinhasAtividades({ searchParams }: { searchParams:
                 acao={ajustarTempo.bind(null, t.id)}
                 titulo={`${nomeTarefa(t)}`}
               />
+              {t.origem === "registrada" && (t.escalado_id === pessoa!.id || !daFrente) && (
+                <DialogoRenomear acao={renomearTarefaRegistrada.bind(null, t.id)} tituloAtual={t.titulo ?? ""} />
+              )}
             </Linha>
           ))}
         </Secao>
