@@ -1,5 +1,28 @@
 # Onde paramos — 28/09/2026
 
+## RETOMAR AQUI (05/11/2026 — tempo da entrega pelo site; renomear; notch × Codenotch)
+
+Três pontos que o Daniel trouxe:
+- **Tempo da entrega pelo site diferente do notch (corrigido):** o diálogo "Entregar" vinha
+  preenchido com `t.segundos`, que é a `v_tempo_tarefa` = só sessões FECHADAS, lida quando a
+  página carregou. No cartão em andamento o trecho correndo ficava de fora (começou e entregou
+  sem pausar → campo ~0) e o servidor gravava `informado − medido` como ajuste negativo. Agora o
+  diálogo calcula na hora de abrir (`correndoDesde` × `fracao`) e manda `sugerido`; o servidor
+  (`minutosAlterados`) só cria ajuste se a pessoa MUDOU o número; senão vale o medido até o
+  clique. Lote ganhou o mesmo `sugerido`. Ajustes antigos "tempo confirmado na entrega"
+  negativos (1 de Juliana −2, Lucas −3, Daniel −34, Gabriel −2; 2 da Julia, o maior −268) NÃO
+  foram mexidos.
+- **Renomear atividade começada do zero (novo):** botão "renomear" na linha e no cartão em
+  andamento, só `origem='registrada'`; `renomearTarefaRegistrada` (RLS `escreve_tarefas`). Sem
+  migration. Notch não renomeia.
+- **"Clicar no app com o Codenotch ligado não abre" (aberto):** atalhos e identificadores
+  conferidos (`com.livemode.opec.atividades.notch` × `com.immidi.codenotch`, sem colisão no
+  single-instance). A janela do Codenotch é um retângulo transparente de 360×650 px no canto
+  inferior direito (click-through, ExStyle 0x80C0138), e o notch do Atividades (146×77, canto
+  baixo-dir, recuo 96) fica inteiro dentro dele. Aqui na máquina do Daniel abriu normal. Segunda
+  execução só faz `location.reload()`, sem nada visível. Falta a reprodução exata (quem, qual
+  PC, o notch já estava aberto?). Contorno: ⚙ do notch → outro canto/distância.
+
 ## RETOMAR AQUI (04/11/2026, noite — "Cancelar" um início por engano)
 
 Daniel: começou sem querer, não tinha como desfazer. Agora o cartão "Em andamento" (solo e

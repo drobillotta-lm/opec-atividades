@@ -68,6 +68,7 @@ export function DialogoEntregaLote({ acao, itens, desde, euId, time, atrasada, c
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const [minutos, setMinutos] = useState(0);
+  const [sugerido, setSugerido] = useState(0);
   const totalAgora = () => {
     const correndo = (Date.now() - new Date(desde).getTime()) / 1000;
     return itens.reduce((s, it) => s + it.segundos + correndo * it.fracao, 0);
@@ -78,7 +79,7 @@ export function DialogoEntregaLote({ acao, itens, desde, euId, time, atrasada, c
 
   return (
     <>
-      <button type="button" onClick={() => { setMinutos(Math.max(0, Math.round(totalAgora() / 60))); ref.current?.showModal(); }} className={classeBotao}>
+      <button type="button" onClick={() => { const m = Math.max(0, Math.round(totalAgora() / 60)); setMinutos(m); setSugerido(m); ref.current?.showModal(); }} className={classeBotao}>
         Entregar as {itens.length}
       </button>
       <dialog ref={ref} onClick={(e) => { if (e.target === ref.current) ref.current?.close(); }}
@@ -102,6 +103,7 @@ export function DialogoEntregaLote({ acao, itens, desde, euId, time, atrasada, c
                 onChange={(e) => setMinutos(Number(e.target.value))}
                 className="num w-28 min-h-10 px-3 rounded-lg border border-linha bg-superficie-2 text-[14px]" />
               <span className="text-[12.5px] text-tinta-4">minutos · {hhmm(minutos)}</span>
+              <input type="hidden" name="sugerido" value={sugerido} />
             </div>
             <p className="text-[11.5px] text-tinta-4">
               Soma do que cada uma já mediu, com este cronômetro rateado pelas porcentagens acima. As taxas

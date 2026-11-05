@@ -4,7 +4,7 @@ import { Aba } from "@/componentes/Aba";
 import { Chip } from "@/componentes/Chip";
 import { QuadroKanban, type TarefaQuadro } from "@/componentes/QuadroKanban";
 import { semanaDe, deslocarSemana, diaCurto, hhmm, tempoLegivel, ROTULO_ATIVIDADE, escaladosDe, hojeISO, diaBRT, somarDias } from "@/lib/semana";
-import { Relogio, Submit, TempoParado, DialogoEntrega, DialogoDesnecessaria, DialogoAjuste, DialogoExcluir } from "./Cronometro";
+import { Relogio, Submit, TempoParado, DialogoEntrega, DialogoDesnecessaria, DialogoAjuste, DialogoExcluir, DialogoRenomear } from "./Cronometro";
 import { DialogoPartes, type Parte } from "./Partes";
 import { LoteProvider, CaixaLote, BarraLote, DialogoEntregaLote } from "./Lote";
 import { BuscaRapida } from "./BuscaRapida";
@@ -12,7 +12,7 @@ import { NovaAtividade } from "./NovaAtividade";
 import { BotaoCancelar } from "./Cancelar";
 import { normalizar } from "@/lib/busca";
 import {
-  iniciar, pausar, entregar, marcarDesnecessaria, reverterDesnecessaria, ajustarTempo, excluirTarefaRegistrada,
+  iniciar, pausar, entregar, marcarDesnecessaria, reverterDesnecessaria, ajustarTempo, excluirTarefaRegistrada, renomearTarefaRegistrada,
   criarSubtarefa, iniciarSubtarefa, concluirSubtarefa, reabrirSubtarefa, apagarSubtarefa,
   iniciarLote, pausarLote, entregarLote, comecarDoZeroSite, cancelarInicio, cancelarLote, zerarMeuTempo,
 } from "../acoes";
@@ -444,6 +444,7 @@ export default async function MinhasAtividades({ searchParams }: { searchParams:
               titulo={`${nomeTarefa(emCurso)}`}
               subtitulo={emCurso.evento ? `evento ${diaCurto(emCurso.evento.data)}` : SEM_EVENTO}
               segundosMedidos={emCurso.segundos}
+              correndoDesde={emCurso.correndo}
               estimativaMin={emCurso.estimativa_min}
               escaladoId={emCurso.escalado_id}
               duplaId={emCurso.dupla_id}
@@ -460,6 +461,9 @@ export default async function MinhasAtividades({ searchParams }: { searchParams:
               criar={criarSubtarefa.bind(null, emCurso.id)}
               iniciar={iniciarSubtarefa} concluir={concluirSubtarefa} reabrir={reabrirSubtarefa} apagar={apagarSubtarefa}
             />
+            {emCurso.origem === "registrada" && (
+              <DialogoRenomear acao={renomearTarefaRegistrada.bind(null, emCurso.id)} tituloAtual={emCurso.titulo ?? ""} />
+            )}
           </div>
         </div>
       ); })())}
@@ -674,6 +678,9 @@ function LinhaAberta({ t, euId, time, daFrente, nomePor, selecionavel }: {
           criar={criarSubtarefa.bind(null, t.id)}
           iniciar={iniciarSubtarefa} concluir={concluirSubtarefa} reabrir={reabrirSubtarefa} apagar={apagarSubtarefa}
         />
+        {t.origem === "registrada" && (t.escalado_id === euId || !daFrente) && (
+          <DialogoRenomear acao={renomearTarefaRegistrada.bind(null, t.id)} tituloAtual={t.titulo ?? ""} />
+        )}
         {t.origem === "registrada" && (t.escalado_id === euId || !daFrente) && (
           <DialogoExcluir acao={excluirTarefaRegistrada.bind(null, t.id)} titulo={`${nomeTarefa(t)}`} segundos={t.segundos} />
         )}

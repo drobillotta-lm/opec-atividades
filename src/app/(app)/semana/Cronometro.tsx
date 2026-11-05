@@ -54,11 +54,17 @@ export function DialogoEntrega({
   classeBotao,
   rotuloBotao,
   atrasada = false,
+  correndoDesde,
+  fracao = 1,
 }: {
   acao: (formData: FormData) => void | Promise<void>;
   titulo: string;
   subtitulo: string;
+  /** Só o tempo das sessões já fechadas (v_tempo_tarefa); o trecho correndo vem de `correndoDesde`. */
   segundosMedidos: number;
+  /** Início da MINHA sessão aberta nesta tarefa, se o relógio está correndo. */
+  correndoDesde?: string | null;
+  fracao?: number;
   estimativaMin: number;
   escaladoId: string;
   duplaId?: string | null;
@@ -73,11 +79,23 @@ export function DialogoEntrega({
   // Em dupla, quem entrega costuma ser quem fez: o padrao e a propria pessoa se ela e
   // escalada ou dupla; senao, o escalado.
   const quemPadrao = euId && (euId === escaladoId || euId === duplaId) ? euId : escaladoId;
-  const [minutos, setMinutos] = useState(Math.max(0, Math.round(segundosMedidos / 60)));
+  // O tempo é lido NA HORA de abrir (05/11): a página pode estar aberta há uma hora e a
+  // v_tempo_tarefa não conta a sessão que está correndo. Antes o campo vinha com o tempo velho
+  // (ou 0) e o servidor gravava a diferença como ajuste negativo: total menor que o do notch.
+  const agoraSeg = () => segundosMedidos +
+    (correndoDesde ? Math.max(0, (Date.now() - new Date(correndoDesde).getTime()) / 1000) * fracao : 0);
+  const [medidoSeg, setMedidoSeg] = useState(segundosMedidos);
+  const [sugerido, setSugerido] = useState(Math.max(0, Math.round(segundosMedidos / 60)));
+  const [minutos, setMinutos] = useState(sugerido);
 
   return (
     <>
-      <button type="button" onClick={() => { setMinutos(Math.max(0, Math.round(segundosMedidos / 60))); ref.current?.showModal(); }} className={classeBotao}>
+      <button type="button" onClick={() => {
+        const s = agoraSeg();
+        const m = Math.max(0, Math.round(s / 60));
+        setMedidoSeg(s); setSugerido(m); setMinutos(m);
+        ref.current?.showModal();
+      }} className={classeBotao}>
         {rotuloBotao}
       </button>
 
@@ -111,9 +129,11 @@ export function DialogoEntrega({
                 className="num w-28 min-h-10 px-3 rounded-lg border border-linha bg-superficie-2 text-[14px]"
               />
               <span className="text-[12.5px] text-tinta-4">minutos · {hhmm(minutos)}</span>
+              {/* Sem mudar o número, vale o que o relógio mediu até o clique em Confirmar. */}
+              <input type="hidden" name="sugerido" value={sugerido} />
             </div>
             <p className="text-[11.5px] text-tinta-4">
-              O cronômetro mediu {tempoLegivel(segundosMedidos)}. A taxa prevista é {hhmm(estimativaMin)}.
+              O cronômetro mediu {tempoLegivel(medidoSeg)}{correndoDesde ? " até agora" : ""}. A taxa prevista é {hhmm(estimativaMin)}.
               Se você mudar o número, a diferença fica registrada como ajuste, separada do que o relógio contou.
             </p>
           </div>
@@ -216,6 +236,45 @@ export function DialogoAjuste({
  * material novo pra aquela competição; sem isso, nem o líder nem quem for fazer
  * conseguem saber de antemão. Fica pra quem chegou na tarefa decidir, sem virar
  * "entregue" mentindo sobre o que aconteceu. */
+/** Renomear atividade começada do zero (05/11). Só o nome; a frente segue a mesma. */
+export function DialogoRenomear({ acao, tituloAtual }: { acao: (formData: FormData) => void | Promise<void>; tituloAtual: string }) {
+  const ref = useRef<HTMLDialogElement>(null);
+  return (
+    <>
+      <button type="button" onClick={() => ref.current?.showModal()} title="Mudar o nome desta atividade"
+        className="min-h-8 px-2.5 rounded-md border border-linha-2 bg-superficie-2 text-[11.5px] text-tinta-4 hover:text-tinta-2 transition">
+        renomear
+      </button>
+      <dialog
+        ref={ref}
+        onClick={(e) => { if (e.target === ref.current) ref.current?.close(); }}
+        className="m-auto w-[min(420px,92vw)] rounded-xl bg-superficie text-tinta border border-linha p-0 backdrop:bg-black/60"
+      >
+        <form action={async (fd) => { await acao(fd); ref.current?.close(); }} className="flex flex-col gap-4 p-5">
+          <div className="flex flex-col gap-1">
+            <h2 className="text-[17px] font-semibold tracking-[-0.01em]">Renomear atividade</h2>
+            <p className="text-[11.5px] text-tinta-4">Atividade começada do zero: o nome é o que você escreveu ao começar. O tempo não muda.</p>
+          </div>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="titulo-renomear" className="text-[12.5px] font-medium text-tinta-2">Nome</label>
+            <input id="titulo-renomear" name="titulo" type="text" required maxLength={120} defaultValue={tituloAtual}
+              className="min-h-10 px-3 rounded-lg border border-linha bg-superficie-2 text-[13px]" />
+          </div>
+          <div className="flex gap-2 justify-end pt-1">
+            <button type="button" onClick={() => ref.current?.close()}
+              className="min-h-10 px-4 rounded-lg border border-linha bg-superficie-2 text-[13px] text-tinta-3 hover:text-tinta-2">
+              Cancelar
+            </button>
+            <Submit ocupado="Salvando..." className="min-h-10 px-4 rounded-lg border border-linha bg-elevado text-[13px] font-semibold text-tinta-2 hover:bg-linha">
+              Salvar
+            </Submit>
+          </div>
+        </form>
+      </dialog>
+    </>
+  );
+}
+
 /** Excluir tarefa começada do zero (050): some com o tempo junto, por isso confirma antes. */
 export function DialogoExcluir({ acao, titulo, segundos }: { acao: () => void | Promise<void>; titulo: string; segundos: number }) {
   const ref = useRef<HTMLDialogElement>(null);

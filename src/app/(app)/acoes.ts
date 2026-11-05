@@ -70,11 +70,21 @@ export async function entregar(tarefaId: string, formData: FormData) {
   // SO desta: entregar A nao pode parar o relogio de B.
   await fecharSessao(supabase, pessoa.id, tarefaId, "entrega");
 
-  const informado = Math.round(Number(formData.get("minutos")));
-  await concluirTarefa(supabase, pessoa.id, tarefaId, Number.isFinite(informado) ? informado : null,
+  await concluirTarefa(supabase, pessoa.id, tarefaId, minutosAlterados(formData),
     String(formData.get("quem") || ""), String(formData.get("comentario") || "").trim());
   revalidatePath("/semana");
   revalidatePath("/frente");
+}
+
+/** Minutos que a pessoa DIGITOU na entrega, ou null se ela confirmou o número que veio
+ * preenchido (`sugerido`). Sem isso, o tempo entre abrir o diálogo e confirmar virava ajuste
+ * negativo e o total ficava menor que o do notch (05/11). */
+function minutosAlterados(formData: FormData): number | null {
+  const informado = Math.round(Number(formData.get("minutos")));
+  if (!Number.isFinite(informado)) return null;
+  const bruto = formData.get("sugerido");
+  if (bruto !== null && Math.round(Number(bruto)) === informado) return null;
+  return informado;
 }
 
 /** Miolo da entrega, usado pela entrega de uma tarefa e pela do lote (054): confere o tempo
@@ -232,7 +242,7 @@ export async function entregarLote(loteId: string, formData: FormData) {
   const { data: tempos } = await supabase.from("v_tempo_tarefa").select("tarefa_id, segundos_total").in("tarefa_id", ids);
   const medidoPor = new Map((tempos ?? []).map((t) => [t.tarefa_id, Number(t.segundos_total ?? 0) / 60]));
   const totalMedido = ids.reduce((soma, id) => soma + (medidoPor.get(id) ?? 0), 0);
-  const informado = Math.round(Number(formData.get("minutos")));
+  const informado = minutosAlterados(formData) ?? NaN;
   const quem = String(formData.get("quem") || "");
   const comentario = String(formData.get("comentario") || "").trim();
 
@@ -428,6 +438,20 @@ export async function excluirTarefaRegistrada(tarefaId: string) {
     .from("tarefas").delete({ count: "exact" }).eq("id", tarefaId).eq("origem", "registrada");
   if (error) throw new Error(error.message);
   if (!count) throw new Error("só dá pra excluir tarefa começada do zero, e só a sua");
+  revalidarTempo();
+}
+
+/** Renomear atividade começada do zero (05/11): o nome digitado no notch/site às vezes sai
+ * apressado. Só `origem='registrada'`; tarefa da cadeia tem nome montado pelo evento. A RLS
+ * (escreve_tarefas) limita a quem está na tarefa, ao líder da frente e ao gestor. */
+export async function renomearTarefaRegistrada(tarefaId: string, formData: FormData) {
+  const { supabase } = await eu();
+  const titulo = String(formData.get("titulo") || "").trim().slice(0, 120);
+  if (!titulo) throw new Error("o nome não pode ficar vazio");
+  const { error, count } = await supabase
+    .from("tarefas").update({ titulo }, { count: "exact" }).eq("id", tarefaId).eq("origem", "registrada");
+  if (error) throw new Error(error.message);
+  if (!count) throw new Error("só dá pra renomear atividade começada do zero");
   revalidarTempo();
 }
 
