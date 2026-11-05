@@ -4,7 +4,7 @@ import { Aba } from "@/componentes/Aba";
 import { Chip } from "@/componentes/Chip";
 import { QuadroKanban, type TarefaQuadro } from "@/componentes/QuadroKanban";
 import { semanaDe, deslocarSemana, diaCurto, hhmm, tempoLegivel, ROTULO_ATIVIDADE, escaladosDe, hojeISO, diaBRT, somarDias } from "@/lib/semana";
-import { Relogio, Submit, TempoParado, DialogoEntrega, DialogoDesnecessaria, DialogoAjuste, DialogoExcluir, DialogoRenomear } from "./Cronometro";
+import { Relogio, Submit, TempoParado, DialogoEntrega, DialogoDesnecessaria, DialogoAjuste, DialogoExcluir, DialogoEditarRegistrada } from "./Cronometro";
 import { DialogoPartes, type Parte } from "./Partes";
 import { LoteProvider, CaixaLote, BarraLote, DialogoEntregaLote } from "./Lote";
 import { BuscaRapida } from "./BuscaRapida";
@@ -12,7 +12,7 @@ import { NovaAtividade } from "./NovaAtividade";
 import { BotaoCancelar } from "./Cancelar";
 import { normalizar } from "@/lib/busca";
 import {
-  iniciar, pausar, entregar, marcarDesnecessaria, reverterDesnecessaria, ajustarTempo, excluirTarefaRegistrada, renomearTarefaRegistrada,
+  iniciar, pausar, entregar, marcarDesnecessaria, reverterDesnecessaria, ajustarTempo, excluirTarefaRegistrada, editarTarefaRegistrada,
   criarSubtarefa, iniciarSubtarefa, concluirSubtarefa, reabrirSubtarefa, apagarSubtarefa,
   iniciarLote, pausarLote, entregarLote, comecarDoZeroSite, cancelarInicio, cancelarLote, zerarMeuTempo,
 } from "../acoes";
@@ -315,7 +315,7 @@ export default async function MinhasAtividades({ searchParams }: { searchParams:
   }));
 
   const linha = (t: Tarefa) => (
-    <LinhaAberta key={t.id} t={t} euId={pessoa!.id} time={time ?? []} daFrente={daFrente} nomePor={nomePor} selecionavel={!daFrente} />
+    <LinhaAberta key={t.id} t={t} euId={pessoa!.id} time={time ?? []} daFrente={daFrente} nomePor={nomePor} selecionavel={!daFrente} frentes={frentesAtivas ?? []} />
   );
 
   return (
@@ -462,7 +462,7 @@ export default async function MinhasAtividades({ searchParams }: { searchParams:
               iniciar={iniciarSubtarefa} concluir={concluirSubtarefa} reabrir={reabrirSubtarefa} apagar={apagarSubtarefa}
             />
             {emCurso.origem === "registrada" && (
-              <DialogoRenomear acao={renomearTarefaRegistrada.bind(null, emCurso.id)} tituloAtual={emCurso.titulo ?? ""} />
+              <DialogoEditarRegistrada acao={editarTarefaRegistrada.bind(null, emCurso.id)} tituloAtual={emCurso.titulo ?? ""} frenteAtual={emCurso.frente?.sigla ?? ""} frentes={frentesAtivas ?? []} />
             )}
           </div>
         </div>
@@ -509,7 +509,7 @@ export default async function MinhasAtividades({ searchParams }: { searchParams:
                 titulo={`${nomeTarefa(t)}`}
               />
               {t.origem === "registrada" && (t.escalado_id === pessoa!.id || !daFrente) && (
-                <DialogoRenomear acao={renomearTarefaRegistrada.bind(null, t.id)} tituloAtual={t.titulo ?? ""} />
+                <DialogoEditarRegistrada acao={editarTarefaRegistrada.bind(null, t.id)} tituloAtual={t.titulo ?? ""} frenteAtual={t.frente?.sigla ?? ""} frentes={frentesAtivas ?? []} />
               )}
             </Linha>
           ))}
@@ -609,7 +609,8 @@ export default async function MinhasAtividades({ searchParams }: { searchParams:
 const ROTULO = "min-w-[120px] text-[10.5px] font-semibold uppercase tracking-[0.1em] text-tinta-3";
 
 /** Tarefa aberta (pausada ou não começada) na lista: mesma linha em qualquer grupo. */
-function LinhaAberta({ t, euId, time, daFrente, nomePor, selecionavel }: {
+function LinhaAberta({ t, euId, time, daFrente, nomePor, selecionavel, frentes }: {
+  frentes: { sigla: string; nome: string }[];
   t: {
     id: string; atividade: string; titulo: string | null; status: string; estimativa_min: number;
     escalado_id: string; dupla_id: string | null; abre_em: string; diaPrazo: string;
@@ -682,7 +683,7 @@ function LinhaAberta({ t, euId, time, daFrente, nomePor, selecionavel }: {
           iniciar={iniciarSubtarefa} concluir={concluirSubtarefa} reabrir={reabrirSubtarefa} apagar={apagarSubtarefa}
         />
         {t.origem === "registrada" && (t.escalado_id === euId || !daFrente) && (
-          <DialogoRenomear acao={renomearTarefaRegistrada.bind(null, t.id)} tituloAtual={t.titulo ?? ""} />
+          <DialogoEditarRegistrada acao={editarTarefaRegistrada.bind(null, t.id)} tituloAtual={t.titulo ?? ""} frenteAtual={t.frente?.sigla ?? ""} frentes={frentes} />
         )}
         {t.origem === "registrada" && (t.escalado_id === euId || !daFrente) && (
           <DialogoExcluir acao={excluirTarefaRegistrada.bind(null, t.id)} titulo={`${nomeTarefa(t)}`} segundos={t.segundos} />

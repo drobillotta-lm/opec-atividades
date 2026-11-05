@@ -441,18 +441,27 @@ export async function excluirTarefaRegistrada(tarefaId: string) {
   revalidarTempo();
 }
 
-/** Renomear atividade começada do zero (05/11): o nome digitado no notch/site às vezes sai
- * apressado. Só `origem='registrada'`; tarefa da cadeia tem nome montado pelo evento. A RLS
- * (escreve_tarefas) limita a quem está na tarefa, ao líder da frente e ao gestor. */
-export async function renomearTarefaRegistrada(tarefaId: string, formData: FormData) {
+/** Editar atividade começada do zero (05/11): nome e frente, também depois de entregue (o
+ * nome do notch sai apressado, a frente às vezes errada). Só `origem='registrada'`; tarefa da
+ * cadeia vem do evento. A RLS (escreve_tarefas) limita a quem está na tarefa, líder e gestor. */
+export async function editarTarefaRegistrada(tarefaId: string, formData: FormData) {
   const { supabase } = await eu();
   const titulo = String(formData.get("titulo") || "").trim().slice(0, 120);
   if (!titulo) throw new Error("o nome não pode ficar vazio");
+  const sigla = String(formData.get("frente") || "");
+  let frenteId: string | null = null;
+  if (sigla) {
+    const { data: f } = await supabase.from("frentes").select("id").eq("sigla", sigla).eq("ativa", true).maybeSingle();
+    if (!f) throw new Error("frente não encontrada");
+    frenteId = f.id;
+  }
   const { error, count } = await supabase
-    .from("tarefas").update({ titulo }, { count: "exact" }).eq("id", tarefaId).eq("origem", "registrada");
+    .from("tarefas").update({ titulo, frente_id: frenteId }, { count: "exact" })
+    .eq("id", tarefaId).eq("origem", "registrada");
   if (error) throw new Error(error.message);
-  if (!count) throw new Error("só dá pra renomear atividade começada do zero");
+  if (!count) throw new Error("só dá pra editar atividade começada do zero");
   revalidarTempo();
+  revalidatePath("/frente");
 }
 
 /** Tarefa que não precisa acontecer (ex.: sem material novo para materiais/sincronização

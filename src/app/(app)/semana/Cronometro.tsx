@@ -236,14 +236,20 @@ export function DialogoAjuste({
  * material novo pra aquela competição; sem isso, nem o líder nem quem for fazer
  * conseguem saber de antemão. Fica pra quem chegou na tarefa decidir, sem virar
  * "entregue" mentindo sobre o que aconteceu. */
-/** Renomear atividade começada do zero (05/11). Só o nome; a frente segue a mesma. */
-export function DialogoRenomear({ acao, tituloAtual }: { acao: (formData: FormData) => void | Promise<void>; tituloAtual: string }) {
+/** Editar atividade começada do zero (05/11): nome e frente, inclusive depois de entregue.
+ * Competição não existe aqui: tarefa do zero não tem evento. */
+export function DialogoEditarRegistrada({ acao, tituloAtual, frenteAtual, frentes }: {
+  acao: (formData: FormData) => void | Promise<void>;
+  tituloAtual: string;
+  frenteAtual: string;
+  frentes: { sigla: string; nome: string }[];
+}) {
   const ref = useRef<HTMLDialogElement>(null);
   return (
     <>
-      <button type="button" onClick={() => ref.current?.showModal()} title="Mudar o nome desta atividade"
+      <button type="button" onClick={() => ref.current?.showModal()} title="Mudar nome ou frente desta atividade"
         className="min-h-8 px-2.5 rounded-md border border-linha-2 bg-superficie-2 text-[11.5px] text-tinta-4 hover:text-tinta-2 transition">
-        renomear
+        editar
       </button>
       <dialog
         ref={ref}
@@ -252,13 +258,21 @@ export function DialogoRenomear({ acao, tituloAtual }: { acao: (formData: FormDa
       >
         <form action={async (fd) => { await acao(fd); ref.current?.close(); }} className="flex flex-col gap-4 p-5">
           <div className="flex flex-col gap-1">
-            <h2 className="text-[17px] font-semibold tracking-[-0.01em]">Renomear atividade</h2>
-            <p className="text-[11.5px] text-tinta-4">Atividade começada do zero: o nome é o que você escreveu ao começar. O tempo não muda.</p>
+            <h2 className="text-[17px] font-semibold tracking-[-0.01em]">Editar atividade</h2>
+            <p className="text-[11.5px] text-tinta-4">Atividade começada do zero. O tempo e a entrega não mudam.</p>
           </div>
           <div className="flex flex-col gap-2">
-            <label htmlFor="titulo-renomear" className="text-[12.5px] font-medium text-tinta-2">Nome</label>
-            <input id="titulo-renomear" name="titulo" type="text" required maxLength={120} defaultValue={tituloAtual}
+            <label htmlFor="titulo-editar" className="text-[12.5px] font-medium text-tinta-2">Nome</label>
+            <input id="titulo-editar" name="titulo" type="text" required maxLength={120} defaultValue={tituloAtual}
               className="min-h-10 px-3 rounded-lg border border-linha bg-superficie-2 text-[13px]" />
+          </div>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="frente-editar" className="text-[12.5px] font-medium text-tinta-2">Frente</label>
+            <select id="frente-editar" name="frente" defaultValue={frenteAtual}
+              className="min-h-10 px-3 rounded-lg border border-linha bg-superficie-2 text-[13px]">
+              <option value="">Não sei / nenhuma</option>
+              {frentes.map((f) => <option key={f.sigla} value={f.sigla}>{f.nome}</option>)}
+            </select>
           </div>
           <div className="flex gap-2 justify-end pt-1">
             <button type="button" onClick={() => ref.current?.close()}
