@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-acao"
+description = "Enables the acao command without any pre-configured scope."
+commands.allow = ["acao"]
+
+[[permission]]
+identifier = "deny-acao"
+description = "Denies the acao command without any pre-configured scope."
+commands.deny = ["acao"]

@@ -117,6 +117,20 @@ async fn comecar(http: tauri::State<'_, Http>, titulo: String, frente: Option<St
     chamar(&http.0, "comecar", Some(json!({ "titulo": titulo, "frente": frente.unwrap_or_default() }))).await
 }
 
+/// Canal genérico (0.4.0, 06/11): repassa /api/notch/<nome> com o token. Ação nova do notch
+/// (zerar, as próximas) sai só com deploy do site, sem instalador novo. Quem valida a ação e a
+/// pessoa é o site; aqui só se recusa nome fora do formato e o pareamento (que tem comando próprio).
+#[tauri::command]
+async fn acao(http: tauri::State<'_, Http>, nome: String, corpo: Option<Value>) -> Result<Value, String> {
+    let valido = !nome.is_empty() && nome.len() <= 30
+        && nome.chars().all(|c| c.is_ascii_lowercase() || c == '-')
+        && nome != "parear";
+    if !valido {
+        return Err("ação inválida".into());
+    }
+    chamar(&http.0, &nome, Some(corpo.unwrap_or_else(|| json!({})))).await
+}
+
 #[tauri::command]
 async fn parear(app: tauri::AppHandle, http: tauri::State<'_, Http>, codigo: String) -> Result<Value, String> {
     let aparelho = nome_do_aparelho();
@@ -197,7 +211,7 @@ fn main() {
                 .build()
                 .expect("cliente http"),
         ))
-        .invoke_handler(tauri::generate_handler![estado, parear, iniciar, pausar, entregar, comecar, abrir, tamanho])
+        .invoke_handler(tauri::generate_handler![estado, parear, iniciar, pausar, entregar, comecar, acao, abrir, tamanho])
         .setup(|app| {
             // No Mac o app vive só na barra de menus (sem ícone no Dock nem no Cmd+Tab).
             #[cfg(target_os = "macos")]

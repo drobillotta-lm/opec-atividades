@@ -71,7 +71,7 @@ const ROTULINHO = "text-[10.5px] uppercase tracking-[0.08em] text-[var(--notch-t
 
 export function Notch({
   correndo, pausadas, proximas = [], atrasadas = [],
-  pausar, retomar, entregar, abrirSemana, aoMudarAjustes, aoAbrirFechar, rodapePainel, aviso, mostrar, aoHover,
+  pausar, retomar, entregar, zerar, abrirSemana, aoMudarAjustes, aoAbrirFechar, rodapePainel, aviso, mostrar, aoHover,
 }: {
   correndo: TarefaNotch[];
   pausadas: TarefaNotch[];
@@ -80,6 +80,8 @@ export function Notch({
   pausar: (id: string) => Promise<void>;
   retomar: (id: string) => Promise<void>;
   entregar: (id: string) => Promise<void>;
+  /** Apaga o meu tempo na tarefa (06/11). Sem o prop (app antigo), o botão não aparece. */
+  zerar?: (id: string) => Promise<void>;
   abrirSemana: () => void;
   aoMudarAjustes?: (a: Ajustes) => void;
   aoAbrirFechar?: (aberto: boolean) => void;
@@ -173,6 +175,13 @@ export function Notch({
     "dir-alto": "top-0 right-[62px] origin-top-right", "esq-alto": "top-0 left-[62px] origin-top-left",
   }[canto];
 
+  const [zerando, setZerando] = useState<string | null>(null);
+  async function clicarZerar(id: string) {
+    if (zerando !== id) { setZerando(id); setConfirmando(null); return; }
+    setZerando(null);
+    await zerar?.(id);
+  }
+
   async function clicarEntregar(id: string) {
     if (confirmando !== id) { setConfirmando(id); return; }
     setConfirmando(null);
@@ -204,6 +213,12 @@ export function Notch({
             {confirmando === t.id ? "Confirmar entrega?" : "Entregar"}
           </button>
         </div>
+        {zerar && (
+          <button type="button" onClick={() => clicarZerar(t.id)} title="Apaga todo o seu tempo nesta atividade"
+            className={`self-start text-[10.5px] underline-offset-2 hover:underline ${zerando === t.id ? "text-rosa font-semibold" : "text-[var(--notch-tinta-3)]"}`}>
+            {zerando === t.id ? "Confirmar: apagar meu tempo aqui?" : "zerar tempo"}
+          </button>
+        )}
       </div>
     );
   };

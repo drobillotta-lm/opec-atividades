@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { criarClienteAdmin } from "@/lib/supabase/admin";
-import { comecarDoZero, entregarComo, estadoDe, iniciarComo, parear, pausarComo, pessoaDoAparelho } from "@/lib/notch";
+import { comecarDoZero, entregarComo, estadoDe, iniciarComo, parear, pausarComo, pessoaDoAparelho, zerarComo } from "@/lib/notch";
 
 // API do notch nativo (desktop/). Não usa cookie nem sessão do site: o middleware deixa
 // passar /api/notch e cada chamada se autentica aqui pelo token do aparelho (042).
@@ -10,6 +10,7 @@ import { comecarDoZero, entregarComo, estadoDe, iniciarComo, parear, pausarComo,
 //   POST /api/notch/pausar   { tarefaId? }            -> estado  (sem tarefaId: pausa tudo)
 //   POST /api/notch/entregar { tarefaId, obs? }       -> estado  (044; tempo medido vale como está)
 //   POST /api/notch/comecar  { titulo, frente? }      -> estado  (tarefa nova, já rodando)
+//   POST /api/notch/zerar    { tarefaId }             -> estado  (06/11; app 0.4.0, comando genérico `acao`)
 
 const UUID = /^[0-9a-f-]{36}$/;
 const ESTADO_VAZIO = { pareado: false, pessoa: null, tarefa: null, correndo: [], pausadas: [], proximas: [], atrasadas: [], frentes: [] };
@@ -66,6 +67,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ aca
       const titulo = String(b.titulo ?? "").trim();
       if (!titulo) return erro("diga o que você vai fazer", 400);
       return NextResponse.json(await comecarDoZero(admin, pessoaId, titulo.slice(0, 120), String(b.frente ?? "")));
+    }
+    if (acao === "zerar") {
+      const tarefaId = String(b.tarefaId ?? "");
+      if (!UUID.test(tarefaId)) return erro("tarefa inválida", 400);
+      return NextResponse.json(await zerarComo(admin, pessoaId, tarefaId));
     }
     return erro("não encontrado", 404);
   } catch (e) {

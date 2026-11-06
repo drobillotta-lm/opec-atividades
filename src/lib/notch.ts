@@ -82,6 +82,28 @@ export const pausarComo = async (admin: Admin, pessoaId: string, tarefaId?: stri
 /** Entrega pelo notch: tempo medido vale como está, sem o ajuste de minutos do site. */
 export const entregarComo = (admin: Admin, pessoaId: string, tarefaId: string, obs: string) =>
   rpc(admin, "notch_entregar", { p_pessoa: pessoaId, p_tarefa: tarefaId, p_obs: obs || null });
+/** Zerar pelo notch (06/11, igual ao "zerar meu tempo" do site): apaga TODAS as sessões e
+ * ajustes DESTA pessoa nesta tarefa, inclusive a que está correndo; o tempo de outras pessoas
+ * fica. Tarefa começada do zero que ficar sem tempo nenhum some. Service role: o filtro por
+ * pessoa_id é a única trava, então nunca tirar. */
+export async function zerarComo(admin: Admin, pessoaId: string, tarefaId: string) {
+  const [rS, rA] = await Promise.all([
+    admin.from("sessoes").delete().eq("pessoa_id", pessoaId).eq("tarefa_id", tarefaId),
+    admin.from("ajustes_tempo").delete().eq("pessoa_id", pessoaId).eq("tarefa_id", tarefaId),
+  ]);
+  if (rS.error) throw new Error(`não consegui zerar: ${rS.error.message}`);
+  if (rA.error) throw new Error(`não consegui apagar os ajustes: ${rA.error.message}`);
+  const { data: t } = await admin.from("tarefas").select("origem, status, escalado_id").eq("id", tarefaId).maybeSingle();
+  if (t?.origem === "registrada" && t.status === "pendente" && t.escalado_id === pessoaId) {
+    const [{ count: sess }, { count: aj }, { count: partes }] = await Promise.all([
+      admin.from("sessoes").select("id", { count: "exact", head: true }).eq("tarefa_id", tarefaId),
+      admin.from("ajustes_tempo").select("id", { count: "exact", head: true }).eq("tarefa_id", tarefaId),
+      admin.from("subtarefas").select("id", { count: "exact", head: true }).eq("tarefa_id", tarefaId),
+    ]);
+    if (!sess && !aj && !partes) await admin.from("tarefas").delete().eq("id", tarefaId).eq("origem", "registrada");
+  }
+  return estadoDe(admin, pessoaId);
+}
 /** Tarefa que não estava planejada: nasce registrada, dona = a pessoa, e já começa a rodar. */
 export const comecarDoZero = (admin: Admin, pessoaId: string, titulo: string, frenteSigla: string) =>
   rpc(admin, "notch_comecar_do_zero", { p_pessoa: pessoaId, p_titulo: titulo, p_frente_sigla: frenteSigla });

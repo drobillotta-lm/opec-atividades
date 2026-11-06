@@ -93,6 +93,8 @@ export function NotchApp() {
   const [falha, setFalha] = useState<string | null>(null);
   const [valeu, setValeu] = useState<{ atrasada: boolean } | null>(null);
   const [atualizacao, setAtualizacao] = useState<{ instalada: string; nova: string } | null>(null);
+  // Zerar usa o comando genérico `acao`, que só existe do 0.4.0 em diante (06/11).
+  const [temAcao, setTemAcao] = useState(false);
 
   const mudar = useCallback((e: Estado | null) => { estadoRef.current = e; setEstado(e); }, []);
 
@@ -112,6 +114,7 @@ export function NotchApp() {
           fetch("/download/versao.json", { cache: "no-store" }),
         ]);
         const { versao: nova } = (await r.json()) as { versao?: string };
+        if (vivo && instalada) setTemAcao(!versaoMenor(instalada, "0.4.0"));
         if (!vivo || !nova || !instalada) return;
         setAtualizacao(versaoMenor(instalada, nova) ? { instalada, nova } : null);
       } catch { /* sem rede ou app sem o comando: nada a mostrar */ }
@@ -232,6 +235,13 @@ export function NotchApp() {
     }
   }, [mudar, carregar]);
 
+  /** Zerar (06/11): some com o card na hora; o retorno traz o estado novo. */
+  const zerar = useCallback(async (tarefaId: string) => {
+    const e = estadoRef.current;
+    const previa = e ? { ...e, correndo: semId(e.correndo, tarefaId), pausadas: semId(e.pausadas, tarefaId) } : null;
+    await agir(previa, "acao", { nome: "zerar", corpo: { tarefaId } });
+  }, [agir]);
+
   async function comecar(ev: React.FormEvent) {
     ev.preventDefault();
     const titulo = novoTitulo.trim().slice(0, 120);
@@ -306,6 +316,7 @@ export function NotchApp() {
         pausar={pausar}
         retomar={iniciarTarefa}
         entregar={entregar}
+        zerar={temAcao ? zerar : undefined}
         abrirSemana={() => { invoke("abrir", { caminho: "/semana" }).catch(() => {}); }}
         aoMudarAjustes={setAjustes}
         aoAbrirFechar={setAberto}
