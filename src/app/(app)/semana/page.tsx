@@ -64,27 +64,34 @@ function janelaDe(sp: Params, hoje: string): [string, string] | null {
   return null;
 }
 
-/** Acha tarefa de qualquer pessoa, pelo nome do jogo/competição ou pelo nome de quem
- * está escalado — pra alguém puxar pra si ou ajudar em conjunto (022 liberou a leitura). */
-async function buscarTarefas(supabase: Awaited<ReturnType<typeof criarClienteServidor>>, termo: string) {
-  const { data: pessoasAchadas } = await supabase.from("pessoas").select("id").ilike("nome", `%${termo}%`);
-  const idsPessoas = (pessoasAchadas ?? []).map((p) => p.id);
-  const condicoes = [
-    idsPessoas.length ? `escalado_id.in.(${idsPessoas.join(",")})` : null,
-    idsPessoas.length ? `dupla_id.in.(${idsPessoas.join(",")})` : null,
-    `eventos.evento_id_origem.ilike.%${termo}%`,
-    `eventos.competicao.ilike.%${termo}%`,
-    `eventos.confronto.ilike.%${termo}%`,
-  ].filter(Boolean).join(",");
-
-  return supabase
-    .from("tarefas")
-    .select(`id, atividade, titulo, status, estimativa_min, prazo_em, escalado_id, dupla_id,
-             frentes ( sigla ), eventos!inner ( competicao, data, evento_id_origem, confronto )`)
-    .in("status", ["pendente", "fora_do_prazo"])
-    .or(condicoes)
-    .order("prazo_em")
-    .limit(25);
+/** Acha tarefa pendente de qualquer pessoa pra puxar ou ajudar (022 liberou a leitura).
+ * 11/11: antes era um `ilike` por campo, com acento e limite de 25 por prazo: "natacao" não achava
+ * "Natação", e "juventude" devolvia só as 25 mais antigas de 200 -- o Gabriel não achou a auditoria
+ * de Natação do dia 06. Agora traz as pendentes dos últimos 60 dias e filtra aqui com o mesmo texto
+ * da busca rápida (sem acento, todas as palavras), mais o nome de quem está escalado e a data do
+ * evento ("06/11"). ~1.000 linhas, por isso em páginas de 1.000 (limite do PostgREST). */
+async function buscarTarefas(supabase: Awaited<ReturnType<typeof criarClienteServidor>>, termo: string, hoje: string) {
+  const palavras = normalizar(termo).split(" ").filter(Boolean);
+  if (!palavras.length) return { data: [] };
+  const desde = somarDias(hoje, -60);
+  const campos = `id, atividade, titulo, status, estimativa_min, prazo_em, escalado_id, dupla_id,
+             frentes ( sigla, nome ), eventos!inner ( competicao, data, evento_id_origem, confronto )`;
+  const paginas = await Promise.all([0, 1, 2].map((n) =>
+    supabase.from("tarefas").select(campos).eq("status", "pendente").gte("eventos.data", desde)
+      .order("prazo_em").order("id").range(n * 1000, n * 1000 + 999)));
+  const { data: gente } = await supabase.from("pessoas").select("id, nome");
+  const nome = new Map((gente ?? []).map((p) => [p.id, p.nome as string]));
+  const achadas = paginas.flatMap((p) => p.data ?? []).filter((r) => {
+    const frente = Array.isArray(r.frentes) ? r.frentes[0] : r.frentes;
+    const evento = Array.isArray(r.eventos) ? r.eventos[0] : r.eventos;
+    const texto = [
+      textoBusca({ atividade: r.atividade, titulo: r.titulo, frente, evento }),
+      normalizar(`${nome.get(r.escalado_id) ?? ""} ${r.dupla_id ? nome.get(r.dupla_id) ?? "" : ""}`),
+      evento ? diaCurto(evento.data) : "",
+    ].join(" ");
+    return palavras.every((p) => texto.includes(p));
+  });
+  return { data: achadas.slice(0, 60) };
 }
 
 export default async function MinhasAtividades({ searchParams }: { searchParams: Promise<Params> }) {
@@ -161,7 +168,7 @@ export default async function MinhasAtividades({ searchParams }: { searchParams:
   const ids = tarefas.map((t) => t.id);
 
   const termo = sp.busca?.trim().replace(/[,()]/g, "");
-  const { data: resultadosBusca } = termo ? await buscarTarefas(supabase, termo) : { data: [] };
+  const { data: resultadosBusca } = termo ? await buscarTarefas(supabase, termo, hoje) : { data: [] };
 
   // Frente Outros (049): evento sem competição cai nela e a tarefa nasce no líder de Outros, mas
   // é pra qualquer um pegar -- por isso aparece pra todo mundo (Daniel, 14/10).
@@ -298,7 +305,7 @@ export default async function MinhasAtividades({ searchParams }: { searchParams:
       // própria pessoa (Juliana procurando "WTA Curitiba", 04/11). Agora aparecem, marcadas.
       minha: idsExistentes.has(r.id),
     }))
-    .sort((a, b) => Number(b.minha) - Number(a.minha));
+    .sort((a, b) => Number(b.minha) - Number(a.minha) || (a.evento?.data ?? "").localeCompare(b.evento?.data ?? ""));
   const praPegar = (praPegarBruto ?? [])
     .map((r) => ({
       ...r,
@@ -475,11 +482,11 @@ export default async function MinhasAtividades({ searchParams }: { searchParams:
         : <VazioComEle pose="ferias" titulo="Hoje não tem nada aberto." texto="Nenhuma atividade pendente. Vai viver." />)}
 
       {atrasadas.length > 0 && (
-        <Secao titulo="Atrasadas" contagem={`${atrasadas.length}`} rosa busca>{atrasadas.map(linha)}</Secao>
+        <Secao titulo="Atrasadas" contagem={`${atrasadas.length}`} rosa busca aberta={atrasadas.length <= 5}>{atrasadas.map(linha)}</Secao>
       )}
 
       {dias.map((dia) => (
-        <Secao key={dia} busca contagem={`${porDia.get(dia)!.length}`}
+        <Secao key={dia} busca contagem={`${porDia.get(dia)!.length}`} aberta={dia <= somarDias(hoje, 1)}
           titulo={dia === hoje ? "Vence hoje" : dia === somarDias(hoje, 1) ? `Amanhã · ${diaCurto(dia)}` : `Vence ${diaCurto(dia)}`}>
           {porDia.get(dia)!.map(linha)}
         </Secao>
@@ -568,7 +575,7 @@ export default async function MinhasAtividades({ searchParams }: { searchParams:
           {Object.entries(sp).filter(([k, v]) => v && k !== "busca")
             .map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />)}
           <input
-            type="text" name="busca" defaultValue={sp.busca ?? ""} placeholder="nome do jogo, da competição ou de alguém do time"
+            type="text" name="busca" defaultValue={sp.busca ?? ""} placeholder="ex.: natacao auditoria 06/11 · jogo, competição, tipo, data ou alguém do time"
             className="flex-1 min-h-9 px-3 rounded-[9px] border border-linha bg-superficie text-[12.5px]"
           />
           <button type="submit" className="min-h-9 px-3.5 rounded-[9px] border border-linha bg-elevado text-[12.5px] font-medium hover:bg-linha transition">
@@ -577,7 +584,7 @@ export default async function MinhasAtividades({ searchParams }: { searchParams:
         </form>
 
         {termo && resultados.length === 0 && (
-          <Vazio>Nada pendente com &quot;{termo}&quot; no jogo, na competição ou no nome de quem está escalado.</Vazio>
+          <Vazio>Nada pendente com &quot;{termo}&quot; nos últimos 60 dias (jogo, competição, tipo, data como 06/11 ou nome de quem está escalado).</Vazio>
         )}
 
         {resultados.map((t) => (
@@ -736,15 +743,19 @@ function CartaoLote({ loteId, primeiro, fala, itens, desde, euId, time, pausar, 
   );
 }
 
-function Secao({ titulo, contagem, rosa, busca, children }: { titulo: string; contagem: string; rosa?: boolean; busca?: boolean; children: React.ReactNode }) {
+/** Bloco recolhível (11/11, pedido do time: não rolar tudo até o fim). `<details>` nativo: clicar no
+ * título abre/fecha. Abertos de saída: vence hoje e amanhã, e Atrasadas se tiver até 5; o resto
+ * fechado mostrando só a contagem. Durante a busca rápida tudo abre (regra em BuscaRapida). */
+function Secao({ titulo, contagem, rosa, busca, aberta = false, children }: { titulo: string; contagem: string; rosa?: boolean; busca?: boolean; aberta?: boolean; children: React.ReactNode }) {
   return (
-    <section data-secao={busca ? "" : undefined} className="flex flex-col gap-2">
-      <div className="flex items-baseline gap-2.5">
+    <details data-secao={busca ? "" : undefined} open={aberta} className="group flex flex-col gap-2">
+      <summary className="flex items-baseline gap-2.5 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden py-1">
+        <span aria-hidden className="text-[10px] text-tinta-4 transition-transform group-open:rotate-90">▶</span>
         <h2 className={`text-[11.5px] font-semibold uppercase tracking-[0.1em] ${rosa ? "text-rosa" : "text-tinta-3"}`}>{titulo}</h2>
         <span className="num text-[11.5px] text-tinta-4">{contagem}</span>
-      </div>
-      {children}
-    </section>
+      </summary>
+      <div className="flex flex-col gap-2 pt-1">{children}</div>
+    </details>
   );
 }
 

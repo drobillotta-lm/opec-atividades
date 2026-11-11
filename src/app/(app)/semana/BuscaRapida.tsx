@@ -13,7 +13,9 @@ export function BuscaRapida({ total }: { total: number }) {
     .map((p) => p.replace(/["\\]/g, "\\$&"));
   const tem = palavras.map((p) => `[data-busca*="${p}"]`).join("");
   const css = palavras.length
-    ? `[data-busca]:not(${tem}){display:none}[data-secao]:not(:has(${tem})){display:none}`
+    ? `[data-busca]:not(${tem}){display:none}[data-secao]:not(:has(${tem})){display:none}` +
+      // Blocos fechados (11/11) abrem durante a busca, senão a linha achada fica escondida.
+      `details[data-secao]::details-content{content-visibility:visible;block-size:auto}`
     : "";
 
   return (
