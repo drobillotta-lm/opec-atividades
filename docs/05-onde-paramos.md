@@ -1,5 +1,15 @@
 # Onde paramos — 28/09/2026
 
+## RETOMAR AQUI (12/11/2026 — distribuição de novembro do Yuri, mig 055)
+
+Fonte: ymuanes/opec-dimensionamento 79e9f17 (`entregaveis/mapa_novembro_ajuste.json`, vale de 12/11).
+Mapa de nov e dez regravado (dez = cópia provisória; Yuri não definiu). Julia fora de tudo; sinc com
+quem audita; duplas a/b do Yuri = escalado/dupla. Pendentes com evento < 12/11 congeladas no dono
+antigo (`dono_manual`, obs "mantida com o dono antigo") — inclui 37 atrasadas da Julia (FI/PR).
+Férias do Lucas 23/11–07/12: FI auditoria+sinc → Juliana+Pedro, PR materiais → Juliana, por tarefa
+(`dono_manual`). **PENDENTE: rodar de novo o bloco 3 da 055 (idempotente) por volta de 17/11**, quando o
+gerar_tarefas (hoje+21) alcançar 07/12. Líder CP = Gabriel Duarte.
+
 ## RETOMAR AQUI (05/11/2026 — tempo da entrega pelo site; renomear; notch × Codenotch)
 
 Três pontos que o Daniel trouxe:
