@@ -1,0 +1,40 @@
+# Backup diário do banco do opec-atividades.
+#
+# Por que existe (18/11/2026): o projeto igzrrsqmweuritiqrmrh saiu da org Pro do Dan
+# para uma org Free para cortar custo. No Free não há backup diário do Supabase.
+# (Pausa por inatividade não preocupa: o app e o notch usam o banco todo dia, e o
+# próprio dump já conta como atividade.)
+#
+# Segredo do repositório:
+#   BACKUP_DATABASE_URL — conexão do papel backup_leitor (só leitura, bypassrls), pooler sessão 5432
+#
+# Leva o schema public inteiro + auth.users e auth.identities (public.pessoas aponta para auth.users).
+# Restaurar: baixar o artifact → pg_restore --no-owner --data-only -t users -t identities -n auth ... e depois
+# pg_restore --no-owner -n public -d "<url do projeto>" atividades.dump
+name: Backup diario do banco
+
+on:
+  schedule:
+    - cron: '25 6 * * *'   # 03h25 de Brasília
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Dump do public + usuários do login
+        env:
+          DB: ${{ secrets.BACKUP_DATABASE_URL }}
+        run: |
+          docker run --rm -e DB postgres:17 sh -c \
+            'pg_dump "$DB" -Fc --no-owner -n public -t auth.users -t auth.identities' > atividades.dump
+          test -s atividades.dump
+          ls -lh atividades.dump
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: atividades-${{ github.run_id }}
+          path: atividades.dump
+          retention-days: 30
